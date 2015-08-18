@@ -1,0 +1,265 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+From Color:
+* .gitignore
+* ColorTestTest\
+* ColorTestTest\.classpath
+* ColorTestTest\.project
+* ColorTestTest\bin\
+* ColorTestTest\bin\AndroidManifest.xml
+* ColorTestTest\bin\ColorTest.apk
+* ColorTestTest\bin\classes.dex
+* ColorTestTest\bin\classes\
+* ColorTestTest\bin\classes\com\
+* ColorTestTest\bin\classes\com\color\
+* ColorTestTest\bin\classes\com\color\home\
+* ColorTestTest\bin\classes\com\color\home\TestProgramIndex$1.class
+* ColorTestTest\bin\classes\com\color\home\TestProgramIndex$2.class
+* ColorTestTest\bin\classes\com\color\home\TestProgramIndex.class
+* ColorTestTest\bin\classes\com\color\home\test\
+* ColorTestTest\bin\classes\com\color\home\test\BuildConfig.class
+* ColorTestTest\bin\classes\com\color\home\test\R$attr.class
+* ColorTestTest\bin\classes\com\color\home\test\R$drawable.class
+* ColorTestTest\bin\classes\com\color\home\test\R$string.class
+* ColorTestTest\bin\classes\com\color\home\test\R.class
+* ColorTestTest\bin\res\
+* ColorTestTest\bin\res\crunch\
+* ColorTestTest\bin\res\crunch\drawable-hdpi\
+* ColorTestTest\bin\res\crunch\drawable-hdpi\ic_launcher.png
+* ColorTestTest\bin\res\crunch\drawable-ldpi\
+* ColorTestTest\bin\res\crunch\drawable-ldpi\ic_launcher.png
+* ColorTestTest\bin\res\crunch\drawable-mdpi\
+* ColorTestTest\bin\res\crunch\drawable-mdpi\ic_launcher.png
+* ColorTestTest\bin\res\crunch\drawable-xhdpi\
+* ColorTestTest\bin\res\crunch\drawable-xhdpi\ic_launcher.png
+* ColorTestTest\bin\resources.ap_
+* ColorTestTest\gen\
+* ColorTestTest\gen\com\
+* ColorTestTest\gen\com\color\
+* ColorTestTest\gen\com\color\home\
+* ColorTestTest\gen\com\color\home\test\
+* ColorTestTest\gen\com\color\home\test\BuildConfig.java
+* ColorTestTest\gen\com\color\home\test\R.java
+* ColorTestTest\proguard-project.txt
+* ColorTestTest\project.properties
+* Readme\
+* Readme\Design
+* debuginfo\
+* debuginfo\3188.txt
+* debuginfo\ResPathError.txt
+* debuginfo\Tetheringissue
+* debuginfo\WMV_unable_play
+* debuginfo\aerror_with_SPS
+* debuginfo\env.ini
+* debuginfo\forthExtSDcard
+* debuginfo\log_surfce_error.txt
+* debuginfo\onestart.txt
+* debuginfo\oob.txt
+* debuginfo\oom
+* debuginfo\secondStart.txt
+* debuginfo\secondStartInterested
+* debuginfo\shell\
+* debuginfo\shell\Configs\
+* debuginfo\shell\Configs\config_serverip_empty.txt
+* debuginfo\shell\Configs\config_serverip_valued.txt
+* debuginfo\shell\Configs\issue-usb-mount-broadcast.bat
+* debuginfo\shell\Configs\push-broadcast.bat
+* debuginfo\shell\Configs\push.bat
+* debuginfo\start_sequence
+* debuginfo\thirdFailedStartHome
+* proguard\
+* proguard\dump.txt
+* proguard\mapping.txt
+* proguard\seeds.txt
+* proguard\usage.txt
+* templates\
+* templates\Java_codestyle_formatter.xml
+* templates\keys.csv
+* templates\templates.xml
+* testhost\
+* testhost\.classpath
+* testhost\.project
+* testhost\Shell\
+* testhost\Shell\TestMidsize\
+* testhost\Shell\TestMidsize\TEST-com.color.home.host.TestMidsize.txt
+* testhost\Shell\TestProgramsCancel\
+* testhost\Shell\TestProgramsCancel\TEST-com.color.home.host.TestProgramsCancel.txt
+* testhost\Shell\TestTwoPrograms\
+* testhost\Shell\TestTwoPrograms\TEST-com.color.home.host.TestTwoPrograms.txt
+* testhost\Shell\build.xml
+* testhost\Shell\build_deploy_programs.xml
+* testhost\Shell\local.prop
+* testhost\Shell\local.prop~
+* testhost\Shell\memo
+* testhost\Shell\testbuild.xml
+* testhost\bin\
+* testhost\bin\com\
+* testhost\bin\com\color\
+* testhost\bin\com\color\home\
+* testhost\bin\com\color\home\host\
+* testhost\bin\com\color\home\host\Constants.class
+* testhost\bin\com\color\home\host\SingleJUnitTestRunner.class
+* testhost\bin\com\color\home\host\TestCancelDownloading.class
+* testhost\bin\com\color\home\host\TestClearInstall.class
+* testhost\bin\com\color\home\host\TestMidsize.class
+* testhost\bin\com\color\home\host\TestProgramsCancel.class
+* testhost\bin\com\color\home\host\TestProgramsEmpty.class
+* testhost\bin\com\color\home\host\TestTwoPrograms.class
+* testhost\bin\com\color\home\host\utils\
+* testhost\bin\com\color\home\host\utils\ColorDownload.class
+* testhost\bin\com\color\home\host\utils\ExecuteCommandUtil.class
+* testhost\bin\com\color\home\host\utils\Log.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$BgAudio.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$BgFile.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$DisplayRect.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$Effect.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$EffectType.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$FileSource.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$Information.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$Item.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$LogFont.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$MultiPicInfo.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$Page.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$Program.class
+* testhost\bin\com\color\home\host\utils\ProgramParser$Region.class
+* testhost\bin\com\color\home\host\utils\ProgramParser.class
+* testhost\bin\com\color\home\host\utils\ResourceCollectable.class
+* testhost\bin\com\color\home\host\utils\SimpleXmlPullApp.class
+* testhost\bin\com\color\home\host\utils\TextUtils.class
+* testhost\lib\
+* testhost\lib\guava-17.0.jar
+* testhost\lib\hamcrest-core-1.3.jar
+* testhost\lib\junit.jar
+* testhost\lib\xpp3-1.1.4c.jar
+* testhost\src\
+* testhost\src\com\
+* testhost\src\com\color\
+* testhost\src\com\color\home\
+* testhost\src\com\color\home\host\
+* testhost\src\com\color\home\host\Constants.java
+* testhost\src\com\color\home\host\SingleJUnitTestRunner.java
+* testhost\src\com\color\home\host\TestCancelDownloading.java
+* testhost\src\com\color\home\host\TestClearInstall.java
+* testhost\src\com\color\home\host\TestMidsize.java
+* testhost\src\com\color\home\host\TestProgramsCancel.java
+* testhost\src\com\color\home\host\TestProgramsEmpty.java
+* testhost\src\com\color\home\host\TestTwoPrograms.java
+* testhost\src\com\color\home\host\utils\
+* testhost\src\com\color\home\host\utils\ColorDownload.java
+* testhost\src\com\color\home\host\utils\ExecuteCommandUtil.java
+* testhost\src\com\color\home\host\utils\Log.java
+* testhost\src\com\color\home\host\utils\ProgramParser.java
+* testhost\src\com\color\home\host\utils\ResourceCollectable.java
+* testhost\src\com\color\home\host\utils\SimpleXmlPullApp.java
+* testhost\src\com\color\home\host\utils\TextUtils.java
+* testui\
+* testui\.classpath
+* testui\.project
+* testui\.settings\
+* testui\.settings\org.eclipse.jdt.core.prefs
+* testui\bin\
+* testui\bin\com\
+* testui\bin\com\color\
+* testui\bin\com\color\tests\
+* testui\bin\com\color\tests\ui\
+* testui\bin\com\color\tests\ui\LaunchSettings.class
+* testui\build.xml
+* testui\local.properties
+* testui\project.properties
+* testui\src\
+* testui\src\com\
+* testui\src\com\color\
+* testui\src\com\color\tests\
+* testui\src\com\color\tests\ui\
+* testui\src\com\color\tests\ui\LaunchSettings.java
+From OpenWeatherSimple:
+* ic_launcher-web.png
+* proguard-project.txt
+From UDPMessenger:
+* .gitignore
+* README.md
+* proguard-project.txt
+From libpreference:
+* build.xml
+* proguard.cfg
+From libweather:
+* build.xml
+* proguard.cfg
+From libweatherskin:
+* build.xml
+* libweatherskin.iml
+* proguard.cfg
+
+Replaced Jars with Dependencies:
+--------------------------------
+The importer recognized the following .jar files as third party
+libraries and replaced them with Gradle dependencies instead. This has
+the advantage that more explicit version information is known, and the
+libraries can be updated automatically. However, it is possible that
+the .jar file in your project was of an older version than the
+dependency we picked, which could render the project not compileable.
+You can disable the jar replacement in the import wizard and try again:
+
+android-support-v4.jar => com.android.support:support-v4:19.1.0
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+In OpenWeatherSimple:
+* AndroidManifest.xml => openWeatherSimple\src\main\AndroidManifest.xml
+* assets\ => openWeatherSimple\src\main\assets
+* res\ => openWeatherSimple\src\main\res\
+* src\ => openWeatherSimple\src\main\java\
+In UDPMessenger:
+* AndroidManifest.xml => uDPMessenger\src\main\AndroidManifest.xml
+* res\ => uDPMessenger\src\main\res\
+* src\ => uDPMessenger\src\main\java\
+In libpreference:
+* AndroidManifest.xml => libpreference\src\main\AndroidManifest.xml
+* assets\ => libpreference\src\main\assets
+* res\ => libpreference\src\main\res\
+* src\ => libpreference\src\main\java\
+In libweather:
+* AndroidManifest.xml => libweather\src\main\AndroidManifest.xml
+* assets\ => libweather\src\main\assets
+* res\ => libweather\src\main\res\
+* src\ => libweather\src\main\java\
+In libweatherskin:
+* AndroidManifest.xml => libweatherskin\src\main\AndroidManifest.xml
+* assets\ => libweatherskin\src\main\assets
+* res\ => libweatherskin\src\main\res\
+* src\ => libweatherskin\src\main\java\
+In Color:
+* AndroidManifest.xml => color\src\main\AndroidManifest.xml
+* assets\ => color\src\main\assets
+* ColorTestTest\res\ => color\src\androidTest\res\
+* ColorTestTest\src\ => color\src\androidTest\java\
+* libs\volley.jar => color\libs\volley.jar
+* proguard-project.txt => color\proguard-project.txt
+* res\ => color\src\main\res\
+* src\ => color\src\main\java\
+* src\com\google\common\primitives\generate.sh => color\src\main\resources\com\google\common\primitives\generate.sh
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

@@ -1,0 +1,372 @@
+ProgramView ( > AdapterViewAnimator )
+ => PageView ( > AbsoluteLayout )
+   => RegionView ( > AdapterRegionBaseView > AdapterViewAnimator )
+     => ItemXXXcView(
+     
+     2560 720 
+     1280 2 720
+     
+     1280 
+     
+     
+     
+     
+// [
+// {
+// "classNameId": 0,
+// "classPK": 0,
+// "companyId": 10157,
+// "createDate": 1387376859159,
+// "custom1ImageId": 0,
+// "custom2ImageId": 0,
+// "description": "",
+// "extension": "vsn",
+// "extraSettings": "",
+// "fileEntryId": 11132,
+// "fileEntryTypeId": 0,
+// "folderId": 0,
+// "groupId": 10184,
+// "largeImageId": 0,
+// "manualCheckInRequired": false,
+// "mimeType": "application/xml",
+// "modifiedDate": 1387376859159,
+// "name": "202",
+// "readCount": 2,
+// "repositoryId": 10184,
+// "size": 24445,
+// "smallImageId": 0,
+// "title": "new.vsn",
+// "treePath": "/0/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "f3317dc1-4844-4ea4-b223-6af9ca5efe58",
+// "version": "1.0"
+// }
+// ]
+
+// http://localhost:8080/api/jsonws/dlapp/get-folders/repository-id/10184/parent-folder-id/0
+
+// [
+// {
+// "companyId": 10157,
+// "createDate": 1387340490582,
+// "defaultFileEntryTypeId": 0,
+// "description": "aaa",
+// "folderId": 10464,
+// "groupId": 10184,
+// "hidden": false,
+// "lastPostDate": 1387345774150,
+// "modifiedDate": 1387340490582,
+// "mountPoint": false,
+// "name": "a",
+// "overrideFileEntryTypes": false,
+// "parentFolderId": 0,
+// "repositoryId": 10184,
+// "status": 0,
+// "statusByUserId": 0,
+// "statusByUserName": "",
+// "statusDate": null,
+// "treePath": "/10464/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "a3756bdb-9d5e-4558-95fb-206628b80b92"
+// },
+// {
+// "companyId": 10157,
+// "createDate": 1387376859579,
+// "defaultFileEntryTypeId": 0,
+// "description": "",
+// "folderId": 11149,
+// "groupId": 10184,
+// "hidden": false,
+// "lastPostDate": 1387376876230,
+// "modifiedDate": 1387376859579,
+// "mountPoint": false,
+// "name": "new.files",
+// "overrideFileEntryTypes": false,
+// "parentFolderId": 0,
+// "repositoryId": 10184,
+// "status": 0,
+// "statusByUserId": 0,
+// "statusByUserName": "",
+// "statusDate": null,
+// "treePath": "/11149/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "8eb6b967-493c-40cd-b704-029c239b4069"
+// }
+// ]
+
+// http://localhost:8080/api/jsonws/dlapp/get-folders-and-file-entries-and-file-shortcuts/repository-id/10184/folder-id/0/status/0/include-mount-folders/true/start/0/end/222
+
+// [
+// {
+// "companyId": 10157,
+// "createDate": 1387340490582,
+// "defaultFileEntryTypeId": 0,
+// "description": "aaa",
+// "folderId": 10464,
+// "groupId": 10184,
+// "hidden": false,
+// "lastPostDate": 1387345774150,
+// "modifiedDate": 1387340490582,
+// "mountPoint": false,
+// "name": "a",
+// "overrideFileEntryTypes": false,
+// "parentFolderId": 0,
+// "repositoryId": 10184,
+// "status": 0,
+// "statusByUserId": 0,
+// "statusByUserName": "",
+// "statusDate": null,
+// "treePath": "/10464/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "a3756bdb-9d5e-4558-95fb-206628b80b92"
+// },
+// {
+// "companyId": 10157,
+// "createDate": 1387376859579,
+// "defaultFileEntryTypeId": 0,
+// "description": "",
+// "folderId": 11149,
+// "groupId": 10184,
+// "hidden": false,
+// "lastPostDate": 1387376876230,
+// "modifiedDate": 1387376859579,
+// "mountPoint": false,
+// "name": "new.files",
+// "overrideFileEntryTypes": false,
+// "parentFolderId": 0,
+// "repositoryId": 10184,
+// "status": 0,
+// "statusByUserId": 0,
+// "statusByUserName": "",
+// "statusDate": null,
+// "treePath": "/11149/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "8eb6b967-493c-40cd-b704-029c239b4069"
+// },
+// {
+// "classNameId": 0,
+// "classPK": 0,
+// "companyId": 10157,
+// "createDate": 1387376859159,
+// "custom1ImageId": 0,
+// "custom2ImageId": 0,
+// "description": "",
+// "extension": "vsn",
+// "extraSettings": "",
+// "fileEntryId": 11132,
+// "fileEntryTypeId": 0,
+// "folderId": 0,
+// "groupId": 10184,
+// "largeImageId": 0,
+// "manualCheckInRequired": false,
+// "mimeType": "application/xml",
+// "modifiedDate": 1387376859159,
+// "name": "202",
+// "readCount": 2,
+// "repositoryId": 10184,
+// "size": 24445,
+// "smallImageId": 0,
+// "status": 0,
+// "title": "new.vsn",
+// "treePath": "/0/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "f3317dc1-4844-4ea4-b223-6af9ca5efe58",
+// "version": "1.0"
+// },
+// {
+// "classNameId": 0,
+// "classPK": 0,
+// "companyId": 10157,
+// "createDate": 1387384279806,
+// "custom1ImageId": 0,
+// "custom2ImageId": 0,
+// "description": "",
+// "extension": "rtf",
+// "extraSettings": "",
+// "fileEntryId": 11317,
+// "fileEntryTypeId": 0,
+// "folderId": 0,
+// "groupId": 10184,
+// "largeImageId": 0,
+// "manualCheckInRequired": false,
+// "mimeType": "application/rtf",
+// "modifiedDate": 1387384279806,
+// "name": "213",
+// "readCount": 0,
+// "repositoryId": 10184,
+// "size": 827,
+// "smallImageId": 0,
+// "status": 0,
+// "title": "test.rtf",
+// "treePath": "/0/",
+// "userId": 10201,
+// "userName": "Test Test",
+// "uuid": "96b50425-27dc-4539-ae61-79c459e65cb2",
+// "version": "1.0"
+// }
+// ]
+
+// /mnt/sdcard/Android/data/com.color.home/files/Download/new.files
+
+// /data/data/com.color.home/shared_prefs
+
+// new.vsn, modifiedDate=1387445954642
+
+// new.vsn, modifiedDate=1387448094780
+
+
+
+
+
+
+
+
+
+
+12-28 22:22:34.448: D/StorageManager(7611): download+/mnt/sdcard/Android/data/com.color.home/files/Download
+12-28 22:22:34.468: V/DownloadManager(7611): Updating for startId 3
+12-28 22:22:34.528: W/dalvikvm(7611): threadid=12: thread exiting with uncaught exception (group=0x41be7300)
+12-28 22:22:34.538: E/AndroidRuntime(7611): FATAL EXCEPTION: DownloadManager-UpdateThread
+12-28 22:22:34.538: E/AndroidRuntime(7611): java.lang.IllegalArgumentException: Unknown URI: content://color_downloads/all_downloads/1/headers
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadProvider.query(DownloadProvider.java:849)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.content.ContentProvider.query(ContentProvider.java:652)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.content.ContentProvider$Transport.query(ContentProvider.java:189)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.content.ContentResolver.query(ContentResolver.java:370)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.content.ContentResolver.query(ContentResolver.java:313)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadInfo$Reader.readRequestHeaders(DownloadInfo.java:118)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadInfo$Reader.newDownloadInfo(DownloadInfo.java:69)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadService.insertDownloadLocked(DownloadService.java:378)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadService.updateLocked(DownloadService.java:313)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadService.access$1(DownloadService.java:291)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at com.color.home.android.providers.downloads.DownloadService$1.handleMessage(DownloadService.java:235)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.os.Handler.dispatchMessage(Handler.java:95)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.os.Looper.loop(Looper.java:137)
+12-28 22:22:34.538: E/AndroidRuntime(7611): 	at android.os.HandlerThread.run(HandlerThread.java:60)
+
+D:\Work\CityLight\Debug>adb shell
+root@android:/ # cd /data/app/com.color.home/
+cd /data/app/com.color.home/
+/system/bin/sh: cd: /data/app/com.color.home: No such file or directory
+2|root@android:/ # cd /data/data/com.color.home
+cd /data/data/com.color.home
+root@android:/data/data/com.color.home # ls
+ls
+cache
+databases
+lib
+root@android:/data/data/com.color.home # cd database
+cd database
+/system/bin/sh: cd: /data/data/com.color.home/database: No such file or directory
+2|root@android:/data/data/com.color.home # cd databases
+cd databases
+root@android:/data/data/com.color.home/databases # ls
+ls
+color_downloads.db
+color_downloads.db-journal
+root@android:/data/data/com.color.home/databases # pwd
+pwd
+/data/data/com.color.home/databases
+root@android:/data/data/com.color.home/databases # exit
+exit
+
+root@android:/mnt/sdcard/Android/data/com.color.home # pwd
+pwd
+/mnt/sdcard/Android/data/com.color.home
+root@android:/mnt/sdcard/Android/data/com.color.home #
+
+
+
+
+
+
+
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.vsn-2.tmp
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download-1
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/vlcsnap-2012-01-24-13h27m47s223.jpg
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/VID_20131208_002646.mp4
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/IMG_1107.bmp
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/VID_20131208_111153.mp4
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/etc-tomcat6-server.xml.txt
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/tests.txt
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/IMG_0503.JPG
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download-2
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/vlcsnap-2012-01-24-13h27m47s223-1.jpg
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/VID_20131208_002646-1.mp4
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/IMG_1107-1.bmp
+01-02 00:47:55.527: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/VID_20131208_111153-1.mp4
+01-02 00:47:55.537: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/etc-tomcat6-server.xml-1.txt
+01-02 00:47:55.537: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/tests-1.txt
+01-02 00:47:55.537: I/DownloadManager(10321): in removeSpuriousFiles, preserving file /mnt/sdcard/Android/data/com.color.home/files/Download/new.files/IMG_0503-1.JPG
+01-02 00:47:55.537: I/DownloadManager(10321): in trimDatabase
+
+
+
+root@android:/ # cat /proc/net/arp
+cat /proc/net/arp
+IP address       HW type     Flags       HW address            Mask     Device
+192.168.43.193   0x1         0x0         08:11:96:84:06:34     *        wl0.1
+192.168.43.129   0x1         0x0         00:00:00:00:00:00     *        wl0.1
+root@android:/ # ls -l /proc/net
+ls -l /proc/net
+lrwxrwxrwx root     root              2013-01-04 15:15 net -> self/net
+
+
+
+
+
+
+01-04 08:07:50.150: I/EventHub(271): Removing device RAPOO RAPOO 2.4G Wireless Device due to epoll hang-up event.
+01-04 08:07:50.150: I/EventHub(271): Removed device: path=/dev/input/event4 name=RAPOO RAPOO 2.4G Wireless Device id=2 fd=108 classes=0x80000403
+01-04 08:07:50.190: I/InputReader(271): Device removed: id=2, name='RAPOO RAPOO 2.4G Wireless Device', sources=0x00000101
+01-04 08:07:50.190: I/EventHub(271): Removing device '/dev/input/event4' due to inotify event
+01-04 08:07:50.220: W/Vold(88): subsystem found in netlink event
+01-04 08:07:50.220: D/Vold(88): usb, 2
+01-04 08:07:50.270: I/EventHub(271): Removing device RAPOO RAPOO 2.4G Wireless Device due to epoll hang-up event.
+01-04 08:07:50.270: I/EventHub(271): Removed device: path=/dev/input/event5 name=RAPOO RAPOO 2.4G Wireless Device id=1 fd=106 classes=0x80000569
+01-04 08:07:50.310: I/InputReader(271): Device removed: id=1, name='RAPOO RAPOO 2.4G Wireless Device', sources=0x71252753
+01-04 08:07:50.310: I/EventHub(271): Removing device '/dev/input/event5' due to inotify event
+01-04 08:07:50.310: I/ActivityManager(271): Config changed: {1.15 0mcc0mnc en_US sw720dp w1280dp h672dp lrg long land -touch -keyb/v/h -nav/h s.5}
+01-04 08:07:50.330: D/PhoneApp(412): updateProximitySensorMode: state = IDLE
+01-04 08:07:50.340: D/RemoteControlManager(271): BroadcastReceiver:android.intent.action.CONFIGURATION_CHANGED
+01-04 08:07:50.340: W/Vold(88): subsystem found in netlink event
+01-04 08:07:50.340: D/Vold(88): usb, 2
+01-04 08:07:50.360: W/Vold(88): subsystem found in netlink event
+01-04 08:07:50.360: D/Vold(88): usb, 2
+01-04 08:07:50.360: I/ServerInfo(574): onDestroy. 
+01-04 08:07:50.360: I/WifiP2P(574): onDetroy. 
+01-04 08:07:50.360: D/AndroidRuntime(574): Shutting down VM
+01-04 08:07:50.360: W/dalvikvm(574): threadid=1: thread exiting with uncaught exception (group=0x415df300)
+01-04 08:07:50.370: E/AndroidRuntime(574): FATAL EXCEPTION: main
+01-04 08:07:50.370: E/AndroidRuntime(574): java.lang.RuntimeException: Unable to destroy activity {com.color.home/com.color.home.MainActivity}: java.lang.IllegalArgumentException: Receiver not registered: com.color.home.WifiP2P$1@41c4ed38
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread.performDestroyActivity(ActivityThread.java:3273)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread.handleDestroyActivity(ActivityThread.java:3291)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread.handleRelaunchActivity(ActivityThread.java:3489)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread.access$700(ActivityThread.java:130)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1201)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.os.Looper.loop(Looper.java:137)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread.main(ActivityThread.java:4745)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at java.lang.reflect.Method.invokeNative(Native Method)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at java.lang.reflect.Method.invoke(Method.java:511)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:786)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at dalvik.system.NativeStart.main(Native Method)
+01-04 08:07:50.370: E/AndroidRuntime(574): Caused by: java.lang.IllegalArgumentException: Receiver not registered: com.color.home.WifiP2P$1@41c4ed38
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.LoadedApk.forgetReceiverDispatcher(LoadedApk.java:654)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ContextImpl.unregisterReceiver(ContextImpl.java:1150)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.content.ContextWrapper.unregisterReceiver(ContextWrapper.java:378)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at com.color.home.WifiP2P.onDetroy(WifiP2P.java:68)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at com.color.home.MainActivity.onDestroy(MainActivity.java:243)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.Activity.performDestroy(Activity.java:5184)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.Instrumentation.callActivityOnDestroy(Instrumentation.java:1109)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	at android.app.ActivityThread.performDestroyActivity(ActivityThread.java:3260)
+01-04 08:07:50.370: E/AndroidRuntime(574): 	... 12 more
+01-04 08:07:50.390: W/ActivityManager(271):   Force finishing activity com.color.home/.MainActivity
+01-04 08:07:50.420: I/Process(574): Sending signal. PID: 574 SIG: 9
+01-04 08:07:50.460: I/WindowState(271): WIN DEATH: Window{41dd2370 com.color.home/com.color.home.MainActivity paused=true}

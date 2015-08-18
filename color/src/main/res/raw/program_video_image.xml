@@ -1,0 +1,831 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Programs>
+
+    <Program>
+        <Id>
+814A08C6-86A4-41F9-851B-A57B3260A523
+        </Id>
+
+        <Name>
+LED1
+        </Name>
+
+        <Version>
+1
+        </Version>
+
+        <Information>
+            <Width>
+256
+            </Width>
+
+            <Height>
+256
+            </Height>
+
+            <Duration>
+300000
+            </Duration>
+
+            <Description />
+
+            <Creator />
+
+            <CreateTime>
+1601-01-01 00:00:00
+            </CreateTime>
+
+            <LastModifyTime>
+1601-01-01 00:00:00
+            </LastModifyTime>
+        </Information>
+
+        <Pages>
+            <Page>
+                <Id>
+B343DCBB-0380-4C4B-AA51-D6F5B6F950EA
+                </Id>
+
+                <Name>
+节目页1
+                </Name>
+
+                <Visibale>
+1
+                </Visibale>
+
+                <AppointDuration>
+3600000
+                </AppointDuration>
+
+                <LoopType>
+1
+                </LoopType>
+
+                <BgFile>
+                    <IsRelative>
+1
+                    </IsRelative>
+
+                    <FilePath >
+                        assets/pic.jpg
+                        </FilePath>
+                </BgFile>
+
+                <BgAudio>
+                    <FileSource>
+                        <IsRelative>
+0
+                        </IsRelative>
+
+                        <FilePath />
+                    </FileSource>
+
+                    <Lenth>
+0
+                    </Lenth>
+
+                    <InOffset>
+0
+                    </InOffset>
+
+                    <PlayLenth>
+0
+                    </PlayLenth>
+
+                    <Volume>
+1.000000
+                    </Volume>
+
+                    <IsLoop>
+1
+                    </IsLoop>
+                </BgAudio>
+
+                <Regions>
+                    <Region>
+                        <Id>
+1EA745D3-4F2F-46A3-ACD7-4E080CB1D5A9
+                        </Id>
+
+                        <Name>
+文件窗
+                        </Name>
+
+                        <type>
+1
+                        </type>
+
+                        <Show>
+1
+                        </Show>
+
+                        <Layer>
+4
+                        </Layer>
+
+                        <Rect>
+                            <X>
+10
+                            </X>
+
+                            <Y>
+10
+                            </Y>
+
+                            <Width>
+128
+                            </Width>
+
+                            <Height>
+128
+                            </Height>
+
+                            <BorderWidth>
+0
+                            </BorderWidth>
+
+                            <BorderColor>
+0x0FFFFF00
+                            </BorderColor>
+                        </Rect>
+
+                        <Items>
+                            <Item>
+                                <Id>
+B952EF45-4235-4F44-B8E0-FC097ECDCE51
+                                </Id>
+
+                                <Name>
+720×576_WMV2.wmv
+                                </Name>
+
+                                <Type>
+3
+                                </Type>
+
+                                <Version>
+0x00000001
+                                </Version>
+
+                                <BackColor>
+0xFF000000
+                                </BackColor>
+
+                                <Alhpa>
+1.000000
+                                </Alhpa>
+
+                                <Duration>
+24841
+                                </Duration>
+
+                                <BeGlaring>
+0
+                                </BeGlaring>
+
+                                <effect>
+                                    <IsStatic>
+0
+                                    </IsStatic>
+
+                                    <StayType>
+0
+                                    </StayType>
+                                </effect>
+
+                                <inEffect>
+                                    <Type>
+0
+                                    </Type>
+
+                                    <Time>
+500
+                                    </Time>
+
+                                    <repeatX>
+1
+                                    </repeatX>
+
+                                    <repeatY>
+1
+                                    </repeatY>
+
+                                    <IsTran>
+0
+                                    </IsTran>
+                                </inEffect>
+
+                                <outEffect>
+                                    <Type>
+0
+                                    </Type>
+
+                                    <Time>
+500
+                                    </Time>
+
+                                    <repeatX>
+1
+                                    </repeatX>
+
+                                    <repeatY>
+1
+                                    </repeatY>
+
+                                    <IsTran>
+0
+                                    </IsTran>
+                                </outEffect>
+
+                                <MultiPicInfo>
+                                    <Source>
+0
+                                    </Source>
+
+                                    <PicCount>
+0
+                                    </PicCount>
+
+                                    <OnePicDuration>
+0
+                                    </OnePicDuration>
+
+                                    <FilePath>
+                                        <IsRelative>
+0
+                                        </IsRelative>
+
+                                        <FilePath />
+                                    </FilePath>
+                                </MultiPicInfo>
+
+                                <Length>
+24841
+                                </Length>
+
+                                <VideoWidth>
+720
+                                </VideoWidth>
+
+                                <VideoHeight>
+576
+                                </VideoHeight>
+
+                                <InOffset>
+0
+                                </InOffset>
+
+                                <PlayLength>
+24841
+                                </PlayLength>
+
+                                <Volume>
+1.000000
+                                </Volume>
+
+                                <Loop>
+1
+                                </Loop>
+
+                                <FileSource>
+                                    <IsRelative>
+1
+                                    </IsRelative>
+
+                                    <FilePath>
+assets/VID_20131204_220754.3gp
+                                    </FilePath>
+                                </FileSource>
+
+                                <ReserveAS>
+0
+                                </ReserveAS>
+
+                                <showX>
+0
+                                </showX>
+
+                                <showY>
+0
+                                </showY>
+
+                                <showWidth>
+720
+                                </showWidth>
+
+                                <showHeight>
+576
+                                </showHeight>
+
+                                <IsSetShowRegion>
+0
+                                </IsSetShowRegion>
+
+                                <IsSetPlayLen>
+0
+                                </IsSetPlayLen>
+                            </Item>
+                        </Items>
+                    </Region>
+                    <Region>
+                        <Id>
+7574F96F-5E36-40B0-B5A4-CAD52598AD35
+                        </Id>
+
+                        <Name>
+文件窗
+                        </Name>
+
+                        <type>
+1
+                        </type>
+
+                        <Show>
+1
+                        </Show>
+
+                        <Layer>
+3
+                        </Layer>
+
+                        <Rect>
+                            <X>
+20
+                            </X>
+
+                            <Y>
+20
+                            </Y>
+
+                            <Width>
+128
+                            </Width>
+
+                            <Height>
+128
+                            </Height>
+
+                            <BorderWidth>
+0
+                            </BorderWidth>
+
+                            <BorderColor>
+0x0FFFFF00
+                            </BorderColor>
+                        </Rect>
+
+                        <Items>
+                            <Item>
+                                <Id>
+FD99CCBE-C77B-49A9-8DF8-7184FB3365CD
+                                </Id>
+
+                                <Name>
+assets/IMG_1107.img
+                                </Name>
+
+                                <Type>
+2
+                                </Type>
+
+                                <Version>
+0x00000001
+                                </Version>
+
+                                <BackColor>
+0xFF000000
+                                </BackColor>
+
+                                <Alhpa>
+1.000000
+                                </Alhpa>
+
+                                <Duration>
+6000
+                                </Duration>
+
+                                <BeGlaring>
+0
+                                </BeGlaring>
+
+                                <effect>
+                                    <IsStatic>
+0
+                                    </IsStatic>
+
+                                    <StayType>
+0
+                                    </StayType>
+                                </effect>
+
+                                <inEffect>
+                                    <Type>
+1
+                                    </Type>
+
+                                    <Time>
+500
+                                    </Time>
+
+                                    <repeatX>
+1
+                                    </repeatX>
+
+                                    <repeatY>
+1
+                                    </repeatY>
+
+                                    <IsTran>
+0
+                                    </IsTran>
+                                </inEffect>
+
+                                <outEffect>
+                                    <Type>
+1
+                                    </Type>
+
+                                    <Time>
+500
+                                    </Time>
+
+                                    <repeatX>
+1
+                                    </repeatX>
+
+                                    <repeatY>
+1
+                                    </repeatY>
+
+                                    <IsTran>
+0
+                                    </IsTran>
+                                </outEffect>
+
+                                <MultiPicInfo>
+                                    <Source>
+0
+                                    </Source>
+
+                                    <PicCount>
+0
+                                    </PicCount>
+
+                                    <OnePicDuration>
+0
+                                    </OnePicDuration>
+
+                                    <FilePath>
+                                        <IsRelative>
+0
+                                        </IsRelative>
+
+                                        <FilePath />
+                                    </FilePath>
+                                </MultiPicInfo>
+
+                                <Width>
+640
+                                </Width>
+
+                                <Height>
+480
+                                </Height>
+
+                                <FileSource>
+                                    <IsRelative>
+1
+                                    </IsRelative>
+
+                                    <FilePath>
+assets/IMG_1107.bmp
+                                    </FilePath>
+                                </FileSource>
+
+                                <ReserveAS>
+0
+                                </ReserveAS>
+                            </Item>
+                        </Items>
+                    </Region>
+                    <Region>
+                        <Id>
+D0E83C92-C53C-435F-98DE-A0238EED96C8
+                        </Id>
+
+                        <Name>
+文件窗
+                        </Name>
+
+                        <type>
+1
+                        </type>
+
+                        <Show>
+1
+                        </Show>
+
+                        <Layer>
+2
+                        </Layer>
+
+                        <Rect>
+                            <X>
+30
+                            </X>
+
+                            <Y>
+30
+                            </Y>
+
+                            <Width>
+128
+                            </Width>
+
+                            <Height>
+128
+                            </Height>
+
+                            <BorderWidth>
+0
+                            </BorderWidth>
+
+                            <BorderColor>
+0x0FFFFF00
+                            </BorderColor>
+                        </Rect>
+
+                        <Items />
+                    </Region>
+                    <Region>
+                        <Id>
+31AFC226-29A6-4992-A3EA-A11D2FCC079A
+                        </Id>
+
+                        <Name>
+单行文本窗
+                        </Name>
+
+                        <type>
+3
+                        </type>
+
+                        <Show>
+1
+                        </Show>
+
+                        <Layer>
+1
+                        </Layer>
+
+                        <Rect>
+                            <X>
+20
+                            </X>
+
+                            <Y>
+214
+                            </Y>
+
+                            <Width>
+216
+                            </Width>
+
+                            <Height>
+32
+                            </Height>
+
+                            <BorderWidth>
+0
+                            </BorderWidth>
+
+                            <BorderColor>
+0x0FFFFF00
+                            </BorderColor>
+                        </Rect>
+
+                        <Items>
+                            <Item>
+                                <Id>
+4368AC5C-0B13-4123-A76F-3BB2C3B6EE87
+                                </Id>
+
+                                <Name>
+单行文字
+                                </Name>
+
+                                <Type>
+4
+                                </Type>
+
+                                <Version>
+0x00000001
+                                </Version>
+
+                                <BackColor>
+0xFF000000
+                                </BackColor>
+
+                                <Alhpa>
+1.000000
+                                </Alhpa>
+
+                                <Duration>
+300000
+                                </Duration>
+
+                                <BeGlaring>
+0
+                                </BeGlaring>
+
+                                <effect>
+                                    <IsStatic>
+0
+                                    </IsStatic>
+
+                                    <StayType>
+0
+                                    </StayType>
+                                </effect>
+
+                                <inEffect>
+                                    <Type>
+0
+                                    </Type>
+
+                                    <Time>
+500
+                                    </Time>
+
+                                    <repeatX>
+1
+                                    </repeatX>
+
+                                    <repeatY>
+1
+                                    </repeatY>
+
+                                    <IsTran>
+0
+                                    </IsTran>
+                                </inEffect>
+
+                                <outEffect>
+                                    <Type>
+0
+                                    </Type>
+
+                                    <Time>
+500
+                                    </Time>
+
+                                    <repeatX>
+1
+                                    </repeatX>
+
+                                    <repeatY>
+1
+                                    </repeatY>
+
+                                    <IsTran>
+0
+                                    </IsTran>
+                                </outEffect>
+
+                                <MultiPicInfo>
+                                    <Source>
+0
+                                    </Source>
+
+                                    <PicCount>
+0
+                                    </PicCount>
+
+                                    <OnePicDuration>
+6000
+                                    </OnePicDuration>
+
+                                    <FilePath>
+                                        <IsRelative>
+0
+                                        </IsRelative>
+
+                                        <FilePath />
+                                    </FilePath>
+                                </MultiPicInfo>
+
+                                <TextColor>
+0xFFFFFFFF
+                                </TextColor>
+
+                                <LogFont>
+                                    <lfHeight>
+16
+                                    </lfHeight>
+
+                                    <lfWidth>
+0
+                                    </lfWidth>
+
+                                    <lfEscapement>
+0
+                                    </lfEscapement>
+
+                                    <lfOrientation>
+0
+                                    </lfOrientation>
+
+                                    <lfWeight>
+0
+                                    </lfWeight>
+
+                                    <lfItalic>
+0
+                                    </lfItalic>
+
+                                    <lfUnderline>
+0
+                                    </lfUnderline>
+
+                                    <lfStrikeOut>
+0
+                                    </lfStrikeOut>
+
+                                    <lfCharSet>
+1
+                                    </lfCharSet>
+
+                                    <lfOutPrecision>
+0
+                                    </lfOutPrecision>
+
+                                    <lfQuality>
+0
+                                    </lfQuality>
+
+                                    <lfPitchAndFamily>
+32
+                                    </lfPitchAndFamily>
+
+                                    <lfFaceName>
+宋体
+                                    </lfFaceName>
+                                </LogFont>
+
+                                <Text>
+单行文本
+                                </Text>
+
+                                <FileSource>
+                                    <IsRelative>
+0
+                                    </IsRelative>
+
+                                    <FilePath />
+                                </FileSource>
+
+                                <IsFromFile>
+0
+                                </IsFromFile>
+
+                                <IsScroll>
+1
+                                </IsScroll>
+
+                                <Speed>
+25.000000
+                                </Speed>
+
+                                <IsHeadConnectTail>
+0
+                                </IsHeadConnectTail>
+
+                                <WordSpacing>
+0
+                                </WordSpacing>
+
+                                <RepeatCount>
+1
+                                </RepeatCount>
+
+                                <IsScrollByTime>
+1
+                                </IsScrollByTime>
+
+                                <PlayLenth>
+300000
+                                </PlayLenth>
+
+                                <MoveDir>
+0
+                                </MoveDir>
+                            </Item>
+                        </Items>
+                    </Region>
+                </Regions>
+            </Page>
+        </Pages>
+    </Program>
+
+</Programs>

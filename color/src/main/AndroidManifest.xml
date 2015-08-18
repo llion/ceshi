@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.color.home"
+    android:versionCode="9300100"
+    android:versionName="@string/version_name" >
+<!--  9 0 1                 00           00
+    0.9.0 |Formal           | rc00       |Build number.  
+          |1 Formal, 0 RC   |            |
+                            |rc number.  |
+                                         |Build number -->
+    <uses-sdk
+        android:minSdkVersion="19"
+        android:targetSdkVersion="19" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <application
+        android:name="com.color.home.AppController"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.color.home.MainActivity"
+            android:configChanges="orientation|mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:theme="@style/FullscreenTheme" 
+            android:stateNotNeeded="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".program.sync.SyncServiceReceiver" >
+            <intent-filter>
+                <action android:name="com.color.intent.action.CONFIG" />
+                <action android:name="com.color.intent.action.ALL_DOWNLOAD_FINISHED" />
+                <action android:name="color.android.intent.action.DOWNLOAD_COMPLETE" />
+                <action android:name="com.color.intent.action.APP_STARTED" />
+                <action android:name="com.color.intent.ACTION_USB_SYNCED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+                <action android:name="android.intent.action.MEDIA_BAD_REMOVAL" />
+                <action android:name="android.intent.action.MEDIA_EJECT" />
+                <action android:name="android.intent.action.MEDIA_REMOVED" />
+
+                <data android:scheme="file" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".PlayPrgmReceiver" >
+            <intent-filter>
+                <action android:name="com.clt.broadcast.playProgram" />
+            </intent-filter>
+            <!--
+                 <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter> 
+            BOOT_COMPLETED is useless to me, as the end of the HOME's on create means BOOT_COMPLETED.
+            -->
+        </receiver>
+
+        <provider
+            android:name=".android.providers.downloads.DownloadProvider"
+            android:authorities="color_downloads"
+            android:exported="true" >
+        </provider>
+
+        <service android:name=".android.providers.downloads.DownloadService" />
+        <service android:name="com.color.home.program.sync.SyncService" />
+        <service android:name=".SyncUsbService" />
+        <service android:name="com.color.home.app.DetectionService" />
+
+        <receiver android:name=".android.providers.downloads.DownloadReceiver" >
+            <intent-filter>
+
+                <!-- <action android:name="android.intent.action.BOOT_COMPLETED" /> -->
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+
+                <data android:scheme="file" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

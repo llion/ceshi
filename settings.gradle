@@ -1,0 +1,6 @@
+include ':uDPMessenger'
+include ':libpreference'
+include ':libweather'
+include ':libweatherskin'
+include ':openWeatherSimple'
+include ':color'
