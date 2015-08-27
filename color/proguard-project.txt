@@ -26,7 +26,4 @@
 # http://stackoverflow.com/questions/7464035/how-to-tell-proguard-to-keep-everything
 -keep public class com.google.common.**
 
-
-
-
 -dontwarn com.google.common.**

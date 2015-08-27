@@ -17,7 +17,6 @@
 package com.color.home.android.providers.downloads;
 
 import android.content.Context;
-import android.net.NetworkPolicyManager;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
@@ -840,7 +839,7 @@ public final class Downloads {
 
         /**
          * This download has failed because requesting application has been
-         * blocked by {@link NetworkPolicyManager}.
+         * blocked by  NetworkPolicyManager.
          * 
          * @hide
          * @deprecated since behavior now uses
