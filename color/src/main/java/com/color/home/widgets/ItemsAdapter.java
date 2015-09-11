@@ -1,8 +1,5 @@
 package com.color.home.widgets;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.DataSetObserver;
@@ -37,8 +34,11 @@ import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
 import com.color.home.widgets.weather.ItemWeatherInfo;
 
+import java.io.File;
+import java.util.ArrayList;
+
 public class ItemsAdapter extends BaseAdapter {
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     private final static String TAG = "ItemsAdapter";
 
     private Context mContext;
@@ -297,7 +297,7 @@ public class ItemsAdapter extends BaseAdapter {
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
                         return view;
-                    } else {
+                    } else { // Multi lines text?
                         ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
                         // String filePath = getAbsFilePath(item);
                         /*
@@ -355,7 +355,7 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "getView. [Scroll view, but scrollpicinfo=" + scrollpicinfo);
                     return unknowView(item);
                 }
-            } else {
+            } else { // doc, excel, etc. not scrolling?
                 final MultiPicInfo multipicinfo = item.multipicinfo;
                 if (multipicinfo != null && !"0".equals(multipicinfo.picCount)) {
                     ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);

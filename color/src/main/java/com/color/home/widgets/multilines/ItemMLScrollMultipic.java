@@ -1,13 +1,5 @@
 package com.color.home.widgets.multilines;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
@@ -26,9 +18,17 @@ import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 public class ItemMLScrollMultipic extends ImageView implements OnPlayFinishObserverable {
     // public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable, Runnable {
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemMultiLinesPagedText";
 
@@ -75,6 +75,7 @@ public class ItemMLScrollMultipic extends ImageView implements OnPlayFinishObser
                 final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
                 if (DBG)
                     Log.d(TAG, "setPageText. [absFilePath=" + absFilePath);
+                if (DBG) Log.d(TAG, "thread=" + Thread.currentThread());
 
                 InputStream is = new FileInputStream(absFilePath);
                 is.skip(20);

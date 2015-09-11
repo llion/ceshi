@@ -28,6 +28,7 @@ import android.widget.VideoView;
 
 import com.color.home.android.providers.downloads.CLDownloadManager;
 import com.color.home.app.DetectionService;
+import com.color.home.keyboard.KeyBoardNav;
 import com.color.home.program.sync.SyncService;
 
 // GIF View.
@@ -46,7 +47,7 @@ import com.color.home.program.sync.SyncService;
  * 
  */
 public class MainActivity extends Activity {
-    static final boolean DBG = false;;
+    private static final boolean DBG = false;;
     final static String TAG = "MainActivity";
     public VideoView mVideoView;
     public MediaController mMediaController;
@@ -54,6 +55,7 @@ public class MainActivity extends Activity {
     public ViewGroup mContentVG;
     private MainReceiver mReceiver;
     private CopyProgress mCp;
+    private KeyBoardNav mKb;
 
     private class MainReceiver extends BroadcastReceiver {
 
@@ -83,6 +85,7 @@ public class MainActivity extends Activity {
         
 //        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         mReceiver = new MainReceiver();
+        mKb = new KeyBoardNav(this);
 
         if (DBG)
             Log.d(TAG, "BUILD id=" + Build.ID);
@@ -214,6 +217,8 @@ public class MainActivity extends Activity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (DBG)
             Log.d(TAG, "onKeyDown. [keyCode=" + keyCode + ", event=" + event);
+
+        mKb.onKeyDown(keyCode, event);
         return super.onKeyDown(keyCode, event);
     }
 

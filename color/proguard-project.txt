@@ -19,11 +19,11 @@
 #   public *;
 #}
 
--libraryjars D:\Work\CityLight\Sources\framework_radxa_3188.zip
--libraryjars D:\Work\CityLight\android_full.jar
+#-libraryjars D:\Work\CityLight\Sources\framework_radxa_3188.zip
+#-libraryjars D:\Work\CityLight\android_full.jar
 
 # And subpackage.
 # http://stackoverflow.com/questions/7464035/how-to-tell-proguard-to-keep-everything
 -keep public class com.google.common.**
 
--dontwarn com.google.common.**
+#-dontwarn com.google.common.**

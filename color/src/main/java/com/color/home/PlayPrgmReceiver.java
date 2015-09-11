@@ -8,7 +8,7 @@ import android.util.Log;
 public class PlayPrgmReceiver extends BroadcastReceiver {
     public static final String EXTRA_CONTENT = "content";
     private static final boolean DBG = false;
-    private final static String TAG = "SDCardInsertReceiver";
+    private final static String TAG = "PlayPrgmReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {

@@ -1,5 +1,14 @@
 package com.color.home;
 
+import android.app.IntentService;
+import android.content.Context;
+import android.content.Intent;
+import android.os.FileUtils;
+import android.util.Log;
+
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -11,14 +20,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
-import android.app.IntentService;
-import android.content.Context;
-import android.content.Intent;
-import android.os.FileUtils;
-import android.util.Log;
-
-import com.google.common.io.Files;
 
 public class SyncUsbService extends IntentService {
     private final static String TAG = "SyncUsbService";
@@ -104,13 +105,15 @@ public class SyncUsbService extends IntentService {
             // keySetSyncedUsb intersect keySetUsb
             checkSame.retainAll(keySetUsb);
 
-            MessageDigest digester = MessageDigest.getInstance("MD5");
+//            MessageDigest digester = MessageDigest.getInstance("MD5");
             for (String filename : checkSame) {
                 if (filename.endsWith(".vsn")) {
                     File file = inUsbMap.get(filename);
                     File file2 = inSyncedUsbMap.get(filename);
-                    byte[] digest = Files.getDigest(file, digester);
-                    byte[] digest2 = Files.getDigest(file2, digester);
+//                    byte[] digest = Files.getDigest(file, digester);
+//                    byte[] digest2 = Files.getDigest(file2, digester);
+                    byte[] digest = Files.hash(file, Hashing.sha1()).asBytes();
+                    byte[] digest2 = Files.hash(file2, Hashing.sha1()).asBytes();
                     if (!Arrays.equals(digest, digest2)) {
                         copies.add(filename.replace(".vsn", ".files"));
                         copies.add(filename);
@@ -187,8 +190,6 @@ public class SyncUsbService extends IntentService {
             // }
 
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
