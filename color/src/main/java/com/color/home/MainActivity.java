@@ -1,7 +1,5 @@
 package com.color.home;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -19,9 +17,9 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -30,6 +28,8 @@ import com.color.home.android.providers.downloads.CLDownloadManager;
 import com.color.home.app.DetectionService;
 import com.color.home.keyboard.KeyBoardNav;
 import com.color.home.program.sync.SyncService;
+
+import java.io.File;
 
 // GIF View.
 //http://stackoverflow.com/questions/14482415/show-gif-with-android-graphics-movie
@@ -80,6 +80,22 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (mContentVG == null) {
+            Log.d(TAG, "NULL content view group.");
+            return;
+        }
+        mContentVG.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
@@ -105,6 +121,9 @@ public class MainActivity extends Activity {
         CLDownloadManager.getInst(this.getApplicationContext().getContentResolver(), this.getPackageName());
 
         mContentVG = (ViewGroup) findViewById(android.R.id.content);
+
+
+
         mContentVG.setBackgroundResource(R.drawable.background_empty_content);
 
         mProgramsViewer = new ProgramsViewer(this);

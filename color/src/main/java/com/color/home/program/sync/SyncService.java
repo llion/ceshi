@@ -64,7 +64,7 @@ import com.color.home.netplay.Config;
 
 public class SyncService extends CLIntentService {
     private final static String TAG = "SyncService";
-    private static final boolean DBG = true;;
+    private static final boolean DBG = false;;
     private ProgramRequest mProgramReq;
     private Strategy mStrategy = AppController.getInstance().getStrategy();;
 

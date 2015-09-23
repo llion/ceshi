@@ -28,7 +28,7 @@ import java.nio.ByteOrder;
 
 public class ItemMLScrollMultipic extends ImageView implements OnPlayFinishObserverable {
     // public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable, Runnable {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemMultiLinesPagedText";
 

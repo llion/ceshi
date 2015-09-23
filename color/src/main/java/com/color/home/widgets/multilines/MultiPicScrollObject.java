@@ -10,16 +10,6 @@
 
 package com.color.home.widgets.multilines;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -37,6 +27,16 @@ import com.color.home.widgets.singleline.QuadSegment;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
+import com.google.common.io.ByteStreams;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 public class MultiPicScrollObject {
     // private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
@@ -419,16 +419,22 @@ public class MultiPicScrollObject {
     /* [Draw Canvas To Texture] */
     private void drawCanvasToTexture() {
 
-        InputStream is = null;
+        StreamResolver streamResolver = null;
         try {
             final byte[] head = new byte[8];
             final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
             if (DBG)
                 Log.d(TAG, "setPageText. [absFilePath=" + absFilePath);
 
-            is = new FileInputStream(absFilePath);
-            is.skip(20);
-            is.read(head, 0, 8);
+            streamResolver = new StreamResolver(absFilePath).resolve();
+            InputStream is = streamResolver.getReadFromIs();
+            if (is == null) {
+                Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
+                return ;
+            }
+
+            ByteStreams.skipFully(is, 20);
+            ByteStreams.readFully(is, head, 0, 8);
 
             ByteBuffer bb = ByteBuffer.wrap(head);
             bb.order(ByteOrder.LITTLE_ENDIAN); // if you want little-endian
@@ -459,7 +465,8 @@ public class MultiPicScrollObject {
                         + mTexCount);
 
             // we skipped 20 read 8 = 28.
-            is.skip(1024 - 28);
+            ByteStreams.skipFully(is, 1024 - 28);
+
             // byte[] converted = new byte[mWidth * mHeight * 4];
             for (int i = 0; i < mTexCount; i++) {
                 String keyImgId = mScrollpicinfo.filePath.MD5 + i;
@@ -469,7 +476,8 @@ public class MultiPicScrollObject {
                     if (DBG)
                         Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId);
                     // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
-                    is.skip(mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                    ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+
                     continue;
                 }
 
@@ -515,13 +523,8 @@ public class MultiPicScrollObject {
             e.printStackTrace();
             return;
         } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+            if (streamResolver != null) {
+                streamResolver.close();
             }
         }
 
@@ -577,14 +580,17 @@ public class MultiPicScrollObject {
             int srcWidth) throws IOException {
         for (int j = 0; j < readSrcHeight; j++) {
             // The picture is bigger than my width.
-            // The maximum width the texture could contain is myWidth, so read myWidth, then skip the remaining pixels in the line.
+            // The maximum width the texture could contain is myWidth, so read myWidth, and skip the remaining pixels in the line.
             if (srcWidth > readSrcWidth) {
                 // 4 stands for RGBA.
-                is.read(content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
-                is.skip((srcWidth - readSrcWidth) * 4);
+                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+                ByteStreams.skipFully(is, (srcWidth - readSrcWidth) * 4);
+
+
+
             } else { // srcWidth == readSrcWidth, always read srcWidtgh >= readSrcWidth.
                 // targetOffset * 4 should also *4.
-                is.read(content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
             }
         }
     }

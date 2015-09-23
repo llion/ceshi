@@ -20,22 +20,18 @@ import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
+import com.google.common.io.ByteStreams;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable {
     // public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable, Runnable {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemMultiLinesMultipic";
 
@@ -128,31 +124,18 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
         if (DBG)
             Log.d(TAG, "setPageText. [absFilePath=" + absFilePath);
 
-        InputStream is = null;
-        ZipInputStream isInsideZip = null;
+        StreamResolver streamResolver = null;
         try {
-            if (new File(absFilePath + ".zip").exists()) {
-                if (DBG) Log.e(TAG, "Zipped. file=" + new File(absFilePath + ".zip"));
-                isInsideZip = new ZipInputStream(new BufferedInputStream(new FileInputStream(new File(absFilePath + ".zip"))));
-                ZipEntry ze = isInsideZip.getNextEntry();
-                if (ze == null) {
-                    Log.e(TAG, "Bad zip file.absFilePath=" + absFilePath);
-                    return null; // is is closed in finally block.
-                }
-
-                if (DBG) {
-                    Log.d(TAG, "zipped file name is=" + ze.getName());
-                }
-
-            } else {
-                if (DBG)
-                    Log.e(TAG, "Not zipped, use plain pic. trying to find file=" + new File(absFilePath + ".zip"));
-                is = new FileInputStream(absFilePath);
+            streamResolver = new StreamResolver(absFilePath).resolve();
+            InputStream readFromIs = streamResolver.getReadFromIs();
+            if (readFromIs == null) {
+                Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
+                return null;
             }
 
-            InputStream readFromIs = (isInsideZip == null ? is : isInsideZip);
-            readFromIs.skip(20);
-            readFromIs.read(head, 0, 8);
+            if (DBG) Log.d(TAG, "skip fully.");
+            ByteStreams.skipFully(readFromIs, 20);
+            ByteStreams.readFully(readFromIs, head, 0, 8);
 
             ByteBuffer bb = ByteBuffer.wrap(head);
             bb.order(ByteOrder.LITTLE_ENDIAN); // if you want little-endian
@@ -170,24 +153,11 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
             final byte[] content = new byte[picDatalength];
             // byte[] converted = new byte[mWidth * mHeight * 4];
 
-            readFromIs.skip(1024 - 28 + index * picDatalength);
+            ByteStreams.skipFully(readFromIs, 1024 - 28 + index * picDatalength);
             // 0 in the content.
 
-            int offsetInBuff = 0;
-            while (offsetInBuff < picDatalength) {
-                // the offset is the offset in content.
-                int bytesRead = readFromIs.read(content, offsetInBuff, picDatalength - offsetInBuff);
-                if (DBG)
-                    Log.i(TAG, "loadFor. [read size=" + bytesRead + ", offsetInBuff=" + offsetInBuff);
-
-                if (bytesRead == -1) {
-                    // Incomplete data
-                    if (DBG)
-                        Log.i(TAG, "loadFor. [Incomplete data, exit prematurely. read size=" + bytesRead);
-                    break;
-                }
-                offsetInBuff += bytesRead;
-            }
+            if (DBG) Log.d(TAG, "Must read fully, as this is a zip inputstrea, it could return less than requested bytes on read.");
+            ByteStreams.readFully(readFromIs, content, 0, picDatalength);
 
             for (int i = 0; i < content.length; i += 4)
             {
@@ -219,22 +189,31 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (isInsideZip != null) {
-                try {
-                    isInsideZip.close();
-                } catch (Exception e) {
-                }
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                }
+            if (streamResolver != null) {
+                streamResolver.close();
             }
 
         }
         return null;
     }
+
+//    public static void continuousRead(InputStream readFromIs, int length, byte[] buffer) throws IOException {
+//        int offsetInBuff = 0;
+//        while (offsetInBuff < length) {
+//            // the offset is the offset in content.
+//            int bytesRead = readFromIs.read(buffer, offsetInBuff, length - offsetInBuff);
+//            if (DBG)
+//                Log.i(TAG, "loadFor. [read size=" + bytesRead + ", offsetInBuff=" + offsetInBuff);
+//
+//            if (bytesRead == -1) {
+//                // Incomplete data
+//                if (DBG)
+//                    Log.i(TAG, "loadFor. [Incomplete data, exit prematurely. read size=" + bytesRead);
+//                break;
+//            }
+//            offsetInBuff += bytesRead;
+//        }
+//    }
 
     private int getRegionHeight(Region region) {
         return Integer.parseInt(region.rect.height);
@@ -377,4 +356,5 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
             }
         }
     }
+
 }

@@ -38,7 +38,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 public class ItemsAdapter extends BaseAdapter {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private final static String TAG = "ItemsAdapter";
 
     private Context mContext;
