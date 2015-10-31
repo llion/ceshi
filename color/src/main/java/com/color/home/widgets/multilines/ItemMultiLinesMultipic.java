@@ -16,6 +16,7 @@ import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.MultiPicInfo;
 import com.color.home.ProgramParser.Region;
 import com.color.home.ProgramParser.ScrollPicInfo;
+import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
@@ -159,12 +160,7 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
             if (DBG) Log.d(TAG, "Must read fully, as this is a zip inputstrea, it could return less than requested bytes on read.");
             ByteStreams.readFully(readFromIs, content, 0, picDatalength);
 
-            for (int i = 0; i < content.length; i += 4)
-            {
-                final byte ele = content[i];
-                content[i] = content[i + 2];
-                content[i + 2] = ele;
-            }
+            GraphUtils.convertRGBFromPC(content);
             // Now put these nice RGBA pixels into a Bitmap object
 
             Bitmap bm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);

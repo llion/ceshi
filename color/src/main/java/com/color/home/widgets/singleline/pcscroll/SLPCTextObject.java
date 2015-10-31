@@ -10,15 +10,6 @@
 
 package com.color.home.widgets.singleline.pcscroll;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -32,13 +23,23 @@ import android.util.Log;
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.ScrollPicInfo;
+import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.ItemsAdapter;
+import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.google.common.hash.HashCode;
+import com.google.common.io.ByteStreams;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
@@ -255,22 +256,29 @@ public class SLPCTextObject {
     }
 
     /**
-     * 1. Setup pcWidth and pcHeight. 2. Setup the texture dimension to some POT dim. 3. addBitmapToMemoryCache(getKeyImgId(0)
+     * 1. Setup pcWidth and pcHeight.
+     * 2. Setup the texture dimension to some POT dim.
+     * 3. addBitmapToMemoryCache(getKeyImgId(0)
      */
     protected void prepareTexture() {
-        InputStream is = null;
-        try {
-            final byte[] head = new byte[8];
-            final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
-            if (DBG)
-                Log.d(TAG, "setPageText. [absFilePath=" + absFilePath);
+        final byte[] head = new byte[8];
 
-            is = new FileInputStream(absFilePath);
-            is.skip(20);
-            is.read(head, 0, 8);
+        StreamResolver streamResolver = null;
+        final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
+        try {
+            streamResolver = new StreamResolver(absFilePath).resolve();
+            InputStream readFromIs = streamResolver.getReadFromIs();
+            if (readFromIs == null) {
+                Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
+                return;
+            }
+
+            if (DBG) Log.d(TAG, "skip fully.");
+            ByteStreams.skipFully(readFromIs, 20);
+            ByteStreams.readFully(readFromIs, head, 0, 8);
             
             // we skipped 20 read 8 = 28. Here is the content.
-            is.skip(1024 - 28);
+            ByteStreams.skipFully(readFromIs, 1024 - 28);
 
             ByteBuffer bb = ByteBuffer.wrap(head);
             bb.order(ByteOrder.LITTLE_ENDIAN); // if you want little-endian
@@ -297,7 +305,7 @@ public class SLPCTextObject {
                             // 4 stands for RGBA.
                             // i * texWidth is offset into the block (texWidth * pcHeight)
                             // (texWidth * pcHeight) * j is which block.
-                            is.read(content, i * getTexDim() * 4 + (getTexDim() * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
+                            ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4 + (getTexDim() * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
                         }
                     }
                 }
@@ -305,11 +313,11 @@ public class SLPCTextObject {
                 if (DBG)
                     Log.d(TAG, "checkSinglePic. [mPcWidth < mPcHeight, only one line in my texture.");
                 for (int i = 0; i < readHeight; i++) {
-                    is.read(content, i * getTexDim() * 4, mPcWidth * 1 * 4);
+                    ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4, mPcWidth * 1 * 4);
                 }
             }
 
-            convertRGBFromPC(content);
+            GraphUtils.convertRGBFromPC(content);
 
             final Bitmap bm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
             bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, getTexDim() * getTexDim() * 4));
@@ -323,24 +331,8 @@ public class SLPCTextObject {
         } catch (Exception e) {
             Log.e(TAG, "checkSinglePic. [exception:", e);
         } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    public static void convertRGBFromPC(byte[] content) {
-        for (int i = 0; i < content.length; i += 4)
-        {
-            // Swap the R B on when they differ.
-            if (content[i] != content[i + 2]) {
-                final byte ele = content[i];
-                content[i] = content[i + 2];
-                content[i + 2] = ele;
+            if (streamResolver != null) {
+                streamResolver.close();
             }
         }
     }

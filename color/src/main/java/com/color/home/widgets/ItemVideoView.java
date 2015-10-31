@@ -118,10 +118,14 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         mKeepAsp = "1".equals(item.reserveAS);
         if (DBG)
             Log.i(TAG, "setItem. VideoView, [absFilePath=" + path);
+        try {
+            mVolume = Float.parseFloat(item.volume);
+            mStartOffset = Integer.parseInt(item.inOffset);
+            mPlayLength = Integer.parseInt(item.playLength);
+        } catch (NumberFormatException nfe) {
+            Log.e(TAG, "Bad Number", nfe);
+        }
 
-        mVolume = Float.parseFloat(item.volume);
-        mStartOffset = Integer.parseInt(item.inOffset);
-        mPlayLength = Integer.parseInt(item.playLength);
 
         // setVideoPath(filePath);
         // setOnCompletionListener(new OnCompletionListener() {
@@ -240,7 +244,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
                     + ", mIsVideoSizeKnown=" + mIsVideoSizeKnown);
         mIsVideoReadyToBePlayed = true;
         // Can only set after perpare?
-        // mMediaPlayer.setLooping(mIsLoop);
+//        mMediaPlayer.setLooping(mIsLoop);
         if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
             startVideoPlayback();
         }

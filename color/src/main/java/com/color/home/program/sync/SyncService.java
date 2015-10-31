@@ -64,7 +64,7 @@ import com.color.home.netplay.Config;
 
 public class SyncService extends CLIntentService {
     private final static String TAG = "SyncService";
-    private static final boolean DBG = false;;
+    private static final boolean DBG = false;
     private ProgramRequest mProgramReq;
     private Strategy mStrategy = AppController.getInstance().getStrategy();;
 
@@ -308,7 +308,7 @@ public class SyncService extends CLIntentService {
                 if (DBG) {
                     Log.e(TAG, "onHandleIntent. [do not del zip file=" + shouldDel);
                 }
-            return;
+                continue;
             }
             File toDel = new File(path, resFolder + "/" + shouldDel);
             boolean deleted = toDel.delete();

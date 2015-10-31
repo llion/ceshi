@@ -1,12 +1,5 @@
 package com.color.home;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -14,18 +7,34 @@ import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.widgets.ItemsAdapter;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 public class Texts {
     private final static String TAG = "Texts";
     private static final boolean DBG = false;
-    public static boolean shouldUseBitmapFromPC(Item item) {
 
+    /**
+     * @param item
+     * @return true on use bitmap, otherwise, use native font.
+     */
+    public static boolean shouldUseBitmapFromPC(Item item) {
+        // TODO: HMH check the native fonts rendering issue for: singleline-headtail-margin.
+        // currently, it has some extra vertical lines when scrolling.
+        // Can delete all the multipic files, so that it will use the native fonts.
         if ("1".equals(item.isscroll)) {
             final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
             if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)
-                    && new File(ItemsAdapter.getAbsFilePathByFileSource(scrollpicinfo.filePath)).exists()
+                    && (new File(ItemsAdapter.getAbsFilePathByFileSource(scrollpicinfo.filePath)).exists() || new File(ItemsAdapter.getZippedAbsFilePathByFileSource(scrollpicinfo.filePath)).exists())
                     && item.logfont != null && !"宋体".equals(item.logfont.lfFaceName)) {
+                // Currently, the SONG is handled by the native.
                 if (DBG)
                     Log.d(TAG, "usingBitmapFromPC. [Should usingBitmapFromPC. typeface=" + item.logfont.lfFaceName);
+
                 return true;
             }
         }

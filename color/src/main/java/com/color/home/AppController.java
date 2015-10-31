@@ -263,8 +263,8 @@ public class AppController extends Application {
                 // Do not setup, as the dimension is fixed to that in the kernel. 20150507.
 //                 setup();
 //                String displayMode = " 1920x1080p-60 ";
-                String displayMode = " 1280x720p-60 ";
-                setup(displayMode);
+//                String displayMode = " 1280x720p-60 ";
+//                setup(displayMode);
 //                 setup480();
                 mCfg = new Config(AppController.this, Constants.FOLDER_USB_0);
                 mConnectivity = new Connectivity(AppController.this);

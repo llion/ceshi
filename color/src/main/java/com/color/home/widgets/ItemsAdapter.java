@@ -93,6 +93,7 @@ public class ItemsAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         if (DBG) {
             Log.i(TAG, "getView. position= " + position);
+            new Exception("test").printStackTrace();
         }
 
         Item item = (Item) getItem(position);
@@ -421,6 +422,16 @@ public class ItemsAdapter extends BaseAdapter {
         String absFilePath = AppController.getPlayingRootPath() + filepath;
         if (DBG)
             Log.i(TAG, "getAbsFilePathByFileSource.filepath=" + filepath + ", absFilePath=" + absFilePath);
+        return absFilePath;
+    }
+
+
+    public static String getZippedAbsFilePathByFileSource(FileSource filesource) {
+        String filepath = filesource.filepath;
+
+        String absFilePath = AppController.getPlayingRootPath() + filepath + ".zip";
+        if (DBG)
+            Log.i(TAG, "getZippedAbsFilePathByFileSource.filepath=" + filepath + ", absFilePath=" + absFilePath);
         return absFilePath;
     }
 

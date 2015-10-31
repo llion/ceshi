@@ -21,11 +21,11 @@ import android.util.Log;
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.ScrollPicInfo;
+import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
-import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;
 
@@ -474,10 +474,16 @@ public class MultiPicScrollObject {
                 // Image already exist, offset to next image.
                 if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
                     if (DBG)
-                        Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId);
+                        Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxColsPerTexContain=" + mMaxColsPerTexContain);
                     // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
+                    // Do not skip the last texture in a full texture size, as it could overflow the file.
+                    // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                    if (i == mTexCount - 1) {
+                        if (DBG)
+                            Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
+                        continue;
+                    }
                     ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
-
                     continue;
                 }
 
@@ -499,7 +505,7 @@ public class MultiPicScrollObject {
                             readSrcHeight, mPcWidth);
                 }
 
-                SLPCTextObject.convertRGBFromPC(content);
+                GraphUtils.convertRGBFromPC(content);
 
                 // Now put these nice RGBA pixels into a Bitmap object
 

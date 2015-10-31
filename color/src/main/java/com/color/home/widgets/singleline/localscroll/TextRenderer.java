@@ -98,16 +98,19 @@ public class TextRenderer implements GLSurfaceView.Renderer {
         if (DBG)
             checkGLError("onDrawFrame");
 
-        // if (DBG) {
-        // mFPS++;
-        // long currentTime = System.currentTimeMillis();
-        // if (currentTime - mLastTime >= 1000) {
-        // Log.d(TAG, "onDrawFrame. this=" + this + ", [mFPS=" + mFPS);
-        // mFPS = 0;
-        // mLastTime = currentTime;
-        // }
-        // }
+        if (DBG) {
+            mFPS++;
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - mLastTime >= 1000) {
+                Log.d(TAG, "onDrawFrame. this=" + this + ", [mFPS=" + mFPS);
+                mFPS = 0;
+                mLastTime = currentTime;
+            }
+        }
     }
+
+    private int mFPS = 0;
+    private long mLastTime = 0L;
 
     static public void checkGLError(final String aDesc) {
         int errorCode = GLES20.GL_NO_ERROR;

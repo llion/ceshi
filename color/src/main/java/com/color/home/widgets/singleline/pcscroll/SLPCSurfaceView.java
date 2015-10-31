@@ -8,6 +8,7 @@ import android.graphics.Shader;
 import android.opengl.GLSurfaceView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.SurfaceHolder;
 
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
@@ -33,6 +34,15 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
         setEGLContextClientVersion(2);
     }
 
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        super.surfaceCreated(holder);
+
+//        Process.setThreadPriority(Process.THREAD_PRIORITY_LESS_FAVORABLE);
+
+        setRenderMode(RENDERMODE_CONTINUOUSLY);
+    }
+
     public void setItem(RegionView regionView, Item item) {
         SLPCTextObject theTextObj = getTextObj(item.scrollpicinfo);
 
@@ -42,6 +52,8 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
         // Set the Renderer for drawing on the GLSurfaceView
         setRenderer(mRenderer);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
+
+
         // getHolder().setFormat(PixelFormat.RGBA_8888);
 
         mListener = regionView;
@@ -145,5 +157,7 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
     public void removeListener(OnPlayFinishedListener listener) {
         this.mListener = null;
     }
+
+
 
 }

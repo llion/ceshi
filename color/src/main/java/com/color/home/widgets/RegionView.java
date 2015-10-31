@@ -1,7 +1,5 @@
 package com.color.home.widgets;
 
-import java.util.Random;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.LayoutTransition;
@@ -24,11 +22,12 @@ import android.widget.FrameLayout;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.GraphUtils;
-import com.color.home.widgets.multilines.ItemMLScrollMultipic;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMLScrollableText;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
+
+import java.util.Random;
 
 public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedListener, AdaptedRegion {
     // never public, so that another class won't be messed up.
@@ -354,7 +353,6 @@ public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedL
         }
         // || view instanceof ItemSingleLineText
         if (view instanceof SLTextSurfaceView
-                || view instanceof ItemMLScrollMultipic
                 || view instanceof ItemMLScrollMultipic2View
                 || view instanceof ItemMLScrollableText
                 || view instanceof ItemVideoView) {

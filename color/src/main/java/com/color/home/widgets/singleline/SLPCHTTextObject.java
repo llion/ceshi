@@ -10,16 +10,6 @@
 
 package com.color.home.widgets.singleline;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -32,9 +22,19 @@ import android.util.Log;
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.ScrollPicInfo;
+import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
+import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.google.common.hash.HashCode;
+import com.google.common.io.ByteStreams;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 /**
  * 
@@ -255,22 +255,27 @@ public class SLPCHTTextObject {
     }
 
     protected void normalizTexToMemCache() throws Exception {
-        InputStream is = null;
-        try {
-            final byte[] head = new byte[8];
-            final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
-            if (DBG)
-                Log.d(TAG, "setPageText. [absFilePath=" + absFilePath);
+        final byte[] head = new byte[8];
 
-            is = new FileInputStream(absFilePath);
-            is.skip(20);
-            is.read(head, 0, 8);
+        StreamResolver streamResolver = null;
+        final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
+        try {
+            streamResolver = new StreamResolver(absFilePath).resolve();
+            InputStream readFromIs = streamResolver.getReadFromIs();
+            if (readFromIs == null) {
+                Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
+                return;
+            }
+
+            if (DBG) Log.d(TAG, "skip fully.");
+            ByteStreams.skipFully(readFromIs, 20);
+            ByteStreams.readFully(readFromIs, head, 0, 8);
 
             ByteBuffer bb = ByteBuffer.wrap(head);
             bb.order(ByteOrder.LITTLE_ENDIAN); // if you want little-endian
 
             if (DBG)
-                Log.i(TAG, "drawCanvasToTexture. [position=" + bb.position());
+                Log.i(TAG, "normalizTexToMemCache. [position=" + bb.position());
 
             mPcWidth = bb.getInt();
             mPcHeight = bb.getInt();
@@ -278,13 +283,13 @@ public class SLPCHTTextObject {
 
             final int closePOT = QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight());
             if (DBG)
-                Log.d(TAG, "checkSinglePic. [pcWidth=" + mPcWidth + ", pcHeight=" + mPcHeight + ", closePOT=" + closePOT
+                Log.d(TAG, "normalizTexToMemCache. [pcWidth=" + mPcWidth + ", pcHeight=" + mPcHeight + ", closePOT=" + closePOT
                         + ", square=" + closePOT * closePOT
                         + ", mEvenPcHeight=" + getEvenPcHeight());
 
 
             // we skipped 20 read 8 = 28.
-            is.skip(1024 - 28);
+            ByteStreams.skipFully(readFromIs, 1024 - 28);
             // byte[] converted = new byte[mWidth * mHeight * 4];
 
             mTexHeight = mTexWidth = closePOT;
@@ -295,8 +300,14 @@ public class SLPCHTTextObject {
                 // Image already exist, offset to next image.
                 if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
                     if (DBG)
-                        Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId);
-                    is.skip(mTexWidth * mTexHeight * 4);
+                        Log.d(TAG, "normalizTexToMemCache. [getBitmapFromMemCache exist for =" + keyImgId);
+                    if (picIndex == mTexCount - 1) {
+                        // TODO: to test, we have to create a program with a large paragraph.
+                        if (DBG)
+                            Log.d(TAG, "normalizTexToMemCache. [do not skip full size in the file the last texture, as it overflows.");
+                        continue;
+                    }
+                    ByteStreams.skipFully(readFromIs, mTexWidth * mTexHeight * 4);
                     continue;
                 }
 
@@ -315,7 +326,7 @@ public class SLPCHTTextObject {
                                 // 4 stands for RGBA.
                                 // i * texWidth is offset into the block (texWidth * pcHeight)
                                 // (texWidth * pcHeight) * j is which block.
-                                is.read(content, i * mTexWidth * 4 + (mTexWidth * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
+                                ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4 + (mTexWidth * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
                             }
                             // else {
                             // is.read(content, i * texWidth * 4 + (texWidth * pcHeight) * j * 4, (pcWidth - j * texWidth) * 1 * 4);
@@ -330,7 +341,7 @@ public class SLPCHTTextObject {
                     if (DBG)
                         Log.d(TAG, "checkSinglePic. [mPcWidth < mPcHeight, only one line in my texture.");
                     for (int i = 0; i < readHeight; i++) {
-                        is.read(content, i * mTexWidth * 4, mPcWidth * 1 * 4);
+                        ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4, mPcWidth * 1 * 4);
                     }
                 }
 
@@ -346,7 +357,7 @@ public class SLPCHTTextObject {
                 // if (DBG)
                 // Log.i(TAG, "drawCanvasToTexture. [read size=" + read);
 
-                fixRGB(content);
+                GraphUtils.convertRGBFromPC(content);
                 // Now put these nice RGBA pixels into a Bitmap object
 
                 Bitmap bm = Bitmap.createBitmap(mTexWidth, mTexHeight, Bitmap.Config.ARGB_8888);
@@ -360,30 +371,15 @@ public class SLPCHTTextObject {
                 }
             }
 
-//        } catch (Exception e) {
-//            Log.e(TAG, "checkSinglePic. [exception:", e);
+        } catch (Exception e) {
+            Log.e(TAG, "checkSinglePic. [exception:", e);
         } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            if (streamResolver != null) {
+                streamResolver.close();
             }
         }
     }
 
-    public void fixRGB(byte[] content) {
-        for (int i = 0; i < content.length; i += 4)
-        {
-            // Swap the R B on when they differ.
-            if (content[i] != content[i + 2]) {
-                final byte ele = content[i];
-                content[i] = content[i + 2];
-                content[i + 2] = ele;
-            }
-        }
-    }
 
     // Load shaders, create vertices, texture coordinates etc.
     public void init() {
