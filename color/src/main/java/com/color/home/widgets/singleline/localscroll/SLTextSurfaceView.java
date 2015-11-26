@@ -75,6 +75,9 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
 
         LogFont logfont = item.logfont;
         if (logfont != null) {
+            if (DBG) {
+                Log.d(TAG, "logfont=" + logfont);
+            }
             if (logfont.lfHeight != null) {
                 mTextobj.setTextSize(Integer.parseInt(logfont.lfHeight));
             }
@@ -91,14 +94,18 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
                 style |= Typeface.BOLD;
             }
 
+
+            if (DBG) {
+                Log.d(TAG, "style = " + style);
+            }
+
             mTextobj.setTypeface(logfont.lfFaceName, style);
         }
 
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
-        int roundedPixelPerFrame = Math.max(1, Math.round(pixelPerFrame));
         if (DBG)
-            Log.d(TAG, "setItem. [roundedPixelPerFrame=" + roundedPixelPerFrame);
-        mTextobj.setPixelPerFrame(roundedPixelPerFrame);
+            Log.d(TAG, "setItem. [pixelPerFrame=" + pixelPerFrame);
+        mTextobj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
 
         // Total play length in milisec.
         int mPlayLength = Integer.parseInt(item.playLength);

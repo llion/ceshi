@@ -325,7 +325,7 @@ public class Config implements ConfigAPI {
     }
 
     public boolean isAntialias() {
-        return isTrue(mSp.getString(ATTR_TEXT_ANTIALIAS, "1"));
+        return isTrue(mSp.getString(ATTR_TEXT_ANTIALIAS, "0"));
     }
 
     public static boolean isTrue(String property) {

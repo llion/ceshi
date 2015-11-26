@@ -1,16 +1,20 @@
 package com.color.home;
 
 import android.graphics.Color;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Xml;
 
+import com.color.home.widgets.ItemsAdapter;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -27,6 +31,18 @@ import java.util.Set;
 public class ProgramParser {
     private final static boolean DBG = false;
     private final static String TAG = "ProgramParser";
+    private File mVsnFile;
+
+    public ProgramParser(File mVsnFile) {
+        if (DBG) {
+            Log.d(TAG, "PogramParse constructor to parse=" + mVsnFile);
+        }
+        this.mVsnFile = mVsnFile;
+    }
+
+    public File getmVsnFile() {
+        return mVsnFile;
+    }
 
     public static class DigitalClock {
         public String flags;
@@ -311,6 +327,8 @@ public class ProgramParser {
         public DigitalClock digitalClock;
         public String invertClr;
 
+        public ProgramParser mPp;
+
         public Item(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring,
                 EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, LogFont logfont, String text,
                 String textColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll,
@@ -323,8 +341,10 @@ public class ProgramParser {
                 String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity,
                 String longitud, String latitude, String timezone, String language, String useproxy, String proxyserver, String proxyport,
                 String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock,
-                ScrollPicInfo scrollpicinfo, String invertClr) {
+                ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
             super();
+            this.mPp = pp;
+
             this.id = id;
             this.name = name;
             this.type = type;
@@ -405,6 +425,14 @@ public class ProgramParser {
 
         }
 
+        public  String getAbsFilePath() {
+            String absFilePath = mPp.getmVsnFile().getParentFile().getAbsolutePath() + filesource.filepath;
+            if (DBG) {
+                Log.d(TAG, "getAbsFilePath absFilePath=" + absFilePath);
+            }
+            return absFilePath;
+        }
+
         @Override
         public void collectFile(Set<String> files) {
             if (multipicinfo != null) {
@@ -470,6 +498,74 @@ public class ProgramParser {
             mTexts = texts;
         }
 
+    }
+
+    public static class VideoItem extends  Item {
+
+        private final boolean isSeekable;
+
+        public VideoItem(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, LogFont logfont, String text, String textColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
+            super(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont, text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, pp);
+
+            isSeekable = checkSeekable();
+        }
+
+        private boolean checkSeekable() {
+            if (DBG) {
+                Log.d(TAG, "checkSeekable, isFileExists()=" + isFileExists());
+            }
+            if (isFileExists()) {
+                MediaExtractor extractor = new MediaExtractor();
+                try {
+                    if (DBG) {
+                        Log.d(TAG, "video file path=" + getAbsFilePath());
+                    }
+                    extractor.setDataSource(getAbsFilePath());
+                    final int numTracks = extractor.getTrackCount();
+                    if (DBG) {
+                        Log.d(TAG, "video track counts=" + numTracks);
+                    }
+                    for (int i = 0; i < numTracks; ++i) {
+                        MediaFormat format = extractor.getTrackFormat(i);
+                        String mime = format.getString(MediaFormat.KEY_MIME);
+                        if (DBG) {
+                            Log.d(TAG, "video track = " + i + ", mime=" + mime);
+                        }
+                        if ("video/mpeg2".equals(mime)) {
+                            if (DBG) {
+                                Log.d(TAG, "will not loop as it's mpeg2 video.");
+                            }
+                            return false;
+                        }
+
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                     if (extractor != null) {
+                         if (DBG) {
+                             Log.d(TAG, " release =" + getAbsFilePath());
+                         }
+                         extractor.release();
+                     }
+                }
+
+
+            }
+
+            return true;
+
+        }
+
+        private boolean isFileExists() {
+            return "1".equals(filesource.isrelative)
+                    && (new File(getAbsFilePath()).exists());
+        }
+
+        public boolean isSeekable() {
+            return isSeekable;
+        }
     }
 
     public static class Region implements Comparable<Region>, ResourceCollectable {
@@ -1322,14 +1418,27 @@ public class ProgramParser {
                 skip(parser);
             }
         }
-        return new Item(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont,
-                text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing,
-                repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop,
-                showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname,
-                isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet,
-                isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode,
-                isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
-                showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr);
+
+        // Video has it's own class.
+        if ("3".equals(type)) {
+            return new VideoItem(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont,
+                    text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing,
+                    repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop,
+                    showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname,
+                    isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet,
+                    isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode,
+                    isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
+                    showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, this);
+        } else {
+            return new Item(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont,
+                    text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing,
+                    repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop,
+                    showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname,
+                    isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet,
+                    isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode,
+                    isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
+                    showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, this);
+        }
 
     }
 

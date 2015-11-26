@@ -47,13 +47,7 @@ import com.color.home.program.sync.SyncService;
 import com.color.home.provider.ColorContract;
 
 public class AppController extends Application {
-    private static final String FONT_SONG = "宋体";
-    private static final String FONT_KAI = "楷体";
-    private static final String FONT_FANGSONG = "仿宋";
-    private static final String FONT_HEI = "黑体";
-    private static final String FONT_LISHU = "隶书";
 
-    private static final String FONT_PATH = "/system/fonts/";
     private final static String TAG = "AppController";
     private static final boolean DBG = false;
     public static String sCharset = "GBK";
@@ -68,6 +62,7 @@ public class AppController extends Application {
         thread.start();
         sHandler = new Handler(thread.getLooper());
     }
+
 
     public static class MyBitmap {
         private Bitmap mBitmap;
@@ -157,16 +152,16 @@ public class AppController extends Application {
     public Typeface generateTypeface(String fontName) {
         try {
 
-            if (FONT_KAI.equals(fontName)) {
-                return Typeface.createFromFile(FONT_PATH + "simkai.ttf");
-            } else if (FONT_HEI.equals(fontName)) {
-                return Typeface.createFromFile(FONT_PATH + "simhei.ttf");
-            } else if (FONT_FANGSONG.equals(fontName)) {
-                return Typeface.createFromFile(FONT_PATH + "simfang.ttf");
-            } else if (FONT_SONG.equals(fontName)) {
-                return Typeface.createFromFile(FONT_PATH + "simsun.ttf");
-            } else if (FONT_LISHU.equals(fontName)) {
-                return Typeface.createFromFile(FONT_PATH + "simli.ttf");
+            if (Constants.FONT_KAI.equals(fontName)) {
+                return Typeface.createFromFile(Constants.FONT_PATH + "simkai.ttf");
+            } else if (Constants.FONT_HEI.equals(fontName)) {
+                return Typeface.createFromFile(Constants.FONT_PATH + "simhei.ttf");
+            } else if (Constants.FONT_FANGSONG.equals(fontName)) {
+                return Typeface.createFromFile(Constants.FONT_PATH + "simfang.ttf");
+            } else if (Constants.FONT_SONG.equals(fontName)) {
+                return Typeface.createFromFile(Constants.FONT_PATH + "simsun.ttf");
+            } else if (Constants.FONT_LISHU.equals(fontName)) {
+                return Typeface.createFromFile(Constants.FONT_PATH + "simli.ttf");
             }
         } catch (Exception e) {
             Log.e(TAG, "generateTypeface. [fontName=" + fontName, e);
@@ -241,6 +236,8 @@ public class AppController extends Application {
         // initialize the singleton
         sInstance = this;
 
+        toast(this, getString(R.string.version_name), Toast.LENGTH_LONG);
+
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         Configuration config = getBaseContext().getResources().getConfiguration();
         String lang = mSettings.getString(ConfigAPI.ATTR_LOCALE, "");
@@ -263,11 +260,13 @@ public class AppController extends Application {
                 // Do not setup, as the dimension is fixed to that in the kernel. 20150507.
 //                 setup();
 //                String displayMode = " 1920x1080p-60 ";
-//                String displayMode = " 1280x720p-60 ";
-//                setup(displayMode);
+                String displayMode = " 1280x720p-60 ";
+                setup(displayMode);
 //                 setup480();
                 mCfg = new Config(AppController.this, Constants.FOLDER_USB_0);
                 mConnectivity = new Connectivity(AppController.this);
+
+
             }
         });
 
@@ -457,7 +456,6 @@ public class AppController extends Application {
      * Adds the specified request to the global queue using the Default TAG.
      * 
      * @param req
-     * @param tag
      */
     public <T> void addToRequestQueue(Request<T> req) {
         // set the default tag if tag is empty
@@ -522,7 +520,7 @@ public class AppController extends Application {
         TextView textView = new TextView(context);
         textView.setBackgroundColor(Color.BLACK);
         textView.setText(text);
-        textView.setTextSize(10);
+        textView.setTextSize(16);
         textView.setTextColor(Color.WHITE);
         cheatSheet.setView(textView);
         cheatSheet.setDuration(duration);

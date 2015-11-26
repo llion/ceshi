@@ -29,7 +29,7 @@ import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 
 import java.util.Random;
 
-public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedListener, AdaptedRegion {
+public class RegionView extends FrameLayout implements OnPlayFinishedListener, AdaptedRegion {
     // never public, so that another class won't be messed up.
     private final static String TAG = "RegionView";
     private static final boolean DBG = false;
@@ -130,7 +130,7 @@ public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedL
 
         if (DBG)
             Log.d(TAG, "onDetachedFromWindow. [");
-        removeCallbacks(this);
+//        removeCallbacks(this);
     }
 
     private void setupAppearingTransition(LayoutTransition transition) {
@@ -265,12 +265,50 @@ public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedL
     }
 
     @Override
-    public void onPlayFinished(View view) {
+    public void onPlayFinished(final View view) {
         if (DBG)
             Log.i(TAG, "OnPlayFinished. view = " + view + ", getDisplayedChild()=" + getDisplayedChild()
                     + ", getAdapter().getCount()=" + getAdapter().getCount());
 
-        post(this);
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (DBG)
+                    Log.i(TAG, "run , " + "view instanceof ItemVideoView=" + (view instanceof ItemVideoView) + ", Thread=" + Thread.currentThread() + ", this=" + this);
+
+                if (lastItemPlayed()) {
+                    if (DBG)
+                        Log.d(TAG, "run. [all played.");
+                    // Must notifyOnAllPlayed before show Next.
+                    // Because, the Page View could be removed, before showNext.
+                    // And we will not display the next if the region view itself
+                    // was detached.
+                    notifyOnAllPlayed();
+                } else {
+                    if (DBG)
+                        Log.i(TAG, "Continue play region next item, onPlayFinished.  Thread=" + Thread.currentThread());
+                }
+
+                if (view instanceof  ItemVideoView) {
+                    if (DBG) {
+                        Log.d(TAG, "is ItemVideoView.");
+                    }
+                    if (((ItemVideoView)view).ismIsLoop() && ((ItemVideoView)view).ismSeekable()) {
+                        if (DBG) {
+                            Log.d(TAG, "The video can loop itself, and there is only one item (ismIsLoop()), do not show next view.");
+                        }
+                        return;
+                    }
+                }
+
+                // When this view is detached, showNext will be NOP, as there is isAttached flag check.
+                showNext();
+
+            }
+
+        });
+
     }
 
     @Override
@@ -344,7 +382,7 @@ public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedL
         View view = getAdapter().getView(mDisplayedChild, null, null);
         if (DBG)
             Log.i(TAG, "setDisplayedChild., new view=" + view + ", Thread=" + Thread.currentThread()
-                    + ", instanceof ItemViewView=" + (view instanceof ItemVideoView));
+                    + ", instanceof ItemVideoView=" + (view instanceof ItemVideoView));
 
         boolean noAnimation = false;
         View curView = getChildAt(0);
@@ -537,28 +575,6 @@ public class RegionView extends FrameLayout implements Runnable, OnPlayFinishedL
             Log.d(TAG, "removeOldView. [old view=" + curView);
         if (curView != null)
             removeView(curView);
-    }
-
-    @Override
-    public void run() {
-        if (DBG)
-            Log.i(TAG, "run , Thread=" + Thread.currentThread() + ", this=" + this);
-
-        if (lastItemPlayed()) {
-            if (DBG)
-                Log.d(TAG, "run. [all played.");
-            // Must notifyOnAllPlayed before show Next.
-            // Because, the Page View could be removed, before showNext.
-            // And we will not display the next if the region view itself
-            // was detached.
-            notifyOnAllPlayed();
-        } else {
-            if (DBG)
-                Log.i(TAG, "Continue play region next item, onPlayFinished.  Thread=" + Thread.currentThread());
-        }
-
-        showNext();
-
     }
 
     public boolean lastItemPlayed() {

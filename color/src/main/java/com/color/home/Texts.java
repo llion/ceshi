@@ -6,6 +6,7 @@ import android.util.Log;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.widgets.ItemsAdapter;
+import com.google.common.base.CharMatcher;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,13 +26,14 @@ public class Texts {
     public static boolean shouldUseBitmapFromPC(Item item) {
         // TODO: HMH check the native fonts rendering issue for: singleline-headtail-margin.
         // currently, it has some extra vertical lines when scrolling.
-        // Can delete all the multipic files, so that it will use the native fonts.
         if ("1".equals(item.isscroll)) {
             final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
             if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)
                     && (new File(ItemsAdapter.getAbsFilePathByFileSource(scrollpicinfo.filePath)).exists() || new File(ItemsAdapter.getZippedAbsFilePathByFileSource(scrollpicinfo.filePath)).exists())
-                    && item.logfont != null && !"宋体".equals(item.logfont.lfFaceName)) {
-                // Currently, the SONG is handled by the native.
+                    && item.logfont != null
+                    && !isFontLocallyAvailable(item)
+            ) {
+                // Currently, the SONG, FangSong, Kai, LiShu, Hei, are handled with native fonts.
                 if (DBG)
                     Log.d(TAG, "usingBitmapFromPC. [Should usingBitmapFromPC. typeface=" + item.logfont.lfFaceName);
 
@@ -42,22 +44,41 @@ public class Texts {
         return false;
     }
 
+    private static boolean isFontLocallyAvailable(Item item) {
+        return Constants.FONT_SONG.equals(item.logfont.lfFaceName)
+                || Constants.FONT_FANGSONG.equals(item.logfont.lfFaceName)
+                || Constants.FONT_HEI.equals(item.logfont.lfFaceName)
+                || Constants.FONT_KAI.equals(item.logfont.lfFaceName)
+                || Constants.FONT_LISHU.equals(item.logfont.lfFaceName)
+//                || CharMatcher.ASCII.matchesAllOf(item.logfont.lfFaceName)
+                ;
+
+                // Check the none chinese later for the LOCAL rendering issue. There are issues
+                // with the english sentence.
+
+                // If the font name is All in ASCII, it's supposed, we have all ascii fonts natively.
+                // In this case, the SONG, (KAI, LISHU, etc.) are handled by native, as well as the
+                // logfont.lfFaceName is asc.
+                // So, the native will not handle "幼圆", "adobe 宋体", etc., as the font names are not in pure
+                // ascii.
+    }
+
     public Texts(Item item) {
         if (shouldUseBitmapFromPC(item)) {
             return;
         }
         
-        boolean shouldFromFile = false;
+        boolean shouldReadFromFile = false;
         // 4 // Single line text.
         // 5 Multi
         // if ("4".equals(item.type) || "5".equals(item.type)) {
         if ("4".equals(item.type) && "1".equals(item.isfromfile)) {
-            shouldFromFile = true;
+            shouldReadFromFile = true;
         } else if ("5".equals(item.type)) {
-            shouldFromFile = true;
+            shouldReadFromFile = true;
         }
 
-        if (shouldFromFile) {
+        if (shouldReadFromFile) {
             mText = "";
             // From RTF or txt.
             if (item.filesource != null) {

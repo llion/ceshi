@@ -18,12 +18,21 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.Reflects;
 
+/**
+ * Other thoughts regarding loop for some video that doesn't support loop, such as MPEG2.
+ * 1. Play as normal.
+ * 2. After play finished, seekTo(0).
+ * 3. Wait for onSeekComplete.
+ * 4. If it cannot seek complete for 1 seconds, regard this video as unseekable.
+ * 5. Unseekable video should go thru our normal (remove view and reinit the view) video play back.
+ */
 public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverable, OnBufferingUpdateListener, OnCompletionListener,
-        OnPreparedListener, OnVideoSizeChangedListener, SurfaceHolder.Callback, OnErrorListener {
+        OnPreparedListener, OnVideoSizeChangedListener, SurfaceHolder.Callback, OnErrorListener, MediaPlayer.OnSeekCompleteListener {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemVideoView";
@@ -44,6 +53,8 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
     private float mVolume;
     private int mStartOffset;
     private int mPlayLength;
+    private boolean mSeekable;
+
 
     public void setLoop(boolean loop) {
         mIsLoop = loop;
@@ -113,11 +124,12 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
 
     public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
+        mSeekable = ((ProgramParser.VideoItem) item).isSeekable();
         // TODO Auto-generated method stub
-        path = ItemsAdapter.getAbsFilePath(item);
+        path = item.getAbsFilePath();
         mKeepAsp = "1".equals(item.reserveAS);
         if (DBG)
-            Log.i(TAG, "setItem. VideoView, [absFilePath=" + path);
+            Log.i(TAG, "setItem. VideoView, [absFilePath=" + path + ", isSeekable=" + mSeekable);
         try {
             mVolume = Float.parseFloat(item.volume);
             mStartOffset = Integer.parseInt(item.inOffset);
@@ -181,6 +193,9 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
             mMediaPlayer.setOnCompletionListener(this);
             mMediaPlayer.setOnErrorListener(this);
 
+            mMediaPlayer.setOnSeekCompleteListener(this);
+
+
             mMediaPlayer.setOnPreparedListener(this);
             mMediaPlayer.setOnVideoSizeChangedListener(this);
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -211,11 +226,19 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         if (DBG)
             Log.i(TAG, "onCompletion. mIsLoop=" + mIsLoop + ", mMediaPlayer=" + mMediaPlayer);
 
-        if (mIsLoop) {
-//            mMediaPlayer.seekTo(mStartOffset);
-            mMediaPlayer.start();
-        }
+        // No need to start, as with not seekable video, this view is destroyed.
+//        if (mIsLoop) {
+////            mMediaPlayer.seekTo(mStartOffset);
+//            if (!mSeekable) {
+//                // Only not seekable video need this.
+//                // Otherwise, it's handled by setloop(true);
+//                mMediaPlayer.start();
+//            }
+//
+//        }
 
+        // No onCompletion is called when looping.
+        // Use onSeekComplete instead.
         tellListener();
     }
 
@@ -241,10 +264,12 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
     public void onPrepared(MediaPlayer mediaplayer) {
         if (DBG)
             Log.d(TAG, "onPrepared called, mIsVideoReadyToBePlayed=" + mIsVideoReadyToBePlayed
-                    + ", mIsVideoSizeKnown=" + mIsVideoSizeKnown);
+                    + ", mIsVideoSizeKnown=" + mIsVideoSizeKnown + ", seekable=" + mSeekable + ", loop=" + mIsLoop);
         mIsVideoReadyToBePlayed = true;
         // Can only set after perpare?
-//        mMediaPlayer.setLooping(mIsLoop);
+
+        mMediaPlayer.setLooping(mSeekable && mIsLoop);
+
         if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
             startVideoPlayback();
         }
@@ -319,16 +344,21 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         mVideoHeight = 0;
         mIsVideoReadyToBePlayed = false;
         mIsVideoSizeKnown = false;
+        mStarted = false;
     }
+
+    private boolean mStarted;
 
     private void startVideoPlayback() {
         if (DBG)
             Log.v(TAG, "startVideoPlayback, mMediaPlayer=" + mMediaPlayer);
         holder.setFixedSize(mVideoWidth, mVideoHeight);
         // mMediaPlayer.setLooping(true);
-
+        if (!mStarted) {
+            mStarted = true;
 //        mMediaPlayer.seekTo(mStartOffset);
-        mMediaPlayer.start();
+            mMediaPlayer.start();
+        }
     }
 
     // @Override
@@ -389,4 +419,20 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         releaseMediaPlayer();
     }
 
+    @Override
+    public void onSeekComplete(MediaPlayer mediaPlayer) {
+        if (DBG) {
+            Log.d(TAG, "onSeekComplete.....");
+        }
+
+        tellListener();
+    }
+
+    public boolean ismSeekable() {
+        return mSeekable;
+    }
+
+    public boolean ismIsLoop() {
+        return mIsLoop;
+    }
 }

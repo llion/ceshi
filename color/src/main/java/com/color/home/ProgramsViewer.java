@@ -69,7 +69,7 @@ public class ProgramsViewer {
         @Override
         protected List<Program> doInBackground(File... params) {
             mVsnFile = params[0];
-            ProgramParser pp = new ProgramParser();
+            ProgramParser pp = new ProgramParser(mVsnFile);
             InputStream in = null;
             try {
                 in = new BufferedInputStream(new FileInputStream(mVsnFile));

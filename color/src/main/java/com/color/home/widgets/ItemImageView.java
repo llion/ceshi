@@ -65,7 +65,7 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
         mListener = regionView;
         this.mItem = item;
 
-        mFilePath = ItemsAdapter.getAbsFilePath(item);
+        mFilePath = item.getAbsFilePath();
         int width = Integer.parseInt(mRegion.rect.width);
         int height = Integer.parseInt(mRegion.rect.height);
         mDuration = Integer.parseInt(mItem.duration);

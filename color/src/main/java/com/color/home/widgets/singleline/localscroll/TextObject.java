@@ -27,6 +27,7 @@ import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
+import com.color.home.netplay.Config;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
@@ -203,10 +204,10 @@ public class TextObject extends SLPCTextObject {
 
     }
 
+
     public void setupPaint() {
         mPaint.setTextSize(mTextSize);
-        mPaint.setFakeBoldText(true);
-        mPaint.setAntiAlias(false);
+        mPaint.setAntiAlias(AppController.getInstance().getCfg().isAntialias());
         if (DBG)
             Log.d(TAG, "setupPaint. [mPaint antialis=" + mPaint.isAntiAlias()
                     + ", linear=" + mPaint.isLinearText());
@@ -280,13 +281,16 @@ public class TextObject extends SLPCTextObject {
 
     public void setTypeface(String fontName, int style) {
         if (DBG)
-            Log.d(TAG, "setFont. [fontName=" + fontName);
+            Log.d(TAG, "setFont. [fontName=" + fontName + ", style=" + style);
 
         // getPaint().setTypeface(AppController.getInstance().getTypeface(fontName));
         setTypeface(AppController.getInstance().getTypeface(fontName), style);
     }
 
     public void setTypeface(Typeface tf, int style) {
+        if (DBG) {
+            Log.d(TAG, "setTypeface style=" + style);
+        }
         if (style > 0) {
             if (tf == null) {
                 tf = Typeface.defaultFromStyle(style);
@@ -294,13 +298,25 @@ public class TextObject extends SLPCTextObject {
                 tf = Typeface.create(tf, style);
             }
 
-            setTypeface(tf);
+
             // now compute what (if any) algorithmic styling is needed
             int typefaceStyle = tf != null ? tf.getStyle() : 0;
             int need = style & ~typefaceStyle;
-            mPaint.setFakeBoldText((need & Typeface.BOLD) != 0);
+            // Change to style - HMH instead of need.
+
+            mPaint.setFakeBoldText((style & Typeface.BOLD) != 0);
+
+            if (DBG) {
+                Log.d(TAG, "FakeBoldText=" + ((style & Typeface.BOLD) != 0) + ", isFakeBoldText=" + mPaint.isFakeBoldText());
+            }
+
+//            mPaint.setSt
             mPaint.setTextSkewX((need & Typeface.ITALIC) != 0 ? -0.25f : 0);
+            setTypeface(tf);
         } else {
+            if (DBG) {
+                Log.d(TAG, "setTypeface, style=0");
+            }
             mPaint.setFakeBoldText(false);
             mPaint.setTextSkewX(0);
             setTypeface(tf);

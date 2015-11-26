@@ -49,7 +49,7 @@ public class VsnSync extends SyncBase {
     public AllNDowningFiles parseAndDownloadAll() {
         if (DBG)
             Log.i(TAG, "parseAndDownloadAll. mAbsDownloadingFileName=" + getTargetAbsPath());
-        ProgramParser pp = new ProgramParser();
+        ProgramParser pp = new ProgramParser(new File(getTargetAbsPath()));
         InputStream in = null;
         List<Program> programs = null;
         try {

@@ -63,6 +63,8 @@ public class SLPCHTSurfaceView extends GLSurfaceView implements Runnable, OnPlay
 
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
         theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+
+//        theTextObj.setPixelPerFrame(pixelPerFrame);
         
         // Total play length in milisec.
         int mPlayLength = Integer.parseInt(item.playLength);

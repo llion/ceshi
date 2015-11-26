@@ -176,10 +176,7 @@ public class MainActivity extends Activity {
             Intent intent = Intent.makeMainActivity(new ComponentName("com.android.settings", "com.android.settings.Settings"));
             startActivity(intent);
         } else if (item.getItemId() == R.id.action_apps) {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            // adb shell am start -n com.android.launcher3/com.android.launcher3.Launcher
-            intent.setComponent(new ComponentName("com.color.android.home", "com.color.android.home.Home"));
-            startActivity(intent);
+            startAllApps();
             if (DBG)
                 Log.i(TAG, "onOptionsItemSelected. manual download, Thread=" + Thread.currentThread());
             // listIpAddress();
@@ -188,14 +185,29 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void startAllApps() {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        // adb shell am start -n com.android.launcher3/com.android.launcher3.Launcher
+        intent.setComponent(new ComponentName("com.color.android.home", "com.color.android.home.Home"));
+        startActivity(intent);
+    }
+
+    private boolean mFakeHomeStarted;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            mFakeHomeStarted = false;
             if (DBG)
                 Log.i(TAG, "onTouchEvent. ACTION_DOWN, showNext.");
             if (mProgramsViewer != null)
                 mProgramsViewer.showNext();
             return true;
+        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+            if (!mFakeHomeStarted && event.getEventTime() - event.getDownTime() > 800) {
+                mFakeHomeStarted = true;
+                startAllApps();
+            }
         }
 
         return super.onTouchEvent(event);

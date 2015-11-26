@@ -9,24 +9,28 @@ public class MovingTextUtils {
     private static final boolean DBG = false;
 
     public static float getPixelPerFrame(Item item) {
-        // points/sec.
-        float mSpeed = Float.parseFloat(item.speed);
-    
-        // points/frame.
-        boolean mIfSpeedByFrame = "1".equals(item.ifspeedbyframe);
-        float mSpeedByFrame = Float.parseFloat(item.speedbyframe);
-    
-        float pixelPerFrame = 1.0f;
-        if (mIfSpeedByFrame) {
-            pixelPerFrame = mSpeedByFrame / 2.0f;
-        } else {
-            // 60frames/sec is assumed.
-            pixelPerFrame = mSpeed / 60.0f;
-        }
+        float pixelPerFrame = 0.2f;
+        try {
+            // points/sec.
+            float mSpeed = Float.parseFloat(item.speed);
 
-        if (DBG)
-            Log.d(TAG, "setItem. [mSpeed=" + mSpeed + ", mIfSpeedByFrame=" + mIfSpeedByFrame + ", mSpeedByFrame=" + mSpeedByFrame
-                    + ", pixelPerFrame=" + pixelPerFrame);
+            // points/frame.
+            boolean mIfSpeedByFrame = "1".equals(item.ifspeedbyframe);
+            float mSpeedByFrame = Float.parseFloat(item.speedbyframe);
+
+            if (mIfSpeedByFrame) {
+                pixelPerFrame = mSpeedByFrame / 2.0f;
+            } else {
+                // 60frames/sec is assumed.
+                pixelPerFrame = mSpeed / 60.0f;
+            }
+
+            if (DBG)
+                Log.d(TAG, "setItem. [mSpeed=" + mSpeed + ", mIfSpeedByFrame=" + mIfSpeedByFrame + ", mSpeedByFrame=" + mSpeedByFrame
+                        + ", pixelPerFrame=" + pixelPerFrame);
+        } catch (Exception e) {
+            e.printStackTrace();;
+        }
 
         return pixelPerFrame;
 

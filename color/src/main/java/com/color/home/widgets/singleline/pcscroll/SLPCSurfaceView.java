@@ -76,9 +76,8 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
             theTextObj.setBackgroundColor(GraphUtils.parseColor("0x00000000"));
         }
 
-
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
-        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+        float roundedPixelPerFrame = Math.max(1, Math.round(pixelPerFrame));
 
         // Total play length in milisec.
         int mPlayLength = Integer.parseInt(item.playLength);

@@ -15,6 +15,15 @@ import com.color.home.network.IpUtils;
 
 public class Constants {
     private final static String TAG = "Constants";
+
+
+    public static final String FONT_SONG = "宋体";
+    public static final String FONT_KAI = "楷体";
+    public static final String FONT_FANGSONG = "仿宋";
+    public static final String FONT_HEI = "黑体";
+    public static final String FONT_LISHU = "隶书";
+    public static final String FONT_PATH = "/system/fonts/";
+
     private static final boolean DBG = false;
     public static final boolean HTTP_SERVER_SUPPORT = false;
     public static final String KEY_ETAG = "etag";

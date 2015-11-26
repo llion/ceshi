@@ -55,7 +55,7 @@ public class MultiPicScrollObject {
      * Full bitmap. e.g., 38498.
      */
     protected int mPcHeight;
-    protected float mPixelPerFrame = -4.0f;
+    protected float mPixelPerFrame = -1f;
     private int mColor;
     protected int mCurrentRepeats = 0;
     private Context mContext;

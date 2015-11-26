@@ -410,12 +410,6 @@ public class ItemsAdapter extends BaseAdapter {
         return (View) itemData;
     }
 
-    public static String getAbsFilePath(Item item) {
-        FileSource filesource = item.filesource;
-        String absFilePath = getAbsFilePathByFileSource(filesource);
-        return absFilePath;
-    }
-
     public static String getAbsFilePathByFileSource(FileSource filesource) {
         String filepath = filesource.filepath;
 
