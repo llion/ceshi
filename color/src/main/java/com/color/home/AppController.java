@@ -236,7 +236,7 @@ public class AppController extends Application {
         // initialize the singleton
         sInstance = this;
 
-        toast(this, getString(R.string.version_name), Toast.LENGTH_LONG);
+        toast(this, BuildConfig.VERSION_NAME, Toast.LENGTH_LONG);
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         Configuration config = getBaseContext().getResources().getConfiguration();
@@ -259,9 +259,7 @@ public class AppController extends Application {
                     Log.d(TAG, "run what's posted at front. [postAtFrontOfQueue.");
                 // Do not setup, as the dimension is fixed to that in the kernel. 20150507.
 //                 setup();
-//                String displayMode = " 1920x1080p-60 ";
-                String displayMode = " 1280x720p-60 ";
-                setup(displayMode);
+                ColorDisplayMode.setupDisplayMode();
 //                 setup480();
                 mCfg = new Config(AppController.this, Constants.FOLDER_USB_0);
                 mConnectivity = new Connectivity(AppController.this);
@@ -288,98 +286,7 @@ public class AppController extends Application {
 
     }
 
-//    public void setup() {
-//        // XXX: adb shell "echo ftp.service.enabled=false> /mnt/usb_storage/USB_DISK0/udisk0/config.txt"
-//        // is not a valid Property file for Java.
-//        if (DBG)
-//            Log.d(TAG, "setup1080 ");
-//
-//        ArrayList<String> commands = new ArrayList<String>();
-//        commands.add("echo 1920x1080p-60 > /sys/class/display/display0.HDMI/mode");
-////        commands.add("echo 1920x1080p-60 > /sys/class/display/display0.HDMI/mode");
-//        if (DBG)
-//            Log.d(TAG, "setup1080. [commands 0=" + commands.get(0));
-//
-//        Process process;
-//        try {
-//            process = FtpServer.RunAsRoot(commands.toArray(new String[0]));
-//
-//            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//            {
-//                String line = br.readLine();
-//                while (line != null) {
-//                    if (DBG)
-//                        Log.d(TAG, "line=" + line);
-//                    line = br.readLine();
-//                }
-//            }
-//            br.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
-    public void setup(String displayMode) {
-        // XXX: adb shell "echo ftp.service.enabled=false> /mnt/usb_storage/USB_DISK0/udisk0/config.txt"
-        // is not a valid Property file for Java.
-        if (DBG)
-            Log.d(TAG, "setup " + displayMode);
-
-        ArrayList<String> commands = new ArrayList<String>();
-        commands.add("echo " +
-        		displayMode +
-        		" > /sys/class/display/display0.HDMI/mode");
-//        commands.add("iwconfig wlan0 power off");
-        if (DBG)
-            Log.d(TAG, "setup =" + displayMode + " [commands 0=" + commands.get(0));
-
-        Process process;
-        try {
-            process = FtpServer.RunAsRoot(commands.toArray(new String[0]));
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            {
-                String line = br.readLine();
-                while (line != null) {
-                    if (DBG)
-                        Log.d(TAG, "line=" + line);
-                    line = br.readLine();
-                }
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-//    public void setup480() {
-//        // XXX: adb shell "echo ftp.service.enabled=false> /mnt/usb_storage/USB_DISK0/udisk0/config.txt"
-//        // is not a valid Property file for Java.
-//        if (DBG)
-//            Log.d(TAG, "setup480 ");
-//        
-//        ArrayList<String> commands = new ArrayList<String>();
-//        commands.add("echo 720x480p-60 > /sys/class/display/display0.HDMI/mode");
-//        if (DBG)
-//            Log.d(TAG, "setup480. [commands 0=" + commands.get(0));
-//        
-//        Process process;
-//        try {
-//            process = FtpServer.RunAsRoot(commands.toArray(new String[0]));
-//            
-//            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//            {
-//                String line = br.readLine();
-//                while (line != null) {
-//                    if (DBG)
-//                        Log.d(TAG, "line=" + line);
-//                    line = br.readLine();
-//                }
-//            }
-//            br.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig)

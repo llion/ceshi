@@ -16,8 +16,23 @@ android {
         minSdkVersion 19
         targetSdkVersion 19
 
-        testApplicationId "com.color.home.test"
-        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+//        testApplicationId "com.color.home.test"
+//        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+    }
+
+    productFlavors {
+        resolution1080p {
+            versionCode 1017
+            versionName "1.0(1017)-1080p"
+
+            buildConfigField "String", "DISPLAY_MODE",  "\" 1920x1080p \""
+        }
+        resolution720p {
+            versionCode 1016
+            versionName "1.0(1016)-720p"
+
+            buildConfigField "String", "DISPLAY_MODE",  "\" 1280x720p \""
+        }
     }
 
     buildTypes {
