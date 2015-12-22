@@ -36,7 +36,6 @@
         android:largeHeap="true"
         >
         <activity
-
             android:name="com.color.home.MainActivity"
             android:configChanges="orientation|mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|screenSize|smallestScreenSize"
             android:hardwareAccelerated="true"
