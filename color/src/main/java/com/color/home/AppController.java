@@ -264,7 +264,6 @@ public class AppController extends Application {
                 mCfg = new Config(AppController.this, Constants.FOLDER_USB_0);
                 mConnectivity = new Connectivity(AppController.this);
 
-
             }
         });
 

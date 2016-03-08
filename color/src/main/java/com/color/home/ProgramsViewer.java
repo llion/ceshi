@@ -73,6 +73,8 @@ public class ProgramsViewer {
             InputStream in = null;
             try {
                 in = new BufferedInputStream(new FileInputStream(mVsnFile));
+                // Be aware of that he VsnSync also parse the vsn file, but it's deprecated.
+                // - hmh 2016-02-25
                 List<Program> parsed = pp.parse(in);
 
                 if (DBG)
@@ -87,6 +89,8 @@ public class ProgramsViewer {
             } catch (XmlPullParserException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 if (in != null) {

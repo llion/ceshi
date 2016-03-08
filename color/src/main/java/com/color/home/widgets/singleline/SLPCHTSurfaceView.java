@@ -26,7 +26,8 @@ public class SLPCHTSurfaceView extends GLSurfaceView implements Runnable, OnPlay
 
     public SLPCHTSurfaceView(Context context) {
         super(context);
-
+        if (DBG)
+            Log.d(TAG, "SLPCHTSurfaceView.");
         // setEGLConfigChooser(false);
         // Create an OpenGL ES 2.0 context.
         setEGLContextClientVersion(2);

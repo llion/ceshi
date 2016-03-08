@@ -77,7 +77,9 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
         }
 
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
-        float roundedPixelPerFrame = Math.max(1, Math.round(pixelPerFrame));
+        if (DBG)
+            Log.d(TAG, "setItem. [pixelPerFrame=" + pixelPerFrame);
+        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
 
         // Total play length in milisec.
         int mPlayLength = Integer.parseInt(item.playLength);
@@ -97,12 +99,12 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
             // int mDuration = Integer.parseInt(item.duration);
         }
 
-        boolean isGlaring = "1".equals(mItem.beglaring);
-        if (isGlaring) {
-            theTextObj.getPaint().setShader(new LinearGradient(0, 0, 100, 100, new int[] {
-                    Color.RED, Color.GREEN, Color.BLUE },
-                    null, Shader.TileMode.MIRROR));
-        }
+//        boolean isGlaring = "1".equals(mItem.beglaring);
+//        if (isGlaring) {
+//            theTextObj.getPaint().setShader(new LinearGradient(0, 0, 100, 100, new int[] {
+//                    Color.RED, Color.GREEN, Color.BLUE },
+//                    null, Shader.TileMode.MIRROR));
+//        }
 
     }
 

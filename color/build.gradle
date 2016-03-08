@@ -22,14 +22,14 @@ android {
 
     productFlavors {
         resolution1080p {
-            versionCode 1014
-            versionName "1.0(1015)-1080p"
+            versionCode 1025
+            versionName "1.1(1025)1080"
 
             buildConfigField "String", "DISPLAY_MODE",  "\" 1920x1080p-60 \""
         }
         resolution720p {
-            versionCode 1013
-            versionName "1.0(1013)-720p"
+            versionCode 1024
+            versionName "1.1(1024)720"
 
             buildConfigField "String", "DISPLAY_MODE",  "\" 1280x720p-60  \""
         }

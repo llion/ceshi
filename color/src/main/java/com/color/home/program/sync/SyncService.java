@@ -136,10 +136,11 @@ public class SyncService extends CLIntentService {
             if (DBG)
                 Log.d(TAG, "onHandleIntent. ACTION_PROGRAM_STARTED [data uri=" + intent.getDataString());
 
+            final int typeID = Constants.absPathToSourceTypeID(Strategy.getPlayingFolder());
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(Constants.absPathToSourceTypeID(Strategy.getPlayingFolder())) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
+                    AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(typeID) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
                     
                 }
 
@@ -157,11 +158,17 @@ public class SyncService extends CLIntentService {
                 }
             });
 
-            if (Constants.absPathToSourceTypeID(Strategy.getPlayingFolder()) == Constants.TYPE_NET) {
-                new SyncedPrograms().pruneDeprecatedVsnsButPlaying();
-            }
+            // Now we support internet download/play, in order to minimize the download bandwidth,
+            // keep as much as possible the resources.
+            // so remove the prune for INTERNET download/playback.
+//            if (typeID == Constants.TYPE_NET) {
+//                new SyncedPrograms().pruneDeprecatedVsnsButPlaying();
+//            }
 
-            keepOnlyPlayingVSNUsingResources();
+            // Clean up excluding the INTERNET.
+            if (typeID == Constants.TYPE_USB || typeID == Constants.TYPE_SYNCED_USB || typeID == Constants.TYPE_FTP) {
+                keepOnlyPlayingVSNUsingResources();
+            }
 
         } else if (Constants.ACTION_COLOR_CONFIG.equals(action)) {
             final String filePath = intent.getStringExtra("path");

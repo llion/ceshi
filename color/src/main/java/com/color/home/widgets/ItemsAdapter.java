@@ -98,61 +98,62 @@ public class ItemsAdapter extends BaseAdapter {
 
         Item item = (Item) getItem(position);
 
-        // Video
-        if ("3".equals(item.type)) {
-            ItemVideoView vv = new ItemVideoView(mContext);
-            vv.setRegion(mRegion);
-            vv.setItem(mRegionView, item);
+        try {
+            // Video
+            if ("3".equals(item.type)) {
+                ItemVideoView vv = new ItemVideoView(mContext);
+                vv.setRegion(mRegion);
+                vv.setItem(mRegionView, item);
 
-            // If I'm the only one, always loop.
-            vv.setLoop(getCount() == 1);
-            return vv;
-        } else if ("7".equals(item.type)) { // Image
+                // If I'm the only one, always loop.
+                vv.setLoop(getCount() == 1);
+                return vv;
+            } else if ("7".equals(item.type)) { // Image
 
-            String filepath = item.filesource.filepath;
-            int index = filepath.indexOf("clock") + 5;
-            String clockType = null;
-            if (index < 5) {
-                // return default.
-                clockType = "8";
-            } else {
-                clockType = filepath.substring(index);
-            }
-            if (DBG)
-                Log.i(TAG, "getView. clocktype=" + clockType);
-
-            ItemData itemData = null;
-            if ("8".equals(clockType)) {
-                return genItemQuazAnalogClock(item);
-            } else {
-                itemData = new ItemSmoothAnalogClock(mContext);
-                itemData.setRegion(mRegion);
-                itemData.setItem(mRegionView, item);
-                return (View) itemData;
-            }
-
-        } else if ("9".equals(item.type)) { // NormalClock
-            if ("0".equals(item.isAnalog)) {
-                ItemTextClock itc = new ItemTextClock(mContext);
-                itc.setRegion(mRegion);
-                itc.setItem(mRegionView, item);
-                return itc;
-            } else {
-                // Currently, use the Item Quaz.
-                return genItemQuazAnalogClock(item);
-            }
-        } else if ("2".equals(item.type)) { // Image
-            ItemImageView iiv = new ItemImageView(mContext);
-            iiv.setRegion(mRegion);
-            iiv.setItem(mRegionView, item);
-            return iiv;
-        } else if ("4".equals(item.type)) {// Single line text.
-            if ("1".equals(item.isscroll)) {
-                final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
-                
+                String filepath = item.filesource.filepath;
+                int index = filepath.indexOf("clock") + 5;
+                String clockType = null;
+                if (index < 5) {
+                    // return default.
+                    clockType = "8";
+                } else {
+                    clockType = filepath.substring(index);
+                }
                 if (DBG)
-                    Log.d(TAG, "getView. [isscroll single line=" + item.scrollpicinfo
-                            + ", file exist=" + new File(ItemsAdapter.getAbsFilePathByFileSource(scrollpicinfo.filePath)).exists());
+                    Log.i(TAG, "getView. clocktype=" + clockType);
+
+                ItemData itemData = null;
+                if ("8".equals(clockType)) {
+                    return genItemQuazAnalogClock(item);
+                } else {
+                    itemData = new ItemSmoothAnalogClock(mContext);
+                    itemData.setRegion(mRegion);
+                    itemData.setItem(mRegionView, item);
+                    return (View) itemData;
+                }
+
+            } else if ("9".equals(item.type)) { // NormalClock
+                if ("0".equals(item.isAnalog)) {
+                    ItemTextClock itc = new ItemTextClock(mContext);
+                    itc.setRegion(mRegion);
+                    itc.setItem(mRegionView, item);
+                    return itc;
+                } else {
+                    // Currently, use the Item Quaz.
+                    return genItemQuazAnalogClock(item);
+                }
+            } else if ("2".equals(item.type)) { // Image
+                ItemImageView iiv = new ItemImageView(mContext);
+                iiv.setRegion(mRegion);
+                iiv.setItem(mRegionView, item);
+                return iiv;
+            } else if ("4".equals(item.type)) {// Single line text.
+                if ("1".equals(item.isscroll)) {
+                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
+
+                    if (DBG)
+                        Log.d(TAG, "getView. [isscroll single line=" + item.scrollpicinfo
+                                + ", file exist=" + new File(ItemsAdapter.getAbsFilePathByFileSource(scrollpicinfo.filePath)).exists());
 //                LogFont logfont = item.logfont;
 //                if (logfont != null) {
 //                    if (logfont.lfHeight != null) {
@@ -173,223 +174,228 @@ public class ItemsAdapter extends BaseAdapter {
 //
 //                    mTextobj.setTypeface(logfont.lfFaceName, style);
 //                }
-                if (Texts.shouldUseBitmapFromPC(item)) { // we intercept "song".
-                    // File must also exist.
-                    if (DBG)
-                        Log.d(TAG, "getView. [scroll single line.");
-                    if ("1".equals(item.isheadconnecttail)) {
+                    if (Texts.shouldUseBitmapFromPC(item)) { // we intercept "song".
+                        // File must also exist.
                         if (DBG)
-                            Log.d(TAG, "getView. [isheadconnecttail single line.");
-                        SLPCHTSurfaceView view = new SLPCHTSurfaceView(mContext);
-                        view.setItem(mRegionView, item);
-                        
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
-                        
-                        return view;
-                    } else {
-                        // ItemSingleLineText singleLineText = (ItemSingleLineText)
-                        // mInflater.inflate(R.layout.layout_singleline_movingleft_text,
-                        // null);
-                        SLPCSurfaceView view = new SLPCSurfaceView(mContext);
-                        // String filePath = getAbsFilePath(item);
+                            Log.d(TAG, "getView. [scroll single line.");
+                        if ("1".equals(item.isheadconnecttail)) {
+                            if (DBG)
+                                Log.d(TAG, "getView. [isheadconnecttail single line.");
+                            SLPCHTSurfaceView view = new SLPCHTSurfaceView(mContext);
+                            view.setItem(mRegionView, item);
+
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+
+                            return view;
+                        } else {
+                            // ItemSingleLineText singleLineText = (ItemSingleLineText)
+                            // mInflater.inflate(R.layout.layout_singleline_movingleft_text,
+                            // null);
+                            SLPCSurfaceView view = new SLPCSurfaceView(mContext);
+                            // String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
-                        view.setItem(mRegionView, item);
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
-                        return view;
-                    }
-                } else { // Generate my text, do not use pc img.
-                    if ("1".equals(item.isheadconnecttail)) {
+                            view.setItem(mRegionView, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+                            return view;
+                        }
+                    } else { // Generate my text, do not use pc img.
+                        if ("1".equals(item.isheadconnecttail)) {
 //                        SLHTSurfaceView view = new SLHTSurfaceView(mContext);
-                        SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObjectHeadTail(mContext));
-                        view.setItem(mRegionView, item);
-                        
-                        if (DBG)
-                            Log.d(TAG, "getView. [isheadconnecttail view=" + view);
-                        return view;
-                    } else {
-                        // ItemSingleLineText singleLineText = (ItemSingleLineText)
-                        // mInflater.inflate(R.layout.layout_singleline_movingleft_text,
-                        // null);
-                        
-                        SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObject(mContext));
-                        // String filePath = getAbsFilePath(item);
+                            SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObjectHeadTail(mContext));
+                            view.setItem(mRegionView, item);
+
+                            if (DBG)
+                                Log.d(TAG, "getView. [isheadconnecttail view=" + view);
+                            return view;
+                        } else {
+                            // ItemSingleLineText singleLineText = (ItemSingleLineText)
+                            // mInflater.inflate(R.layout.layout_singleline_movingleft_text,
+                            // null);
+
+                            SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObject(mContext));
+                            // String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
-                        view.setItem(mRegionView, item);
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
-                        return view;
+                            view.setItem(mRegionView, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+                            return view;
+                        }
                     }
-                }
 
-            } else {
-                final MultiPicInfo multipicinfo = item.multipicinfo;
-                // if we have multipic and it's correctly packed into relative path.
-                if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
-                        && "1".equals(multipicinfo.filePath.isrelative)) {
-                    PCItemSingleLineText view = new PCItemSingleLineText(mContext);
-                    view.setItem(mRegionView, mRegion, item);
-                    if (DBG)
-                        Log.d(TAG, "PC single line paged. getView. [view=" + view);
-                    return view;
                 } else {
-                    ItemSingleLineText view = (ItemSingleLineText) mInflater.inflate(R.layout.layout_singleline_text, null);
-                    // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
-                    view.setItem(mRegionView, item);
-                    if (DBG)
-                        Log.d(TAG, "getView. [view=" + view);
-                    return view;
-                }
-            }
-
-        } else if ("5".equals(item.type)) {// Multi lines text.
-
-            if ("1".equals(item.isscroll)) {
-                if (DBG)
-                    Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo);
-                final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
-                if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
-                    if (DBG)
-                        Log.d(TAG, "getView. [scrollmultipic.");
-                    ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
-                    // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
-                    view.setItem(mRegionView, item);
-                    if (DBG)
-                        Log.d(TAG, "getView. [view=" + view);
-                    
-                    return view;
-                } else { // legacy scroll view.
-                    if (DBG)
-                        Log.d(TAG, "getView. [legacy scroll view");
-                    ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
-                            R.layout.layout_multilines_scrollable_text, null);
-                    // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
-                    if (DBG)
-                        Log.d(TAG, "getView. [view=" + view);
-                    view.setItem(mRegionView, item);
-                    return view;
-                }
-            } else {
-                final MultiPicInfo multipicinfo = item.multipicinfo;
-                // if we have multipic and it's correctly packed into relative path.
-                if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
-                    // It's scrolling txt.
-                    if ("1".equals(item.isscroll)) {
-                        ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
-                        // String filePath = getAbsFilePath(item);
-                        /*
-                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                         */
-                        view.setItem(mRegionView, item);
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
-                        return view;
-                    } else { // Multi lines text?
-                        ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
-                        // String filePath = getAbsFilePath(item);
-                        /*
-                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                         */
+                    final MultiPicInfo multipicinfo = item.multipicinfo;
+                    // if we have multipic and it's correctly packed into relative path.
+                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
+                            && "1".equals(multipicinfo.filePath.isrelative)) {
+                        PCItemSingleLineText view = new PCItemSingleLineText(mContext);
                         view.setItem(mRegionView, mRegion, item);
                         if (DBG)
+                            Log.d(TAG, "PC single line paged. getView. [view=" + view);
+                        return view;
+                    } else {
+                        ItemSingleLineText view = (ItemSingleLineText) mInflater.inflate(R.layout.layout_singleline_text, null);
+                        // String filePath = getAbsFilePath(item);
+                    /*
+                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                     */
+                        view.setItem(mRegionView, item);
+                        if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
                         return view;
                     }
-                } else {
-                    if ("1".equals(item.isscroll)) {
+                }
+
+            } else if ("5".equals(item.type)) {// Multi lines text.
+
+                if ("1".equals(item.isscroll)) {
+                    if (DBG)
+                        Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo);
+                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
+                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
+                        if (DBG)
+                            Log.d(TAG, "getView. [scrollmultipic.");
+                        ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
+                        // String filePath = getAbsFilePath(item);
+                    /*
+                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                     */
+                        view.setItem(mRegionView, item);
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+
+                        return view;
+                    } else { // legacy scroll view.
+                        if (DBG)
+                            Log.d(TAG, "getView. [legacy scroll view");
                         ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
                                 R.layout.layout_multilines_scrollable_text, null);
                         // String filePath = getAbsFilePath(item);
+                    /*
+                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                     */
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+                        view.setItem(mRegionView, item);
+                        return view;
+                    }
+                } else {
+                    final MultiPicInfo multipicinfo = item.multipicinfo;
+                    // if we have multipic and it's correctly packed into relative path.
+                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
+                        // It's scrolling txt.
+                        if ("1".equals(item.isscroll)) {
+                            ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
+                            // String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
+                            view.setItem(mRegionView, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+                            return view;
+                        } else { // Multi lines text?
+                            ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
+                            // String filePath = getAbsFilePath(item);
+                        /*
+                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                         */
+                            view.setItem(mRegionView, mRegion, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+                            return view;
+                        }
+                    } else {
+                        if ("1".equals(item.isscroll)) {
+                            ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
+                                    R.layout.layout_multilines_scrollable_text, null);
+                            // String filePath = getAbsFilePath(item);
+                        /*
+                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                         */
+                            view.setItem(mRegionView, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+
+                            return view;
+                        } else {
+                            ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
+                                    R.layout.layout_multilines_paged_text, null);
+                            view.setItem(mRegionView, mRegion, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+                            return view;
+                        }
+                    }
+                }
+            } else if ("11".equals(item.type) || "12".equals(item.type) || "13".equals(item.type)) {
+
+                if ("1".equals(item.isscroll)) {
+                    if (DBG)
+                        Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo + ", item type=" + item.type);
+                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
+                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && scrollpicinfo.filePath != null && "1".equals(scrollpicinfo.filePath.isrelative)) {
+                        if (DBG)
+                            Log.d(TAG, "getView. [scrollmultipic.");
+                        ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
+                        // String filePath = getAbsFilePath(item);
+                    /*
+                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                     */
                         view.setItem(mRegionView, item);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
-                        
+
                         return view;
-                    } else {
-                        ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
-                                R.layout.layout_multilines_paged_text, null);
+                    } else { // legacy scroll view.
+                        if (DBG)
+                            Log.d(TAG, "getView. [Scroll view, but scrollpicinfo=" + scrollpicinfo);
+                        return unknowView(item);
+                    }
+                } else { // doc, excel, etc. not scrolling?
+                    final MultiPicInfo multipicinfo = item.multipicinfo;
+                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount)) {
+                        ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
+                        // String filePath = getAbsFilePath(item);
+                    /*
+                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                     */
                         view.setItem(mRegionView, mRegion, item);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
                         return view;
+                    } else {
+                        return unknowView(item);
                     }
                 }
-            }
-        } else if ("11".equals(item.type) || "12".equals(item.type) || "13".equals(item.type)) {
-
-            if ("1".equals(item.isscroll)) {
-                if (DBG)
-                    Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo + ", item type=" + item.type);
-                final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
-                if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && scrollpicinfo.filePath != null && "1".equals(scrollpicinfo.filePath.isrelative)) {
-                    if (DBG)
-                        Log.d(TAG, "getView. [scrollmultipic.");
-                    ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
-                    // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
-                    view.setItem(mRegionView, item);
-                    if (DBG)
-                        Log.d(TAG, "getView. [view=" + view);
-                    
-                    return view;
-                } else { // legacy scroll view.
-                    if (DBG)
-                        Log.d(TAG, "getView. [Scroll view, but scrollpicinfo=" + scrollpicinfo);
-                    return unknowView(item);
-                }
-            } else { // doc, excel, etc. not scrolling?
-                final MultiPicInfo multipicinfo = item.multipicinfo;
-                if (multipicinfo != null && !"0".equals(multipicinfo.picCount)) {
-                    ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
-                    // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
-                    view.setItem(mRegionView, mRegion, item);
-                    if (DBG)
-                        Log.d(TAG, "getView. [view=" + view);
-                    return view;
-                } else {
-                    return unknowView(item);
-                }
-            }
-        } else if ("14".equals(item.type)) {// web
-            ItemWeatherInfo weather = (ItemWeatherInfo) mInflater.inflate(R.layout.layout_weather_info, null);
-            // String filePath = getAbsFilePath(item);
+            } else if ("14".equals(item.type)) {// web
+                ItemWeatherInfo weather = (ItemWeatherInfo) mInflater.inflate(R.layout.layout_weather_info, null);
+                // String filePath = getAbsFilePath(item);
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
              */
-            weather.setRegion(mRegion);
-            weather.setItem(mRegionView, item);
-            return weather;
-        } else if ("27".equals(item.type)) {// web
-            ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
-            // String filePath = getAbsFilePath(item);
+                weather.setRegion(mRegion);
+                weather.setItem(mRegionView, item);
+                return weather;
+            } else if ("27".equals(item.type)) {// web
+                ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
+                // String filePath = getAbsFilePath(item);
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
              */
-            web.setItem(mRegionView, item);
-            return web;
-        } else {
+                web.setItem(mRegionView, item);
+                return web;
+            } else {
+                return unknowView(item);
+            }
+        } catch (Exception e) {
+            // We catch all the exceptions.
+            e.printStackTrace();
             return unknowView(item);
         }
 

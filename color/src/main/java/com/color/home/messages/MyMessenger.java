@@ -11,7 +11,7 @@ import com.color.network.udp.UDPMessenger;
 
 public class MyMessenger extends UDPMessenger {
     private final static String TAG = "MyMessenger";
-    private static final boolean DBG = false;;;
+    private static final boolean DBG = false;
 
     public MyMessenger(Context context, int port) throws IllegalArgumentException {
         super(context, port);

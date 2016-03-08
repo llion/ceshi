@@ -4,6 +4,7 @@ import java.io.File;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.color.home.AppController;
@@ -11,12 +12,14 @@ import com.color.home.Constants;
 
 public class Strategy {
     private final static String TAG = "Strategy";
-    private static final boolean DBG = false;;
+    private static final boolean DBG = false;
 
     public void onUsbMounted() {
         if (DBG)
             Log.d(TAG, "onUsbMounted. [");
 
+        FailedProgram fp = new FailedProgram();
+        fp.clear();
         // Try to play usb content. If no vsn, do nothing.
         // i.e., keep current playing.
         playVsnDir(Constants.FOLDER_USB_0);
@@ -54,9 +57,11 @@ public class Strategy {
     public void onHomeStarted() {
         if (DBG)
             Log.d(TAG, "onHomeStarted. [");
+        FailedProgram failedProgram = new FailedProgram();
+        failedProgram.check();
 
         ProgramFile pf = PairedProgramFile.fromSettings(AppController.getInstance().getSettings());
-        if (pf.exist()) {
+        if (pf.exist() && failedProgram.okToPlay(pf.file())) {
             if (DBG)
                 Log.d(TAG, "onHomeStarted. [From shared preference, play file=" + pf.file());
             pf.play();
@@ -108,6 +113,7 @@ public class Strategy {
             vsnPlaying = intent.getStringExtra(Constants.EXTRA_FILE_NAME);
             if (DBG)
                 Log.d(TAG, "getPlayingVsn. [Playing vsn=" + vsnPlaying);
+
         }
         return vsnPlaying;
     }
@@ -127,7 +133,8 @@ public class Strategy {
         if (DBG)
             Log.d(TAG, "Try playNet. [");
 
-        return new SyncedPrograms().play();
+//        return new SyncedPrograms().play();
+        return playVsnDir(Constants.FOLDER_NET);
     }
 
     private static boolean playSyncedUsb() {
@@ -144,8 +151,13 @@ public class Strategy {
         File[] vsns = Constants.listVsns(dir);
         if (vsns != null && vsns.length > 0) {
             // Always sort Usb program.
-            new FileProgramFile(vsns[0]).play();
-            return true;
+            FailedProgram fp = new FailedProgram();
+            for (int i = 0; i < vsns.length; i++) {
+                if (fp.okToPlay(vsns[i])) {
+                    new FileProgramFile(vsns[i]).play();
+                    return true;
+                }
+            }
         }
 
         return false;

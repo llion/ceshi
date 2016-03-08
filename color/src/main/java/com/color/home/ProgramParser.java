@@ -507,55 +507,22 @@ public class ProgramParser {
         public VideoItem(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, LogFont logfont, String text, String textColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
             super(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont, text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, pp);
 
-            isSeekable = checkSeekable();
+             isSeekable = checkSeekable();
         }
 
         private boolean checkSeekable() {
-            if (DBG) {
+            if (DBG)
                 Log.d(TAG, "checkSeekable, isFileExists()=" + isFileExists());
-            }
-            if (isFileExists()) {
-                MediaExtractor extractor = new MediaExtractor();
-                try {
-                    if (DBG) {
-                        Log.d(TAG, "video file path=" + getAbsFilePath());
-                    }
-                    extractor.setDataSource(getAbsFilePath());
-                    final int numTracks = extractor.getTrackCount();
-                    if (DBG) {
-                        Log.d(TAG, "video track counts=" + numTracks);
-                    }
-                    for (int i = 0; i < numTracks; ++i) {
-                        MediaFormat format = extractor.getTrackFormat(i);
-                        String mime = format.getString(MediaFormat.KEY_MIME);
-                        if (DBG) {
-                            Log.d(TAG, "video track = " + i + ", mime=" + mime);
-                        }
-                        if ("video/mpeg2".equals(mime)) {
-                            if (DBG) {
-                                Log.d(TAG, "will not loop as it's mpeg2 video.");
-                            }
-                            return false;
-                        }
 
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                     if (extractor != null) {
-                         if (DBG) {
-                             Log.d(TAG, " release =" + getAbsFilePath());
-                         }
-                         extractor.release();
-                     }
-                }
-
-
+            // Mpeg2 file is not seekable.
+            //  || absFilePath.endsWith(".mpg") ".mpeg" || absFilePath.endsWith(".wmv")
+            final String absFilePath = getAbsFilePath();
+            // Only make the .mp4 seekable. All the others, in doubt, and make'em unseekable.
+            if (absFilePath.endsWith(".mp4") || absFilePath.endsWith(".mov")) {
+                return true;
             }
 
-            return true;
-
+            return false;
         }
 
         private boolean isFileExists() {

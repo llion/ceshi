@@ -625,7 +625,9 @@ public class ItemTextClock extends TextView {
         setBackgroundColor(GraphUtils.parseColor(item.backcolor));
 
         // <ftColor>4294967295</ftColor>
-        setTextColor(Integer.parseInt(digitalClock.ftColor) | 0xFF000000);
+        setTextColor((int)(Long.parseLong(digitalClock.ftColor)) | 0xFF000000);
+        // It's not 0xFFFFFFFF, so don't use the following.
+        // setTextColor(GraphUtils.parseColor(digitalClock.ftColor) | 0xFF000000);
 
         // We take the 0xFF000000 (BLACK) to transparent.
         if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor))

@@ -27,6 +27,7 @@ import android.widget.VideoView;
 import com.color.home.android.providers.downloads.CLDownloadManager;
 import com.color.home.app.DetectionService;
 import com.color.home.keyboard.KeyBoardNav;
+import com.color.home.program.sync.FailedProgram;
 import com.color.home.program.sync.SyncService;
 
 import java.io.File;
@@ -47,7 +48,7 @@ import java.io.File;
  * 
  */
 public class MainActivity extends Activity {
-    private static final boolean DBG = false;;
+    private static final boolean DBG = false;
     final static String TAG = "MainActivity";
     public VideoView mVideoView;
     public MediaController mMediaController;
@@ -294,12 +295,17 @@ public class MainActivity extends Activity {
         if (DBG)
             Log.i(TAG, "startProgram. programVsnFile=" + vsn);
 
+        // Mark in the SystemProperties the time and the vsn file we are trying to playback.
+        // If later the Home is restart, and the interval is quite short,
+        // Maybe we could not playback this program.
+        new FailedProgram(vsn);
+
         mProgramsViewer.parsePrograms(vsn);
     }
 
     public void onProgramStarted(File vsn) {
         // Must be before startProgram. Otherwise, the item data source's path will be the previous one.
-        // Check AppController.getPlayingRootPath()'s usaged.
+        // Check AppController.getPlayingRootPath()'s usage.
         AppController.getInstance().getModel().setCurProgramPathFile(vsn.getParentFile().getAbsolutePath(), vsn.getName());
         
         
