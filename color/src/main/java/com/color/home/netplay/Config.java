@@ -73,10 +73,17 @@ public class Config implements ConfigAPI {
 //        }
         
         if (mSp.getBoolean("FirstInit", true)) {
-            String serialno = SystemProperties.get("ro.serialno");
-            if (serialno != null && serialno.length() >= 4) {
-                serialno = serialno.substring(serialno.length() - 4);
+            String ro_serialno = SystemProperties.get("ro.serialno");
+            String serialno = "0000";
+            if (ro_serialno != null && ro_serialno.length() >= 4) {
+                serialno = ro_serialno.substring(ro_serialno.length() - 4);
             }
+
+            String modelname = "cx";
+            if (ro_serialno != null && ro_serialno.length() >= 5) {
+                modelname = ro_serialno.substring(3, 5).toLowerCase();
+            }
+
             if (DBG)
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [serialno=" + serialno);
             
@@ -89,7 +96,7 @@ public class Config implements ConfigAPI {
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [Random channel=" + channelrandom);
             }
             
-            saveAPInfo(true, "C1L-" + serialno, "123456789", String.valueOf(channelrandom));
+            saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
             final Editor edit = mSp.edit();
             edit.putBoolean("FirstInit", false);
             edit.apply();

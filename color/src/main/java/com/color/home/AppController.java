@@ -257,10 +257,7 @@ public class AppController extends Application {
             public void run() {
                 if (DBG)
                     Log.d(TAG, "run what's posted at front. [postAtFrontOfQueue.");
-                // Do not setup, as the dimension is fixed to that in the kernel. 20150507.
-//                 setup();
-                ColorDisplayMode.setupDisplayMode();
-//                 setup480();
+
                 mCfg = new Config(AppController.this, Constants.FOLDER_USB_0);
                 mConnectivity = new Connectivity(AppController.this);
 
