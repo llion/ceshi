@@ -25,7 +25,7 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.color.home.android.providers.downloads.CLDownloadManager;
-import com.color.home.app.DetectionService;
+
 import com.color.home.keyboard.KeyBoardNav;
 import com.color.home.program.sync.FailedProgram;
 import com.color.home.program.sync.SyncService;
@@ -50,8 +50,7 @@ import java.io.File;
 public class MainActivity extends Activity {
     private static final boolean DBG = false;
     final static String TAG = "MainActivity";
-    public VideoView mVideoView;
-    public MediaController mMediaController;
+
     public ProgramsViewer mProgramsViewer;
     public ViewGroup mContentVG;
     private MainReceiver mReceiver;
@@ -94,6 +93,37 @@ public class MainActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
                         | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
                         | View.SYSTEM_UI_FLAG_IMMERSIVE);
+
+        if (DBG) {
+            Log.d(TAG, "onResume, isPause=" + isPaused);
+        }
+
+        if (isPaused) {
+            isPaused = false;
+
+            final File file = AppController.getInstance().getModel().getFile();
+            if (file != null) {
+
+                if (DBG)
+                    Log.d(TAG, "We have previously a file playing and paused, now resume. file=" + file);
+
+                startProgram(file);
+            }
+        }
+    }
+
+    private boolean isPaused = false;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (DBG) {
+            Log.d(TAG, "onPause.");
+        }
+
+        isPaused = true;
+
+        stopProgramInternal();
     }
 
     @Override
@@ -151,11 +181,7 @@ public class MainActivity extends Activity {
 
         sendBroadcast(new Intent(Constants.ACTION_COLOR_HOME_STARTED));
 
-        try {
-            startService(new Intent(this, DetectionService.class));
-        } catch (Exception e) {
-            Log.e(TAG, "start detection=", e);
-        }
+
     }
 
     private void registerUsbSyncEvents() {
@@ -277,11 +303,22 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
+
+    private void stopProgramInternal() {
+        if (DBG) {
+            Log.d(TAG, "stopProgramInternal.");
+        }
+        // Stop program
+        if (mProgramsViewer != null) {
+            mProgramsViewer.setPrograms(null);
+            mProgramsViewer.removeProgramView();
+        }
+    }
+
     private void stopProgram() {
         if (DBG)
             Log.d(TAG, "stopProgram. [");
-        mProgramsViewer.setPrograms(null);
-        mProgramsViewer.removeProgramView();
+        stopProgramInternal();
 
         AppController.getInstance().getModel().setCurProgramPathFile("", "");
         
@@ -291,6 +328,7 @@ public class MainActivity extends Activity {
         SyncService.startService(getApplicationContext(), Uri.parse("content://com.color.home/play/"), Constants.ACTION_PROGRAM_STARTED);
     }
 
+
     private void startProgram(File vsn) {
         if (DBG)
             Log.i(TAG, "startProgram. programVsnFile=" + vsn);
@@ -298,7 +336,7 @@ public class MainActivity extends Activity {
         // Mark in the SystemProperties the time and the vsn file we are trying to playback.
         // If later the Home is restart, and the interval is quite short,
         // Maybe we could not playback this program.
-        new FailedProgram(vsn);
+        new FailedProgram(vsn); // Mark
 
         mProgramsViewer.parsePrograms(vsn);
     }

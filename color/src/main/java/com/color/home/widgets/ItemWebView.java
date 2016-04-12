@@ -53,6 +53,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         this.mItem = item;
 
         mDuration = Integer.parseInt(item.duration);
+
+        removeCallbacks(this);
         postDelayed(this, mDuration);
         
         

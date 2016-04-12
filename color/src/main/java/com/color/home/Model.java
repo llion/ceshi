@@ -1,5 +1,8 @@
 package com.color.home;
 
+import android.text.TextUtils;
+
+import java.io.File;
 import java.util.List;
 
 import com.color.home.ProgramParser.Program;
@@ -17,6 +20,14 @@ public class Model {
     public void setCurProgramPathFile(String path, String fileName) {
         mPath = path;
         mFileName = fileName;
+    }
+
+
+    public File getFile() {
+        if (TextUtils.isEmpty(mPath) || TextUtils.isEmpty(mFileName)) {
+            return null;
+        }
+        return new File(mPath, mFileName);
     }
     
     public String getPath() {

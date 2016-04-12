@@ -236,7 +236,7 @@ public class AppController extends Application {
         // initialize the singleton
         sInstance = this;
 
-        toast(this, BuildConfig.VERSION_NAME, Toast.LENGTH_LONG);
+        toast(this, BuildConfig.VERSION_NAME + "(" + BuildConfig.VERSION_CODE + ")", Toast.LENGTH_SHORT);
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         Configuration config = getBaseContext().getResources().getConfiguration();
@@ -281,8 +281,6 @@ public class AppController extends Application {
         }
 
     }
-
-
 
     @Override
     public void onConfigurationChanged(Configuration newConfig)

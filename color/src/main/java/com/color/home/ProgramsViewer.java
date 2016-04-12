@@ -128,6 +128,8 @@ public class ProgramsViewer {
             Log.i(TAG, "onCreate. [inflatePrograms MainActivity =");
 
         LayoutInflater inflater = mLayoutInflater;
+
+
         ViewGroup vg = removeProgramView();
         setProgramView((ProgramView) inflater.inflate(layout.layout_program, null));
         if (vg != null) {

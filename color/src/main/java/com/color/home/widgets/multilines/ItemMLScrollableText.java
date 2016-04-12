@@ -163,6 +163,8 @@ public class ItemMLScrollableText extends ScrollView implements OnPlayFinishObse
             if (mIsScrollByTime) {
                 // mPlayLength.
                 mAnim.setRepeatCount(ValueAnimator.INFINITE);
+
+                removeCallbacks(this);
                 postDelayed(this, mPlayLength);
             } else {
                 mAnim.setRepeatCount(mRepeatCount - 1);

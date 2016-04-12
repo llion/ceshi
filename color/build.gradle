@@ -30,7 +30,7 @@ android {
 
     productFlavors {
         resolution_independent {
-            versionCode 1029
+            versionCode 1030
             versionName "1.2"
 
         }
@@ -48,7 +48,7 @@ android {
 
 dependencies {
     compile project(':openWeatherSimple')
-    compile project(':uDPMessenger')
+
     compile 'com.google.guava:guava:18.0'
     compile 'com.android.support:support-v4:19.1.0'
     compile files('libs/volley.jar')

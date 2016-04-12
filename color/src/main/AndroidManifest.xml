@@ -88,7 +88,6 @@
         <service android:name=".android.providers.downloads.DownloadService" />
         <service android:name="com.color.home.program.sync.SyncService" />
         <service android:name=".SyncUsbService" />
-        <service android:name="com.color.home.app.DetectionService" />
 
         <receiver android:name=".android.providers.downloads.DownloadReceiver" >
             <intent-filter>

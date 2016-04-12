@@ -87,6 +87,7 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
             Log.d(TAG, "setItem. [mPlayLength=" + mPlayLength);
         boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
         if (mIsScrollByTime) {
+            removeCallbacks(this);
             postDelayed(this, mPlayLength);
         } else {
             // Counts.

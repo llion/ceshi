@@ -128,6 +128,10 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
         if (DBG)
             Log.i(TAG, "onAttachedToWindow. image = " + mItem.filesource.filepath);
 
+        if (mRunnable != null) {
+            removeCallbacks(mRunnable);
+        }
+
         mRunnable = new Runnable() {
 
             @Override
