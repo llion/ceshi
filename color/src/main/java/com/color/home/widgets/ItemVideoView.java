@@ -1,8 +1,5 @@
 package com.color.home.widgets;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.media.AudioManager;
@@ -22,6 +19,9 @@ import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.Reflects;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
 
 /**
  * Other thoughts regarding loop for some video that doesn't support loop, such as MPEG2.
@@ -410,6 +410,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
     public boolean onError(MediaPlayer mp, int what, int extra) {
         if (DBG)
             Log.e(TAG, "onError. mp, what, extra=" + mp + ", " + what + ", " + extra + ", Thread=" + Thread.currentThread());
+        releaseMediaPlayer();
         return false;
     }
 

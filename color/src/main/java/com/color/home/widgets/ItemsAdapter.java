@@ -99,6 +99,7 @@ public class ItemsAdapter extends BaseAdapter {
         Item item = (Item) getItem(position);
 
         try {
+
             // Video
             if ("3".equals(item.type)) {
                 ItemVideoView vv = new ItemVideoView(mContext);

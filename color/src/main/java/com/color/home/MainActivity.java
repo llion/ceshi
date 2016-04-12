@@ -265,6 +265,9 @@ public class MainActivity extends Activity {
                 stopProgram();
             } else {
                 startProgram(generateVsnFile(false, path, fileName));
+                if(DBG)
+                    Log.d(TAG, "after startProgram onNewIntent: isPause=" + isPaused);
+                isPaused = false;
             }
 
         }
