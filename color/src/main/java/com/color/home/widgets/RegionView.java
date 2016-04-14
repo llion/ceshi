@@ -13,6 +13,7 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.graphics.drawable.shapes.Shape;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -400,7 +401,16 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         }
 
         Item item = mRegion.items.get(mDisplayedChild);
-        int type = Integer.parseInt(item.ineffect.Type);
+        int type = 0; // default to no animation.
+        if (item.ineffect != null && !TextUtils.isEmpty(item.ineffect.Type)) {
+            try {
+                type = Integer.parseInt(item.ineffect.Type);
+            } catch (Exception e) {
+                // Do nothing, as we donnot care.
+            }
+
+        }
+
         if (!noAnimation && type != 0 && !"1".equals(item.isscroll)) {
             if (DBG)
                 Log.d(TAG, "setDisplayedChild. [type=" + type);
@@ -462,10 +472,20 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     }
 
     private ValueAnimator getAnimationFor(int type, Item item) {
-        long duration = Long.parseLong(item.outeffect.Time);
-        // long duration = Long.parseLong(item.ineffect.Time);
+        // long duration = Long.parseLong(item.outeffect.Time);
+        long duration = 500L;
+        if (item.ineffect != null) {
+            try {
+                duration = Long.parseLong(item.ineffect.Time);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
         if (DBG)
-            Log.i(TAG, "getAnimationFor. duration=" + duration);
+            Log.i(TAG, "getAnimationFor. using ineffect's duration=" + duration);
 
         PropertyValuesHolder left2Right = PropertyValuesHolder.ofFloat("translationX", -getRegionWidth(), 0f);
         PropertyValuesHolder right2Left = PropertyValuesHolder.ofFloat("translationX", getRegionWidth(), 0f);

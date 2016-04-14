@@ -173,7 +173,9 @@ public class PageView extends AbsoluteLayout {
             Log.i(TAG, "setPageCommon. ");
 
         mBgImage = (ImageView) findViewById(R.id.pageBg);
-        String imageFilePath = mPage.bgfile.filepath;
+
+        String imageFilePath = mPage.bgfile == null ? null : mPage.bgfile.filepath;
+
         if (TextUtils.isEmpty(imageFilePath)) {
             if (DBG)
                 Log.i(TAG, "setupPageCommon. no image, remove imageview., Thread=" + Thread.currentThread());
