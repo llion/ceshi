@@ -8,28 +8,20 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import android.os.SystemProperties;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.Constants;
 
 public class FtpServer {
     private final static String TAG = "FtpServer";
-    private static final boolean DBG = false;;
+    private static final boolean DBG = true;;
     public final static String ATTR_FTP_SERVICE_ENABLED = "ftp.service.enabled";
 
     public FtpServer() {
-        File ftpDir = new File(Constants.FOLDER_FTP);
-        if (!ftpDir.isDirectory()) {
-            if (!ftpDir.mkdirs()) {
-                if (DBG)
-                    Log.d(TAG, "FtpServer. [Cannot make dir:" + ftpDir);
-                return;
-            }
-        }
 
     }
+
+
 
     public void setupFtpService(Properties pp) {
         // XXX: adb shell "echo ftp.service.enabled=false> /mnt/usb_storage/USB_DISK0/udisk0/config.txt"

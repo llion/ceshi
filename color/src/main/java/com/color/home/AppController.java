@@ -264,6 +264,8 @@ public class AppController extends Application {
             }
         });
 
+        scheduleEnsureFTP(mFtpFacilities, 3000);
+
         mDownloadMngr = CLDownloadManager.getInst(getContentResolver(), getPackageName());
 
         mModel = new Model();
@@ -280,6 +282,36 @@ public class AppController extends Application {
             Log.e(TAG, "onCreate", e);
         }
 
+    }
+
+    private void scheduleEnsureFTP(Runnable runnable, int delayMillis) {
+        sHandler.removeCallbacks(runnable);
+        sHandler.postDelayed(runnable, delayMillis);
+    }
+
+    private Runnable mFtpFacilities = new Runnable() {
+        @Override
+        public void run() {
+            if (!ensureFtpRootAndProgramPath()) {
+                Log.w(TAG, "Schedule another scheduleEnsureFTP.");
+                scheduleEnsureFTP(this, 5000);
+            }
+        }
+    };
+
+    private boolean ensureFtpRootAndProgramPath() {
+        Log.d(TAG, "ensureFtpRootAndProgramPath.");
+
+        File ftpDir = new File(Constants.FTP_PROGRAM_PATH);
+        if (!ftpDir.isDirectory()) {
+            if (!ftpDir.mkdirs()) {
+                Log.e(TAG, "FtpServer. [Cannot make dir:" + ftpDir);
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override
