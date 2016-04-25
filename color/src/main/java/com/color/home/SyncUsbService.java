@@ -71,7 +71,9 @@ public class SyncUsbService extends IntentService {
         if (DBG)
             Log.d(TAG, "onHandleIntent. [");
 
+
         if (!ensureSyncUsbPath()) return;
+
 
         try {
             File[] inUsb = Constants.listUsbVsnAndFilesFolders();
@@ -192,6 +194,7 @@ public class SyncUsbService extends IntentService {
         if (!usbSyncDir.isDirectory()) {
             if (!usbSyncDir.mkdirs()) {
                 Log.w(TAG, "onHandleIntent. [Cannot make dir:" + usbSyncDir);
+
 
                 return false;
             }
