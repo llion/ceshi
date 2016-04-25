@@ -70,15 +70,7 @@ public class SyncUsbService extends IntentService {
         if (DBG)
             Log.d(TAG, "onHandleIntent. [");
 
-        File usbSyncDir = new File(Constants.FOLDER_SYNCED_USB);
-        if (!usbSyncDir.isDirectory()) {
-            if (!usbSyncDir.mkdirs()) {
-                if (DBG)
-                    Log.d(TAG, "onHandleIntent. [Cannot make dir:" + usbSyncDir);
-
-                return;
-            }
-        }
+        if (ensureSyncUsbPath()) return;
 
         try {
             File[] inUsb = Constants.listUsbVsnAndFilesFolders();
@@ -194,9 +186,20 @@ public class SyncUsbService extends IntentService {
         }
     }
 
+    private boolean ensureSyncUsbPath() {
+        File usbSyncDir = new File(Constants.FOLDER_SYNCED_USB);
+        if (!usbSyncDir.isDirectory()) {
+            if (!usbSyncDir.mkdirs()) {
+                Log.w(TAG, "onHandleIntent. [Cannot make dir:" + usbSyncDir);
+
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void failedSync() {
-        if (DBG)
-            Log.d(TAG, "failedSync. [COPY FAILED.");
+        Log.e(TAG, "failedSync. [COPY FAILED.");
 
         Intent intent2 = new Intent(Constants.ACTION_USB_SYNCED);
         intent2.putExtra(Constants.EXTRA_USB_SYNC_RESULT, false);
