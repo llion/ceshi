@@ -6,16 +6,15 @@ import android.content.Intent;
 import android.os.FileUtils;
 import android.util.Log;
 
-import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
-
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -105,11 +104,9 @@ public class SyncUsbService extends IntentService {
                 if (filename.endsWith(".vsn")) {
                     File file = inUsbMap.get(filename);
                     File file2 = inSyncedUsbMap.get(filename);
-//                    byte[] digest = Files.getDigest(file, digester);
-//                    byte[] digest2 = Files.getDigest(file2, digester);
-                    byte[] digest = Files.hash(file, Hashing.sha1()).asBytes();
-                    byte[] digest2 = Files.hash(file2, Hashing.sha1()).asBytes();
-                    if (!Arrays.equals(digest, digest2)) {
+                    String digest = getMd5ByFile(file);
+                    String digest2 = getMd5ByFile(file2);
+                    if (!digest.equals(digest2)) {
                         copies.add(filename.replace(".vsn", ".files"));
                         copies.add(filename);
                         if (DBG)
@@ -184,7 +181,7 @@ public class SyncUsbService extends IntentService {
             sendBroadcast(new Intent(Constants.ACTION_USB_SYNCED));
             // }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -200,6 +197,31 @@ public class SyncUsbService extends IntentService {
             }
         }
         return true;
+    }
+
+    public String getMd5ByFile(File file) {
+
+        String value = "";
+        FileInputStream in = null;
+        try {
+            in = new FileInputStream(file);
+            MappedByteBuffer byteBuffer = in.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(byteBuffer);
+            BigInteger bi = new BigInteger(1, md5.digest());
+            value = bi.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != in) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return value;
     }
 
     public void failedSync() {

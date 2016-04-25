@@ -55,6 +55,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
     private int mPlayLength;
     private boolean mSeekable;
 
+    private Context mContext;
 
     public void setLoop(boolean loop) {
         mIsLoop = loop;
@@ -63,6 +64,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
 
     public ItemVideoView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        mContext = context;
         // TODO Auto-generated constructor stub
 
         // setVisibility(INVISIBLE);
@@ -75,6 +77,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         // setZOrderOnTop(true);
 
         checkSkipDraw();
+
 
     }
 
@@ -114,11 +117,13 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
 
     public ItemVideoView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        mContext = context;
         // TODO Auto-generated constructor stub
     }
 
     public ItemVideoView(Context context) {
         this(context, null);
+        mContext = context;
         // TODO Auto-generated constructor stub
     }
 
@@ -168,6 +173,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
             Log.i(TAG, "playVideo. mIsLoop=" + mIsLoop + ", Thread=" + Thread.currentThread());
         doCleanUp();
 
+
         // Create a new media player and set the listeners
         // mMediaPlayer = PlayerPool.getInst().getFree();
         // if (mMediaPlayer == null) {
@@ -212,6 +218,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
 
     }
 
@@ -295,6 +302,7 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         if (DBG)
             Log.d(TAG, "surfaceCreated called");
         playVideo();
+
     }
 
     public void releaseMediaPlayer() {
@@ -410,7 +418,8 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
     public boolean onError(MediaPlayer mp, int what, int extra) {
         if (DBG)
             Log.e(TAG, "onError. mp, what, extra=" + mp + ", " + what + ", " + extra + ", Thread=" + Thread.currentThread());
-        releaseMediaPlayer();
+        if(what == 1 && extra == -2147483648)
+            releaseMediaPlayer();
         return false;
     }
 

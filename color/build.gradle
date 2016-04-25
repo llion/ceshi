@@ -30,8 +30,8 @@ android {
 
     productFlavors {
         resolution_independent {
-            versionCode 1032
-            versionName "1.4"
+            versionCode 1033
+            versionName "1.5"
 
         }
 
@@ -44,11 +44,15 @@ android {
             signingConfig signingConfigs.release
         }
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
     compile project(':openWeatherSimple')
-
     compile 'com.google.guava:guava:18.0'
     compile 'com.android.support:support-v4:19.1.0'
     compile files('libs/volley.jar')

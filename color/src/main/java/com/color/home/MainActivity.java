@@ -20,12 +20,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.MediaController;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.color.home.android.providers.downloads.CLDownloadManager;
-
 import com.color.home.keyboard.KeyBoardNav;
 import com.color.home.program.sync.FailedProgram;
 import com.color.home.program.sync.SyncService;
@@ -43,9 +40,8 @@ import java.io.File;
 
 /**
  * @author zzjd7382
- * 
+ *         <p>
  *         MainActivity:V
- * 
  */
 public class MainActivity extends Activity {
     private static final boolean DBG = false;
@@ -54,6 +50,7 @@ public class MainActivity extends Activity {
     public ProgramsViewer mProgramsViewer;
     public ViewGroup mContentVG;
     private MainReceiver mReceiver;
+    private ScreenStatusReceiver mScreenStatusReceiver;
     private CopyProgress mCp;
     private KeyBoardNav mKb;
 
@@ -86,6 +83,7 @@ public class MainActivity extends Activity {
             Log.d(TAG, "NULL content view group.");
             return;
         }
+
         mContentVG.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -94,25 +92,25 @@ public class MainActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
                         | View.SYSTEM_UI_FLAG_IMMERSIVE);
 
-        if (DBG) {
-            Log.d(TAG, "onResume, isPause=" + isPaused);
-        }
+//        if (DBG) {
+//            Log.d(TAG, "onResume, isPause=" + isPaused);
+//        }
 
-        if (isPaused) {
-            isPaused = false;
-
-            final File file = AppController.getInstance().getModel().getFile();
-            if (file != null) {
-
-                if (DBG)
-                    Log.d(TAG, "We have previously a file playing and paused, now resume. file=" + file);
-
-                startProgram(file);
-            }
-        }
+//        if (isPaused) {
+//            isPaused = false;
+//
+//            final File file = AppController.getInstance().getModel().getFile();
+//            if (file != null) {
+//
+//                if (DBG)
+//                    Log.d(TAG, "We have previously a file playing and paused, now resume. file=" + file);
+//
+//                startProgram(file);
+//            }
+//        }
     }
 
-    private boolean isPaused = false;
+//    private boolean isPaused = false;
 
     @Override
     protected void onPause() {
@@ -121,15 +119,15 @@ public class MainActivity extends Activity {
             Log.d(TAG, "onPause.");
         }
 
-        isPaused = true;
+//        isPaused = true;
 
-        stopProgramInternal();
+        //stopProgramInternal();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
 //        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         mReceiver = new MainReceiver();
         mKb = new KeyBoardNav(this);
@@ -152,7 +150,6 @@ public class MainActivity extends Activity {
         CLDownloadManager.getInst(this.getApplicationContext().getContentResolver(), this.getPackageName());
 
         mContentVG = (ViewGroup) findViewById(android.R.id.content);
-
 
 
         mContentVG.setBackgroundResource(R.drawable.background_empty_content);
@@ -181,7 +178,32 @@ public class MainActivity extends Activity {
 
         sendBroadcast(new Intent(Constants.ACTION_COLOR_HOME_STARTED));
 
+        // regist screen_on/off boardcast receiver
 
+        mScreenStatusReceiver = new ScreenStatusReceiver();
+        IntentFilter recevierFilter = new IntentFilter();
+        recevierFilter.addAction(Intent.ACTION_SCREEN_ON);
+        recevierFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(mScreenStatusReceiver, recevierFilter);
+    }
+
+    class ScreenStatusReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (DBG)
+                Log.d(TAG, "status receiver action=" + intent.getAction());
+            if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                stopProgramInternal();
+            } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+                final File file = AppController.getInstance().getModel().getFile();
+                if (file != null) {
+                    if (DBG)
+                        Log.d(TAG, "screen on action received , previous file : " + file);
+                    startProgram(file);
+                }
+            }
+        }
     }
 
     private void registerUsbSyncEvents() {
@@ -256,6 +278,7 @@ public class MainActivity extends Activity {
 
         final String action = intent.getAction();
         if (Constants.ACTION_PLAY_PROGRAM.equals(action)) {
+
             final String path = intent.getStringExtra(Constants.EXTRA_PATH);
             final String fileName = intent.getStringExtra(Constants.EXTRA_FILE_NAME);
             if (DBG)
@@ -265,15 +288,15 @@ public class MainActivity extends Activity {
                 stopProgram();
             } else {
                 startProgram(generateVsnFile(false, path, fileName));
-                if(DBG)
-                    Log.d(TAG, "after startProgram onNewIntent: isPause=" + isPaused);
-                isPaused = false;
+//                if(DBG)
+//                    Log.d(TAG, "after startProgram onNewIntent: isPause=" + isPaused);
+//                isPaused = false;
             }
 
         }
 
     }
-    
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (DBG)
@@ -303,6 +326,7 @@ public class MainActivity extends Activity {
             Log.d(TAG, "onDestroy. [");
 
         unregisterReceiver(mReceiver);
+        unregisterReceiver(mScreenStatusReceiver);
         super.onDestroy();
     }
 
@@ -324,7 +348,7 @@ public class MainActivity extends Activity {
         stopProgramInternal();
 
         AppController.getInstance().getModel().setCurProgramPathFile("", "");
-        
+
         AppController.getInstance().getModel().setPrograms(null);
         AppController.getInstance().markProgram(null, null);
         // But in fact, its stopped.
@@ -348,8 +372,8 @@ public class MainActivity extends Activity {
         // Must be before startProgram. Otherwise, the item data source's path will be the previous one.
         // Check AppController.getPlayingRootPath()'s usage.
         AppController.getInstance().getModel().setCurProgramPathFile(vsn.getParentFile().getAbsolutePath(), vsn.getName());
-        
-        
+
+
         AppController.getInstance().getModel().setPrograms(mProgramsViewer.getPrograms());
         AppController.getInstance().markProgram(vsn.getParentFile().getAbsolutePath(), vsn.getName());
         SyncService.startService(getApplicationContext(), Uri.fromFile(vsn), Constants.ACTION_PROGRAM_STARTED);

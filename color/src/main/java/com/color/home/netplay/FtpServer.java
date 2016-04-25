@@ -1,20 +1,17 @@
 package com.color.home.netplay;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import android.util.Log;
-
-import com.color.home.Constants;
-
 public class FtpServer {
     private final static String TAG = "FtpServer";
-    private static final boolean DBG = true;;
+    private static final boolean DBG = false;;
     public final static String ATTR_FTP_SERVICE_ENABLED = "ftp.service.enabled";
 
     public FtpServer() {

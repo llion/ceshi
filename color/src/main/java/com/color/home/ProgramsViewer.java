@@ -1,16 +1,5 @@
 package com.color.home;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,7 +14,18 @@ import com.color.home.R.layout;
 import com.color.home.widgets.PagesAdapter;
 import com.color.home.widgets.ProgramView;
 
-public class ProgramsViewer {
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProgramsViewer{
     private final static String TAG = "ProgramsViewer";
     private static final boolean DBG = false;
 

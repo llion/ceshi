@@ -1,17 +1,16 @@
 package com.color.home;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Set;
-
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.android.providers.downloads.CLStorageManager;
 import com.color.home.network.IpUtils;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.Set;
 
 public class Constants {
     private final static String TAG = "Constants";
@@ -176,6 +175,7 @@ public class Constants {
     public static final String EXTRA_FILE_NAME = "file_name";
     public static final String EXTRA_PATH = "path";
     public static final String ACTION_PLAY_PROGRAM = "com.clt.broadcast.playProgram";
+    public static final String ACTION_PROGRAM_SEEK = "com.clt.broadcast.programSeek";
 
     public static int absPathToSourceTypeID(String playingFolder) {
         if (TextUtils.isEmpty(playingFolder))
