@@ -10,13 +10,13 @@
 
 package com.color.home.widgets.singleline.localscroll;
 
-import com.color.home.widgets.singleline.QuadGenerator;
-import com.color.home.widgets.singleline.QuadSegment;
-
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
+
+import com.color.home.widgets.singleline.QuadGenerator;
+import com.color.home.widgets.singleline.QuadSegment;
 
 public class TextObjectHeadTail extends TextObject {
     private final static String TAG = "TextObjectHeadTail";

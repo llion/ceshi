@@ -1,13 +1,10 @@
 package com.color.home;
 
 import android.graphics.Color;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Xml;
 
-import com.color.home.widgets.ItemsAdapter;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
@@ -35,7 +32,7 @@ public class ProgramParser {
 
     public ProgramParser(File mVsnFile) {
         if (DBG) {
-            Log.d(TAG, "PogramParse constructor to parse=" + mVsnFile);
+            Log.d(TAG, "Program Parse constructor to parse=" + mVsnFile);
         }
         this.mVsnFile = mVsnFile;
     }
@@ -45,6 +42,7 @@ public class ProgramParser {
     }
 
     public static class DigitalClock {
+        public String type;
         public String flags;
         public String name;
         public String isStrikeOut;
@@ -56,8 +54,9 @@ public class ProgramParser {
         public String bBold;
         public String charSet;
 
-        public DigitalClock(String flags, String name, String isStrikeOut, String weight, String ftSize, String ftColor, String bItalic,
+        public DigitalClock(String type, String flags, String name, String isStrikeOut, String weight, String ftSize, String ftColor, String bItalic,
                 String bUnderline, String bBold, String charSet) {
+            this.type = type;
             this.flags = flags;
             this.name = name;
             this.isStrikeOut = isStrikeOut;
@@ -1412,6 +1411,7 @@ public class ProgramParser {
     private DigitalClock readDigtalClock(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "DigtalClock");
 
+        String type = null;
         String flags = null;
         String name = null;
         String isStrikeOut = null;
@@ -1431,7 +1431,9 @@ public class ProgramParser {
             if (DBG)
                 Log.i(TAG, "readDigtalClock. [tagName=" + tagName);
 
-            if (tagName.equalsIgnoreCase("Flags")) {
+            if (tagName.equalsIgnoreCase("DigtalClock")){
+                type = readText(parser);
+            } else if(tagName.equalsIgnoreCase("Flags")) {
                 flags = readText(parser);
             } else if (tagName.equalsIgnoreCase("Name")) {
                 name = readText(parser);
@@ -1456,7 +1458,7 @@ public class ProgramParser {
                 skip(parser);
             }
         }
-        return new DigitalClock(flags, name, isStrikeOut, weight, ftSize, ftColor, bItalic, bUnderline, bBold, charSet);
+        return new DigitalClock(type, flags, name, isStrikeOut, weight, ftSize, ftColor, bItalic, bUnderline, bBold, charSet);
     }
 
     private MultiPicInfo readMultiPicInfo(XmlPullParser parser) throws XmlPullParserException, IOException {

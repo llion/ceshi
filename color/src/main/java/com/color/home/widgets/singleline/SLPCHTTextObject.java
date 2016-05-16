@@ -428,10 +428,18 @@ public class SLPCHTTextObject {
 //        TextRenderer.checkGLError("glGetUniformLocation:muTexScaleHandle");
     }
 
+    private float pixelTemp = 0.0f;
     public void render() {
-        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
+        pixelTemp += mPixelPerFrame;
+
+        if(pixelTemp <= -1.0f) {
+            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
+            pixelTemp = 0.0f;
+        }
+
+//        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
-        final float overflow = mMMatrix[12] - (-mWidth - mPcWidth);
+        float overflow = mMMatrix[12] - (-mWidth - mPcWidth);
         if (overflow < 0) {
             // if (isFirstRun)
             // isFirstRun = false;

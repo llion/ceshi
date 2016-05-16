@@ -1,7 +1,5 @@
 package com.color.home.widgets;
 
-import java.util.Map;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
@@ -17,6 +15,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.color.home.ProgramParser.Item;
+
+import java.util.Map;
 
 public class ItemWebView extends WebView implements OnPlayFinishObserverable, Runnable, FinishObserver {
     private static final boolean DBG = false;
@@ -56,8 +56,10 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
-        
-        
+
+        //url has no protocol
+        if(!item.url.contains("http://") && !item.url.contains("https://"))
+            item.url = "http://" + item.url;
         loadUrl(item.url);
         if (DBG)
             Log.i(TAG, "setItem. url=" + item.url);

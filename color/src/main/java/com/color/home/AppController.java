@@ -49,7 +49,7 @@ import com.color.home.provider.ColorContract;
 public class AppController extends Application {
 
     private final static String TAG = "AppController";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     public static String sCharset = "GBK";
 
     /**
@@ -151,7 +151,8 @@ public class AppController extends Application {
 
     public Typeface generateTypeface(String fontName) {
         try {
-
+            if(DBG)
+                Log.d(TAG, "generate typeface by fontName:" + fontName);
             if (Constants.FONT_KAI.equals(fontName)) {
                 return Typeface.createFromFile(Constants.FONT_PATH + "simkai.ttf");
             } else if (Constants.FONT_HEI.equals(fontName)) {

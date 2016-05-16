@@ -10,12 +10,12 @@
 
 package com.color.home.widgets.singleline.pcscroll;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 public class SLPCRenderer implements GLSurfaceView.Renderer {
     private final static String TAG = "SLPCRenderer";
@@ -98,15 +98,15 @@ public class SLPCRenderer implements GLSurfaceView.Renderer {
             checkGLError("onDrawFrame");
 
          if (DBG) {
-         mFPS++;
-         long currentTime = System.currentTimeMillis();
-             Log.d(TAG, "current=" + (currentTime - mLastFrameTime));
-             mLastFrameTime = currentTime;
-         if (currentTime - mLastTime >= 1000) {
-         Log.d(TAG, "onDrawFrame. this=" + this + ", [mFPS=" + mFPS);
-         mFPS = 0;
-         mLastTime = currentTime;
-         }
+             mFPS++;
+             long currentTime = System.currentTimeMillis();
+                 Log.d(TAG, "current=" + (currentTime - mLastFrameTime));
+                 mLastFrameTime = currentTime;
+             if (currentTime - mLastTime >= 1000) {
+                 Log.d(TAG, "onDrawFrame. this=" + this + ", [mFPS=" + mFPS);
+                 mFPS = 0;
+                 mLastTime = currentTime;
+             }
          }
     }
 

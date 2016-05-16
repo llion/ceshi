@@ -43,7 +43,7 @@ import java.nio.FloatBuffer;
 
 public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
-    static final boolean DBG = false;
+    static final boolean DBG = true;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -389,14 +389,33 @@ public class SLPCTextObject {
 
         muTextureHandle = GLES20.glGetUniformLocation(mProgram, "u_s2dTexture");
         TextRenderer.checkGLError("glGetUniformLocation:u_s2dTexture");
-
         muTexScaleHandle = GLES20.glGetUniformLocation(mProgram, "uTexScale");
         TextRenderer.checkGLError("glGetUniformLocation:muTexScaleHandle");
     }
 
+
+    private float pixelTemp = 0.0f;
     public void render() {
+//        if(DBG)
+//            Log.d(TAG, "singleline render");
         // // Add program to OpenGL environment
-        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
+        if(DBG)
+            Log.d(TAG, "pixelperframe: " + mPixelPerFrame);
+//        Matrix.translateM(mMMatrix, 0, -1.5f, 0.f, 0.f);
+
+        if(DBG)
+            Log.d(TAG, "pixelTemp:" + pixelTemp);
+
+        pixelTemp += mPixelPerFrame;
+
+        if(pixelTemp <= -1.0f) {
+            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
+            pixelTemp = 0.0f;
+        }
+
+        if(DBG)
+            Log.d(TAG, "mMMatrix [12]  = " + mMMatrix[12]);
+
         if (mMMatrix[12] < -mEvenedWidth - mPcWidth) {
             Matrix.setIdentityM(mMMatrix, 0);
             // if repeat count == 0, infinite loop.

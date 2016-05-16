@@ -10,8 +10,6 @@
 
 package com.color.home.widgets.singleline.localscroll;
 
-import java.io.File;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,14 +25,15 @@ import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
-import com.color.home.netplay.Config;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
 
+import java.io.File;
+
 public class TextObject extends SLPCTextObject {
     private final static String TAG = "TextObject";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
 
     private String mText = new String("Empty");
     private float mTextSize = 20;
@@ -66,7 +65,9 @@ public class TextObject extends SLPCTextObject {
         Rect boundsAllText = new Rect();
         mPaint.getTextBounds(text, 0, text.length(), boundsAllText);
         int topAllText = boundsAllText.top;
-        mLineHeight = (int) mTextSize + 2;
+        if(DBG)
+            Log.d(TAG, "bounds top: " + topAllText + " TextSize: " + mTextSize);
+        mLineHeight = (int) mTextSize + 3;
         if (mLineHeight % 2 == 1) {
             mLineHeight ++;
         }

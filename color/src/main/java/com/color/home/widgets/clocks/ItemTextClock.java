@@ -16,9 +16,6 @@ package com.color.home.widgets.clocks;
  * limitations under the License.
  */
 
-import java.util.Calendar;
-import java.util.TimeZone;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -29,16 +26,22 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.ViewDebug.ExportedProperty;
 import android.widget.TextView;
 
+import com.color.home.AppController;
 import com.color.home.ProgramParser.DigitalClock;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.RegionView;
+
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * <p>
@@ -110,11 +113,14 @@ public class ItemTextClock extends TextView {
      * 
      */
     public static final CharSequence DEFAULT_FORMAT_24_HOUR = "MM/dd/yy HH:mmaa";
+    private static final boolean DBG = true;
+    private static final String TAG  = "ItemTextClock";
 
     private CharSequence mFormat12 = DEFAULT_FORMAT_12_HOUR;
     private CharSequence mFormat24 = DEFAULT_FORMAT_24_HOUR;
 
     private CharSequence mFormat;
+    private int mFormatType;
     private boolean mHasSeconds;
 
     private boolean mAttached;
@@ -452,7 +458,16 @@ public class ItemTextClock extends TextView {
 
     private CharSequence parseFormat() {
         CharSequence format = "";
-        // year exist.
+        if(DBG)
+            Log.d(TAG, "default dateFormat : " + DateFormat.getTimeFormatString(this.getContext()));
+
+//        if(mFormatType == 3){
+//            return DateFormat.getTimeFormatString(this.getContext());
+//        }
+//         year exist.
+        if(DBG)
+            Log.e(TAG, "mFormat Type : " + mFormatType);
+
         boolean hasYear = false;
         if ((mFlag & FLAG_YEAR) == FLAG_YEAR) {
             hasYear = true;
@@ -469,7 +484,7 @@ public class ItemTextClock extends TextView {
             if (hasYear) {
                 format = format + "-";
             }
-            format = format + "M";
+            format = format + "MM";
         }
 
         boolean hasDate = false;
@@ -478,7 +493,17 @@ public class ItemTextClock extends TextView {
             if (hasYear || hasMon) {
                 format = format + "-";
             }
-            format = format + "d";
+            format = format + "dd";
+        }
+
+        if(mFormatType == 2){
+            String s = format.toString().replace('-', '/');
+            //move year str to the end
+            if(hasYear) {
+                s += ("/" + s.split("/")[0]);
+                s = s.substring(s.indexOf('/') + 1);
+            }
+            format = s;
         }
 
         boolean hasWeekDay = false;
@@ -487,7 +512,7 @@ public class ItemTextClock extends TextView {
             if (hasYear || hasMon) {
                 format = format + " ";
             }
-            format = format + "E";
+            format = format + "EEEE";
         }
 
         boolean hasHour = false;
@@ -498,9 +523,9 @@ public class ItemTextClock extends TextView {
             }
 
             if ((mFlag & HOURS_24) == HOURS_24)
-                format = format + "k";
+                format = format + "kk";
             else
-                format = format + "h";
+                format = format + "hh";
         }
 
         boolean hasMin = false;
@@ -508,6 +533,8 @@ public class ItemTextClock extends TextView {
             hasMin = true;
             if (hasHour) {
                 format = format + ":";
+            }else{
+                format = format + " ";
             }
 
             format = format + "mm";
@@ -518,6 +545,8 @@ public class ItemTextClock extends TextView {
             hasSec = true;
             if (hasMin) {
                 format = format + ":";
+            }else{
+                format = format + " ";
             }
 
             format = format + "ss";
@@ -533,7 +562,30 @@ public class ItemTextClock extends TextView {
             format = format + "AA";
         }
 
-        return format;
+        if(DBG)
+            Log.d(TAG, "date Format generate : " + format );
+
+        switch (mFormatType){
+            case 1: {
+                return format;
+            }
+            case 2:{
+                return format;
+            }
+            case 3: {
+//                return DateFormat.getLongDateFormat(getContext()).toString();
+                return DateFormat.getBestDateTimePattern(Locale.getDefault(), format.toString().replace("-", ""));
+//                return DateFormat.getBestDateTimePattern(Locale.getDefault(), "MMMMyyyy");
+            }
+
+        }
+//        if(mFormatType == 3) {
+//            if(DBG)
+//                Log.d(TAG, "mFormatType == 3, change date format");
+//            return DateFormat.getBestDateTimePattern(Locale.getDefault(), "yyyyEEEMMMMdHHmmss");
+//        }
+
+        return DateFormat.getBestDateTimePattern(Locale.getDefault(), "yyyyEEEEMMMMddkkmmss");
     }
 
     // 12, YYYY == 0;
@@ -554,6 +606,7 @@ public class ItemTextClock extends TextView {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
+        getPaint().setAntiAlias(false);
         if (!mAttached) {
             mAttached = true;
 
@@ -611,6 +664,7 @@ public class ItemTextClock extends TextView {
     private void onTimeChanged() {
         mTime.setTimeInMillis(System.currentTimeMillis());
         setText(DateFormat.format(mFormat, mTime));
+
     }
 
     public void setRegion(Region region) {
@@ -620,6 +674,9 @@ public class ItemTextClock extends TextView {
     public void setItem(RegionView regionView, Item item) {
         DigitalClock digitalClock = item.digitalClock;
         mFlag = Integer.parseInt(digitalClock.flags);
+        if(DBG)
+            Log.d(TAG, "digitalclock flag : " + digitalClock.flags);
+        mFormatType = Integer.parseInt(digitalClock.type);
 
         // <BackColor>0xFF00FF80</BackColor>
         setBackgroundColor(GraphUtils.parseColor(item.backcolor));
@@ -632,12 +689,14 @@ public class ItemTextClock extends TextView {
         // We take the 0xFF000000 (BLACK) to transparent.
         if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor))
             setBackgroundColor(GraphUtils.parseColor(item.backcolor));
+        else if("0xFF000000".equals(item.backcolor))
+            setBackgroundColor(GraphUtils.parseColor("0x00000000"));
 
         // Size.
         int size = Integer.parseInt(digitalClock.ftSize);
         setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
 
-        // Typeface.
+        // Typeface & font.
         int typeface = Typeface.NORMAL;
         if ("1".equals(digitalClock.bItalic)) {
             typeface = Typeface.ITALIC;
@@ -648,7 +707,10 @@ public class ItemTextClock extends TextView {
         if ("1".equals(digitalClock.bUnderline)) {
             getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
         }
-        setTypeface(getTypeface(), typeface);
+        if(DBG)
+            Log.d(TAG, "font family:" + digitalClock.name + " font type: "+ typeface);
+        Typeface fontFamily = AppController.getInstance().generateTypeface(digitalClock.name);
+        setTypeface(Typeface.create(fontFamily, typeface), typeface);
 
         setGravity(Gravity.CENTER);
         chooseFormat();

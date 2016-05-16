@@ -28,7 +28,7 @@ import com.color.home.widgets.RegionView;
 public class ItemMLScrollableText extends ScrollView implements OnPlayFinishObserverable, AnimatorListener, Runnable {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
-    private final static String TAG = "ItemMultiLinesScrollableText";
+    private final static String TAG = "ItemMLScrollableText";
 
     private TextView mTv;
     private Item mItem;

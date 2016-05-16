@@ -105,7 +105,8 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
         if (DBG)
             Log.d(TAG, "setItem. [pixelPerFrame=" + pixelPerFrame);
-        mTextobj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+//        mTextobj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+        mTextobj.setPixelPerFrame(pixelPerFrame);
 
         // Total play length in milisec.
         int mPlayLength = Integer.parseInt(item.playLength);

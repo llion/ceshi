@@ -1,7 +1,6 @@
 package com.color.home.widgets.multilines;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.text.TextUtils;
@@ -66,8 +65,8 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         }
 
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
-        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
-//        theTextObj.setPixelPerFrame(pixelPerFrame);
+//        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+        theTextObj.setPixelPerFrame(pixelPerFrame/2);
 
 
         // Total play length in milisec.

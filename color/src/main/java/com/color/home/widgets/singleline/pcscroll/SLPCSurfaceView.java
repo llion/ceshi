@@ -1,10 +1,7 @@
 package com.color.home.widgets.singleline.pcscroll;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.PixelFormat;
-import android.graphics.Shader;
 import android.opengl.GLSurfaceView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -79,7 +76,9 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
         if (DBG)
             Log.d(TAG, "setItem. [pixelPerFrame=" + pixelPerFrame);
-        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+//        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+//        theTextObj.setPixelPerFrame(pixelPerFrame);
+        theTextObj.setPixelPerFrame(pixelPerFrame);
 
         // Total play length in milisec.
         int mPlayLength = Integer.parseInt(item.playLength);

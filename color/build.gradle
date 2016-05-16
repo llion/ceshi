@@ -30,8 +30,8 @@ android {
 
     productFlavors {
         resolution_independent {
-            versionCode 1033
-            versionName "1.5"
+            versionCode 1038
+            versionName "1.10"
 
         }
 

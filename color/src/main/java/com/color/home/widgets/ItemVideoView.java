@@ -1,6 +1,9 @@
 package com.color.home.widgets;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Canvas;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -15,6 +18,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.color.home.Constants;
 import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
@@ -33,7 +37,7 @@ import java.lang.reflect.Field;
  */
 public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverable, OnBufferingUpdateListener, OnCompletionListener,
         OnPreparedListener, OnVideoSizeChangedListener, SurfaceHolder.Callback, OnErrorListener, MediaPlayer.OnSeekCompleteListener {
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemVideoView";
     private OnPlayFinishedListener mListener;
@@ -219,7 +223,6 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
             e.printStackTrace();
         }
 
-
     }
 
     @Override
@@ -295,13 +298,30 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
             Log.d(TAG, "surfaceDestroyed called");
 
         releaseMediaPlayer();
+
+        if(mSeekReceiver != null)
+            mContext.unregisterReceiver(mSeekReceiver);
     }
 
+    BroadcastReceiver mSeekReceiver = null;
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         if (DBG)
             Log.d(TAG, "surfaceCreated called");
         playVideo();
+
+        mSeekReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if(DBG)
+                    Log.d(TAG, "program seek command received..");
+                int seekPoint = intent.getIntExtra("seekTo", -1);
+                if(mMediaPlayer.isPlaying() && seekPoint != -1 && seekPoint < mMediaPlayer.getDuration()){
+                    mMediaPlayer.seekTo(seekPoint);
+                }
+            }
+        };
+        mContext.registerReceiver(mSeekReceiver, new IntentFilter(Constants.ACTION_PROGRAM_SEEK));
 
     }
 
