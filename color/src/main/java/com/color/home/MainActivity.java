@@ -44,7 +44,7 @@ import java.io.File;
  *         MainActivity:V
  */
 public class MainActivity extends Activity {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     final static String TAG = "MainActivity";
 
     public ProgramsViewer mProgramsViewer;

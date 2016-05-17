@@ -265,11 +265,29 @@ public class MultiPicScrollObject {
         mBackgroundColor = parseColor;
     }
 
-    public void render() {
-        // // Add program to OpenGL environment
-        float[] modelMat = mMMatrix;
-        Matrix.translateM(modelMat, 0, 0.f, -mPixelPerFrame, 0.f);
 
+    private float pixelTemp = 0.0f;
+    public void render() {
+        float[] modelMat = mMMatrix;
+        // // Add program to OpenGL environment
+        if(Math.abs(mPixelPerFrame) > 1.0f){
+            mPixelPerFrame = Math.round(mPixelPerFrame);
+        }
+        pixelTemp += mPixelPerFrame;
+        //mPixelPerFrame < 0
+        if(DBG)
+            Log.d(TAG, "pixelPerFrame: " + mPixelPerFrame);
+        if(DBG)
+            Log.d(TAG, "pixelTemp:" + pixelTemp);
+        if(pixelTemp <= -1.0f) {
+            Matrix.translateM(modelMat, 0, 0.f, -(int)pixelTemp, 0.f);
+            pixelTemp += Math.abs((int)pixelTemp);
+        }
+
+        //        Matrix.translateM(modelMat, 0, 0.f, -mPixelPerFrame, 0.f);
+
+        if(DBG)
+            Log.d(TAG, "matrix[13] = " + mMMatrix[13]);
         // resetPos();
         // Matrix.translateM(modelMat, 0, 0.f, -200.f, 0.f);
 

@@ -37,7 +37,7 @@ import java.lang.reflect.Field;
  */
 public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverable, OnBufferingUpdateListener, OnCompletionListener,
         OnPreparedListener, OnVideoSizeChangedListener, SurfaceHolder.Callback, OnErrorListener, MediaPlayer.OnSeekCompleteListener {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemVideoView";
     private OnPlayFinishedListener mListener;

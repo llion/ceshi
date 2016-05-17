@@ -281,11 +281,13 @@ public class SLPCHTTextObject {
             mPcHeight = bb.getInt();
             setNormarizedEvenPcHeight(MovingTextUtils.evenIt(mPcHeight));
 
-            final int closePOT = QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight());
+            final int closePOT = QuadGenerator.findClosestPOT(MovingTextUtils.evenIt(mPcWidth), getEvenPcHeight());
             if (DBG)
                 Log.d(TAG, "normalizTexToMemCache. [pcWidth=" + mPcWidth + ", pcHeight=" + mPcHeight + ", closePOT=" + closePOT
                         + ", square=" + closePOT * closePOT
-                        + ", mEvenPcHeight=" + getEvenPcHeight());
+                        + ", mEvenPcHeight=" + getEvenPcHeight()
+                        + ", event Pc width=" + MovingTextUtils.evenIt(mPcWidth)
+                );
 
 
             // we skipped 20 read 8 = 28.
@@ -430,11 +432,14 @@ public class SLPCHTTextObject {
 
     private float pixelTemp = 0.0f;
     public void render() {
+        if(Math.abs(mPixelPerFrame) > 1.0f){
+            mPixelPerFrame = Math.round(mPixelPerFrame);
+        }
         pixelTemp += mPixelPerFrame;
 
         if(pixelTemp <= -1.0f) {
             Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
-            pixelTemp = 0.0f;
+            pixelTemp += Math.abs((int)pixelTemp);
         }
 
 //        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
@@ -557,7 +562,7 @@ public class SLPCHTTextObject {
     }
 
     protected void genQuadSegs() {
-        QuadGenerator qg = new QuadGenerator(mPcWidth, getEvenPcHeight(), mTexWidth, mWidth);
+        QuadGenerator qg = new QuadGenerator(MovingTextUtils.evenIt(mPcWidth), getEvenPcHeight(), mTexWidth, mWidth);
         final int repeatedQuadsSize = qg.getRepeatedQuadsSize();
         mQuadSegs = new QuadSegment[repeatedQuadsSize];
         for (int i = 0; i < repeatedQuadsSize; i++) {

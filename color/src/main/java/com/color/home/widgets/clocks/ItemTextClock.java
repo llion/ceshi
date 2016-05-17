@@ -113,7 +113,7 @@ public class ItemTextClock extends TextView {
      * 
      */
     public static final CharSequence DEFAULT_FORMAT_24_HOUR = "MM/dd/yy HH:mmaa";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private static final String TAG  = "ItemTextClock";
 
     private CharSequence mFormat12 = DEFAULT_FORMAT_12_HOUR;

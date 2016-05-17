@@ -33,7 +33,7 @@ import java.io.File;
 
 public class TextObject extends SLPCTextObject {
     private final static String TAG = "TextObject";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     private String mText = new String("Empty");
     private float mTextSize = 20;

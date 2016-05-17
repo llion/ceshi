@@ -76,8 +76,8 @@ public class QuadSegment {
         float quadCoords[] = {
                 bottomLeftX, bottomLeftY, 0,
                 bottomLeftX, bottomLeftY - textureSlideHeight, 0,
-                bottomLeftX + textureSlideWidth, bottomLeftY, 0,
-                bottomLeftX + textureSlideWidth, bottomLeftY - textureSlideHeight, 0
+                bottomLeftX + textureSlideWidth , bottomLeftY, 0,
+                bottomLeftX + textureSlideWidth , bottomLeftY - textureSlideHeight, 0
         };
 
         return quadCoords;

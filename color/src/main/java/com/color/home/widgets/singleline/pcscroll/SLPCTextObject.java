@@ -43,7 +43,7 @@ import java.nio.FloatBuffer;
 
 public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
-    static final boolean DBG = true;
+    static final boolean DBG = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -403,6 +403,12 @@ public class SLPCTextObject {
             Log.d(TAG, "pixelperframe: " + mPixelPerFrame);
 //        Matrix.translateM(mMMatrix, 0, -1.5f, 0.f, 0.f);
 
+        if(Math.abs(mPixelPerFrame) > 1.0f){
+            mPixelPerFrame = Math.round(mPixelPerFrame);
+        }
+        if(DBG)
+            Log.d(TAG, "pixelPerFrame :" + mPixelPerFrame);
+
         if(DBG)
             Log.d(TAG, "pixelTemp:" + pixelTemp);
 
@@ -410,7 +416,7 @@ public class SLPCTextObject {
 
         if(pixelTemp <= -1.0f) {
             Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
-            pixelTemp = 0.0f;
+            pixelTemp += Math.abs((int)pixelTemp);
         }
 
         if(DBG)

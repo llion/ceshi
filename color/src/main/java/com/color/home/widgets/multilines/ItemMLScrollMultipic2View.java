@@ -66,7 +66,7 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
 
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
 //        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
-        theTextObj.setPixelPerFrame(pixelPerFrame/2);
+        theTextObj.setPixelPerFrame(pixelPerFrame);
 
 
         // Total play length in milisec.

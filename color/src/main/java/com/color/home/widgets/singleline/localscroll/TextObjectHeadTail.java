@@ -15,6 +15,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
 
@@ -30,17 +31,34 @@ public class TextObjectHeadTail extends TextObject {
     protected void genQuadSegs() {
         if (DBG)
             Log.d(TAG, "genQuadSegs. [");
-        QuadGenerator qg = new QuadGenerator(mPcWidth, getPcHeight(), getTexDim(), mEvenedWidth);
+        QuadGenerator qg = new QuadGenerator(MovingTextUtils.evenIt(mPcWidth), getPcHeight(), getTexDim(), mEvenedWidth);
         final int repeatedQuadsSize = qg.getRepeatedQuadsSize();
         mQuadSegs = new QuadSegment[repeatedQuadsSize];
         for (int i = 0; i < repeatedQuadsSize; i++) {
             mQuadSegs[i] = qg.getQuad(i);
         }
     }
-    
+
+    private float pixelTemp = 0.0f;
     @Override
     public void render() {
-        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
+
+        if(Math.abs(mPixelPerFrame) > 1.0f){
+            mPixelPerFrame = Math.round(mPixelPerFrame);
+        }
+        if(DBG)
+            Log.d(TAG, "pixelPerFrame :" + mPixelPerFrame);
+
+        pixelTemp += mPixelPerFrame;
+
+        if(pixelTemp <= -1.0f) {
+            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
+            pixelTemp += Math.abs((int)pixelTemp);
+        }
+        if(DBG)
+            Log.d(TAG, "Head Tail matrix[12] : " + mMMatrix[12]);
+
+//        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
         final float overflow = mMMatrix[12] - (-mEvenedWidth - mPcWidth);
         if (overflow < 0) {
