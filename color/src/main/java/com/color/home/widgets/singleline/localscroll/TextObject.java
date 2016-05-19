@@ -30,6 +30,9 @@ import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class TextObject extends SLPCTextObject {
     private final static String TAG = "TextObject";
@@ -41,7 +44,10 @@ public class TextObject extends SLPCTextObject {
 
     public TextObject(Context context) {
         super(context, null);
+        mContext = context;
     }
+
+    private Context mContext;
 
     protected Paint mPaint = new Paint();
     protected int mLineHeight;
@@ -103,6 +109,10 @@ public class TextObject extends SLPCTextObject {
             if (DBG)
                 Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
         } else {
+            // Ensure that there is always room for a new .png
+
+            ensureTargetDirRoom();
+
             // Prepare bitmap canvas.
             if (DBG)
                 Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
@@ -147,6 +157,48 @@ public class TextObject extends SLPCTextObject {
             QuadGenerator.toPng(textureBm, new File("/mnt/sdcard/mul/" + getKeyImgId(0)));
         }
 
+    }
+
+    private void ensureTargetDirRoom()  {
+        File dataDir = new File("/data");
+        long freeSize = dataDir.getUsableSpace() / 1024 / 1024;
+        if(DBG) {
+            Log.d(TAG, "data dir size By java.io.File : " + freeSize + "M");
+        }
+
+        if(freeSize != 0 && freeSize < 50){
+            clearDir(mContext.getCacheDir());
+        }
+    }
+
+    public static void clearDir(File dir){
+        if(dir.exists()){
+            for(File f : dir.listFiles()){
+//                if(f.isDirectory())
+//                    clearDir(f);
+//                else {
+                    boolean delFlag = f.delete();
+                    if(DBG)
+                        Log.d(TAG, f.getName() + " del- " + delFlag);
+                    if(!delFlag){
+                        try {
+                            FileInputStream fi = new FileInputStream(f);
+                            fi.close();
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        f.delete();
+                    }
+//                }
+            }
+        }
+        if(DBG) {
+            File dataDir = new File("/data");
+            float freeSize = dataDir.getUsableSpace() / 1024 / 1024;
+            Log.d(TAG, "data dir available size after clearing : " + freeSize + "M");
+        }
     }
 
     private String getPngName() {
