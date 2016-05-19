@@ -1,18 +1,5 @@
 package com.color.home.program.sync;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -27,6 +14,19 @@ import com.color.home.android.providers.downloads.CLStorageManager;
 import com.color.home.android.providers.downloads.Downloads;
 import com.color.home.netplay.FilesInDownloadingDb;
 import com.google.common.primitives.Longs;
+
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class VsnSync extends SyncBase {
     final static String TAG = "VsnSync";
@@ -61,6 +61,14 @@ public class VsnSync extends SyncBase {
             Log.e(TAG, "parseAndDownloadAll", e);
         } catch (IOException e) {
             Log.e(TAG, "parseAndDownloadAll", e);
+        }finally {
+            if(in != null){
+                try{
+                    in.close();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
         }
         if (programs == null) {
             Log.e(TAG, "parse. [Program is null.");

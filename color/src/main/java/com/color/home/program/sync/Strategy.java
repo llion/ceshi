@@ -1,14 +1,13 @@
 package com.color.home.program.sync;
 
-import java.io.File;
-
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.SystemClock;
 import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.Constants;
+
+import java.io.File;
 
 public class Strategy {
     private final static String TAG = "Strategy";
@@ -78,6 +77,7 @@ public class Strategy {
                 if (!playNet()) {
                     Log.w(TAG, "playInternals. [No content in the device.");
                 }
+
     }
 
     public void onAllDownloaded() {
@@ -97,13 +97,14 @@ public class Strategy {
         if (DBG)
             Log.d(TAG, "onUsbSynced. [");
 
+        playSyncedUsb();
         // Do not play syned USB (Flash internal synced USB) content,
         // even when sync finished.
-        // if (!playSyncedUsb()) {
-        // if (DBG)
-        // Log.d(TAG, "onHandleIntent. [no synced usb, play net.");
-        // playNet();
-        // }
+//         if (!playSyncedUsb()) {
+//             if (DBG)
+//                 Log.d(TAG, "onHandleIntent. [no synced usb, play net.");
+//             playNet();
+//         }
     }
 
     public static String getPlayingVsn() {
