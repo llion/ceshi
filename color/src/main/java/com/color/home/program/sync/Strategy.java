@@ -76,8 +76,8 @@ public class Strategy {
             if (!playFtp())
                 if (!playNet()) {
                     Log.w(TAG, "playInternals. [No content in the device.");
+                    stopVsn();
                 }
-
     }
 
     public void onAllDownloaded() {
@@ -162,6 +162,13 @@ public class Strategy {
         }
 
         return false;
+    }
+
+    private void stopVsn(){
+        Intent intent = new Intent(Constants.ACTION_PLAY_PROGRAM);
+        intent.putExtra(Constants.EXTRA_PATH, "");
+        intent.putExtra(Constants.EXTRA_FILE_NAME, "");
+        AppController.getInstance().sendBroadcast(intent);
     }
 
     private static boolean playFtp() {

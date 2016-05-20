@@ -44,6 +44,7 @@ import java.nio.FloatBuffer;
 public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
     static final boolean DBG = false;
+    private static final boolean DBG_FPS = true;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -395,28 +396,38 @@ public class SLPCTextObject {
 
 
     private float pixelTemp = 0.0f;
+    public boolean mIsGreaterThanAPixelPerFrame = false;
     public void render() {
 //        if(DBG)
 //            Log.d(TAG, "singleline render");
         // // Add program to OpenGL environment
-        if(DBG)
-            Log.d(TAG, "pixelperframe: " + mPixelPerFrame);
-//        Matrix.translateM(mMMatrix, 0, -1.5f, 0.f, 0.f);
-
-        if(Math.abs(mPixelPerFrame) > 1.0f){
-            mPixelPerFrame = Math.round(mPixelPerFrame);
-        }
-        if(DBG)
-            Log.d(TAG, "pixelPerFrame :" + mPixelPerFrame);
-
-        if(DBG)
-            Log.d(TAG, "pixelTemp:" + pixelTemp);
-
-        pixelTemp += mPixelPerFrame;
-
-        if(pixelTemp <= -1.0f) {
-            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
-            pixelTemp += Math.abs((int)pixelTemp);
+//        if(DBG)
+//            Log.d(TAG, "pixelperframe: " + mPixelPerFrame);
+////        Matrix.translateM(mMMatrix, 0, -1.5f, 0.f, 0.f);
+//
+//        if(Math.abs(mPixelPerFrame) > 1.0f){
+//            mPixelPerFrame = Math.round(mPixelPerFrame);
+//        }
+//        if(DBG)
+//            Log.d(TAG, "pixelPerFrame :" + mPixelPerFrame);
+//
+//        if(DBG)
+//            Log.d(TAG, "pixelTemp:" + pixelTemp);
+//
+//        pixelTemp += mPixelPerFrame;
+//
+//        if(pixelTemp <= -1.0f) {
+//            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
+//            pixelTemp += Math.abs((int)pixelTemp);
+//        }
+        if (mIsGreaterThanAPixelPerFrame)
+            Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
+        else {
+            pixelTemp += mPixelPerFrame;
+            if(pixelTemp <= -1.0f) {
+                Matrix.translateM(mMMatrix, 0, -1.0f, 0.f, 0.f);
+                pixelTemp += 1;
+            }
         }
 
         if(DBG)
@@ -656,7 +667,14 @@ public class SLPCTextObject {
 
     public void setPixelPerFrame(float speedByFrame) {
         // moving left.
-        mPixelPerFrame = -speedByFrame;
+//        mPixelPerFrame = -speedByFrame;
+        if(speedByFrame >= 1.0f) {
+            mPixelPerFrame = Math.round(-speedByFrame);
+            mIsGreaterThanAPixelPerFrame = true;
+        }else {
+            mPixelPerFrame = -speedByFrame;
+            mIsGreaterThanAPixelPerFrame = false;
+        }
     }
 
     public void setRepeatCount(int repeatCount) {

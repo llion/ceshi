@@ -17,6 +17,7 @@ import android.graphics.Paint;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.color.home.AppController;
@@ -48,6 +49,7 @@ public class SLPCHTTextObject {
     private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
     private final static String TAG = "SLPCHTTextObject";
     private static final boolean DBG = false;
+    private static final boolean DBG_FPS = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -431,16 +433,45 @@ public class SLPCHTTextObject {
     }
 
     private float pixelTemp = 0.0f;
-    public void render() {
-        if(Math.abs(mPixelPerFrame) > 1.0f){
-            mPixelPerFrame = Math.round(mPixelPerFrame);
-        }
-        pixelTemp += mPixelPerFrame;
 
-        if(pixelTemp <= -1.0f) {
-            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
-            pixelTemp += Math.abs((int)pixelTemp);
+
+    private long mLastRealtime = 0L;
+
+    private boolean mIsGreaterThanAPixelPerFrame = false;
+
+    public void render() {
+        //if (false) {
+
+
+//            if(mPixelPerFrame < -1.0f){
+//                mPixelPerFrame = Math.round(mPixelPerFrame);
+//            }
+//            pixelTemp += mPixelPerFrame;
+//
+//            if(pixelTemp <= -1.0f) {
+//                Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
+//                pixelTemp += Math.abs((int)pixelTemp);
+//            }
+        //}
+        if (mIsGreaterThanAPixelPerFrame)
+            Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
+        else {
+            pixelTemp += mPixelPerFrame;
+            if(pixelTemp <= -1.0f) {
+                Matrix.translateM(mMMatrix, 0, -1.0f, 0.f, 0.f);
+                pixelTemp += 1;
+            }
         }
+
+
+        if (DBG_FPS) {
+
+            long now = SystemClock.elapsedRealtimeNanos();
+            Log.d(TAG, "Interval=" + (now - mLastRealtime) + ", pos=" + mMMatrix[12]);
+            mLastRealtime = now;
+        }
+
+        // Matrix.translateM(mMMatrix, 0, -1.0f, 0.f, 0.f);
 
 //        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
@@ -667,7 +698,13 @@ public class SLPCHTTextObject {
         if (DBG)
             Log.d(TAG, "setPixelPerFrame. [speedByFrame=" + speedByFrame);
         // moving left.
-        mPixelPerFrame = -speedByFrame;
+        if(speedByFrame >= 1.0f) {
+            mPixelPerFrame = Math.round(-speedByFrame);
+            mIsGreaterThanAPixelPerFrame = true;
+        }else {
+            mPixelPerFrame = -speedByFrame;
+            mIsGreaterThanAPixelPerFrame = false;
+        }
     }
 
     public void setRepeatCount(int repeatCount) {

@@ -30,11 +30,9 @@ android {
 
     productFlavors {
         resolution_independent {
-            versionCode 1041
-            versionName "1.13"
-
+            versionCode 1046
+            versionName "1.16"
         }
-
     }
 
     buildTypes {

@@ -267,22 +267,29 @@ public class MultiPicScrollObject {
 
 
     private float pixelTemp = 0.0f;
+    private boolean mIsGreaterThanAPixelPerFrame = false;
     public void render() {
         float[] modelMat = mMMatrix;
         // // Add program to OpenGL environment
-        if(Math.abs(mPixelPerFrame) > 1.0f){
-            mPixelPerFrame = Math.round(mPixelPerFrame);
-        }
-        pixelTemp += mPixelPerFrame;
+//        if(Math.abs(mPixelPerFrame) > 1.0f){
+//            mPixelPerFrame = Math.round(mPixelPerFrame);
+//        }
+//        pixelTemp += mPixelPerFrame;
         //mPixelPerFrame < 0
-        if(DBG)
-            Log.d(TAG, "pixelPerFrame: " + mPixelPerFrame);
-        if(DBG)
-            Log.d(TAG, "pixelTemp:" + pixelTemp);
-        if(pixelTemp <= -1.0f) {
-            Matrix.translateM(modelMat, 0, 0.f, -(int)pixelTemp, 0.f);
-            pixelTemp += Math.abs((int)pixelTemp);
+//        if(pixelTemp <= -1.0f) {
+//            Matrix.translateM(modelMat, 0, 0.f, -(int)pixelTemp, 0.f);
+//            pixelTemp += Math.abs((int)pixelTemp);
+//        }
+        if (mIsGreaterThanAPixelPerFrame)
+            Matrix.translateM(modelMat, 0, 0.f, mPixelPerFrame, 0.f);
+        else {
+            pixelTemp += mPixelPerFrame;
+            if(pixelTemp >= 1.0f) {
+                Matrix.translateM(modelMat, 0, 0.f, 1.0f, 0.f);
+                pixelTemp -= 1;
+            }
         }
+
 
         //        Matrix.translateM(modelMat, 0, 0.f, -mPixelPerFrame, 0.f);
 
@@ -850,7 +857,14 @@ public class MultiPicScrollObject {
 
     public void setPixelPerFrame(float speedByFrame) {
         // moving left.
-        mPixelPerFrame = -speedByFrame;
+//        mPixelPerFrame = -speedByFrame;
+        if(speedByFrame >= 1.0f) {
+            mPixelPerFrame = Math.round(speedByFrame);
+            mIsGreaterThanAPixelPerFrame = true;
+        }else {
+            mPixelPerFrame = speedByFrame;
+            mIsGreaterThanAPixelPerFrame = false;
+        }
     }
 
     public void setRepeatCount(int repeatCount) {

@@ -43,20 +43,31 @@ public class TextObjectHeadTail extends TextObject {
     @Override
     public void render() {
 
-        if(Math.abs(mPixelPerFrame) > 1.0f){
-            mPixelPerFrame = Math.round(mPixelPerFrame);
+        if (mIsGreaterThanAPixelPerFrame)
+            Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
+        else {
+            pixelTemp += mPixelPerFrame;
+            if(pixelTemp <= -1.0f) {
+                Matrix.translateM(mMMatrix, 0, -1.0f, 0.f, 0.f);
+                pixelTemp += 1;
+            }
         }
-        if(DBG)
-            Log.d(TAG, "pixelPerFrame :" + mPixelPerFrame);
 
-        pixelTemp += mPixelPerFrame;
-
-        if(pixelTemp <= -1.0f) {
-            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
-            pixelTemp += Math.abs((int)pixelTemp);
-        }
-        if(DBG)
-            Log.d(TAG, "Head Tail matrix[12] : " + mMMatrix[12]);
+//
+//        if(Math.abs(mPixelPerFrame) > 1.0f){
+//            mPixelPerFrame = Math.round(mPixelPerFrame);
+//        }
+//        if(DBG)
+//            Log.d(TAG, "pixelPerFrame :" + mPixelPerFrame);
+//
+//        pixelTemp += mPixelPerFrame;
+//
+//        if(pixelTemp <= -1.0f) {
+//            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
+//            pixelTemp += Math.abs((int)pixelTemp);
+//        }
+//        if(DBG)
+//            Log.d(TAG, "Head Tail matrix[12] : " + mMMatrix[12]);
 
 //        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
