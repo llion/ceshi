@@ -26,20 +26,20 @@ public class QuadGenerator {
 //    public static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
 
     public QuadGenerator(int pcWidth, int pcHeight, int texWidth, int itemWidth) {
-        mPcWidth = pcWidth;
+        mPcWidth = pcWidth; //maybe an uneven number
         mPcHeight = pcHeight;
         mTexWidth = texWidth;
         mItemWidth = itemWidth;
 
         final int widthRemaining = mPcWidth % mTexWidth;
         mWholeTexQuadsCount = mPcWidth / mTexWidth + (widthRemaining == 0 ? 0 : 1);
-        mLastQuadWidth = (widthRemaining == 0 ? mTexWidth : widthRemaining);
+        mLastQuadWidth = (widthRemaining == 0 ? mTexWidth : widthRemaining );
 
         final float askingForModelWholeWidth = mPcWidth + mItemWidth + 2.0f;
         // final float askingForModelWholeWidth = Math.max(mTotalTextWidth, mWidth) + Math.min(mTotalTextWidth, mWidth) + 2.0f;
         if (DBG)
-            Log.d(TAG, "initShapes. [askingForModelWholeWidth=" + askingForModelWholeWidth + ", mPcWidth" + mPcWidth
-                    + ", mItemWidth=" + mItemWidth);
+            Log.d(TAG, "initShapes. [askingForModelWholeWidth=" + askingForModelWholeWidth + ", mPcWidth=" + mPcWidth
+                    + ", mItemWidth=" + mItemWidth + ", mTexWidth=" + mTexWidth + ", mLastQuadWidth=" + mLastQuadWidth);
 
         int repeat = (int) askingForModelWholeWidth / (int) mPcWidth; // At least 1.
         repeat++;

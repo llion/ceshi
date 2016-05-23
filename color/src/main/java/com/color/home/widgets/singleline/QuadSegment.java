@@ -23,7 +23,7 @@ public class QuadSegment {
         mLeftInTex = leftInTex;
         
 
-        mQuadWidth = MovingTextUtils.evenIt(quadWidth);
+        mQuadWidth = quadWidth;
         mQuadHeight = MovingTextUtils.evenIt(quadHeight);
 
         if (DBG)

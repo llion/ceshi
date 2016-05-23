@@ -15,7 +15,6 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
 
@@ -31,7 +30,7 @@ public class TextObjectHeadTail extends TextObject {
     protected void genQuadSegs() {
         if (DBG)
             Log.d(TAG, "genQuadSegs. [");
-        QuadGenerator qg = new QuadGenerator(MovingTextUtils.evenIt(mPcWidth), getPcHeight(), getTexDim(), mEvenedWidth);
+        QuadGenerator qg = new QuadGenerator(mPcWidth, getPcHeight(), getTexDim(), mEvenedWidth);
         final int repeatedQuadsSize = qg.getRepeatedQuadsSize();
         mQuadSegs = new QuadSegment[repeatedQuadsSize];
         for (int i = 0; i < repeatedQuadsSize; i++) {
@@ -53,6 +52,10 @@ public class TextObjectHeadTail extends TextObject {
             }
         }
 
+        if(DBG) {
+            Log.d(TAG, "matrix[12] = " + mMMatrix[12]);
+            Log.d(TAG, "pixelTemp = " + pixelTemp);
+        }
 //
 //        if(Math.abs(mPixelPerFrame) > 1.0f){
 //            mPixelPerFrame = Math.round(mPixelPerFrame);

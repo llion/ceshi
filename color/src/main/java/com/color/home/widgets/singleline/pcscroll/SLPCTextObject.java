@@ -44,7 +44,7 @@ import java.nio.FloatBuffer;
 public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
     static final boolean DBG = false;
-    private static final boolean DBG_FPS = true;
+    private static final boolean DBG_FPS = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -95,8 +95,12 @@ public class SLPCTextObject {
     private int mPcHeight;
     
     protected int mEvenPcHeight;
+    protected int mEvenPcWidth;
     private int getEvenPcHeight() {
         return mEvenPcHeight;
+    }
+    private int getEvenPcWidth() {
+        return mEvenPcWidth;
     }
 
     private int mTexDim = -1;
@@ -137,7 +141,7 @@ public class SLPCTextObject {
         if (texFromMemCache == null)
             prepareTexture();
         else {
-            mPcWidth = texFromMemCache.mSingleLineWidth;
+            setPcWidth(texFromMemCache.mSingleLineWidth);
             setPcHeight(texFromMemCache.mSingleLineHeight);
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
         }
@@ -286,7 +290,7 @@ public class SLPCTextObject {
             
             if (DBG)
                 Log.i(TAG, "drawCanvasToTexture. [position=" + bb.position());
-            mPcWidth = bb.getInt();
+            setPcWidth(bb.getInt());
             setPcHeight(bb.getInt());
             // In case the pc width or height is set too late.
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
@@ -748,6 +752,11 @@ public class SLPCTextObject {
     protected void setPcHeight(int pcHeight) {
         mPcHeight = pcHeight;
         mEvenPcHeight = MovingTextUtils.evenIt(pcHeight);
+    }
+
+    protected void setPcWidth(int pcWidth) {
+        mPcWidth = pcWidth;
+        mEvenPcWidth = MovingTextUtils.evenIt(pcWidth);
     }
 
 }

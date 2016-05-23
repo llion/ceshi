@@ -95,6 +95,7 @@ public class SLPCHTTextObject {
     private int mPcWidth;
     private int mPcHeight;
     private int mEvenPcHeight;
+    private int mEvenPcWidth;
     
     private int mTexWidth;
     private int mTexHeight;
@@ -200,6 +201,10 @@ public class SLPCHTTextObject {
         return mEvenPcHeight;
     }
 
+    private int getEvenPcWidth() {
+        return mEvenPcWidth;
+    }
+
     private void genTexs() {
 
         if (DBG)
@@ -282,8 +287,9 @@ public class SLPCHTTextObject {
             mPcWidth = bb.getInt();
             mPcHeight = bb.getInt();
             setNormarizedEvenPcHeight(MovingTextUtils.evenIt(mPcHeight));
+            setNormarizedEvenPcWidth(MovingTextUtils.evenIt(mPcWidth));
 
-            final int closePOT = QuadGenerator.findClosestPOT(MovingTextUtils.evenIt(mPcWidth), getEvenPcHeight());
+            final int closePOT = QuadGenerator.findClosestPOT(getEvenPcWidth(), getEvenPcHeight());
             if (DBG)
                 Log.d(TAG, "normalizTexToMemCache. [pcWidth=" + mPcWidth + ", pcHeight=" + mPcHeight + ", closePOT=" + closePOT
                         + ", square=" + closePOT * closePOT
@@ -463,6 +469,10 @@ public class SLPCHTTextObject {
             }
         }
 
+        if(DBG) {
+            Log.d(TAG, "matrix[12] = " + mMMatrix[12]);
+            Log.d(TAG, "pixelTemp = " + pixelTemp);
+        }
 
         if (DBG_FPS) {
 
@@ -593,7 +603,7 @@ public class SLPCHTTextObject {
     }
 
     protected void genQuadSegs() {
-        QuadGenerator qg = new QuadGenerator(MovingTextUtils.evenIt(mPcWidth), getEvenPcHeight(), mTexWidth, mWidth);
+        QuadGenerator qg = new QuadGenerator(mPcWidth, getEvenPcHeight(), mTexWidth, mWidth);
         final int repeatedQuadsSize = qg.getRepeatedQuadsSize();
         mQuadSegs = new QuadSegment[repeatedQuadsSize];
         for (int i = 0; i < repeatedQuadsSize; i++) {
@@ -725,4 +735,7 @@ public class SLPCHTTextObject {
         mEvenPcHeight = evenPcHeight;
     }
 
+    private void setNormarizedEvenPcWidth(int evenPcWidth) {
+        mEvenPcWidth = evenPcWidth;
+    }
 }
