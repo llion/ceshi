@@ -44,7 +44,7 @@ public class MultiPicScrollObject {
     private static final boolean DBG = false;
     private static final boolean PNG_DBG = false;
     // private static final String MNT_SDCARD_PNGS = "/mnt/sdcard/pngs";
-    private static final int MAX_TEXTURE_WIDTH_HEIGHT = 2048;
+    private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
     /**
      * Must be >= 2. Because there could be two quads w/ different texs.
      */
