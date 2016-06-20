@@ -34,14 +34,19 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     // never public, so that another class won't be messed up.
     private final static String TAG = "RegionView";
     private static final boolean DBG = false;
+    private static final int[] sTypes = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+            23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
+            42, 43, 44, 45, 46, 47, 48};
 
-    private static final int[] sAnimationTypes = { 20, 21, 22, 23, 24, 25, 26, 27, 31, 38, 39, 40, 41, 42 };
 
     private Region mRegion;
     private PageView mPageView;
 
     private ShapeDrawable mDrawable;
     private ItemsAdapter mItemsAdapter;
+
+    //
+    private int mRealAnimationType = 0;
 
     Random mRand = new Random();
 
@@ -76,6 +81,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     public RegionView(Context context, AttributeSet attrs) {
         super(context, attrs);
+    }
+
+    public RegionView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
     }
 
     /**
@@ -115,6 +124,9 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         setupRegionLayout();
     }
 
+    public int getmRealAnimationType(){
+        return mRealAnimationType;
+    }
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -134,15 +146,18 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 //        removeCallbacks(this);
     }
 
-    private void setupAppearingTransition(LayoutTransition transition) {
+    private void setupAppearingTransition(LayoutTransition transition, long duration) {
         transition.setAnimator(LayoutTransition.APPEARING, mCustomAppearingAnim);
+        transition.setDuration(LayoutTransition.APPEARING, duration);
+        //transition.setInterpolator(LayoutTransition.APPEARING, new LinearInterpolator());
         if (DBG)
             new Exception().printStackTrace();
 
         if (DBG)
             Log.d(TAG, "setupAppearingTransition. [mCustomAppearingAnim=" + mCustomAppearingAnim
                     + ", this=" + this
-                    + ", transition=" + transition);
+                    + ", transition=" + transition
+                    + ", duration=" + duration);
     }
 
     @Override
@@ -175,6 +190,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (mRegion.items.size() > 0) {
             if (DBG)
                 Log.i(TAG, "setupItems. [");
+
             setAdapter(new ItemsAdapter(getContext(), mRegion.items, mRegion, this));
         } else {
             Log.e(TAG, "setupItems. [XNo item.");
@@ -380,6 +396,11 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         // then remove the first one (though the content is identical).
         // This results in a transition animation one the only(same) item content.
         // This is what the user would like to have.
+        // Random.
+        Item item = mRegion.items.get(mDisplayedChild);
+
+        mRealAnimationType = getRealAnimationType(item);
+
         View view = getAdapter().getView(mDisplayedChild, null, null);
         if (DBG)
             Log.i(TAG, "setDisplayedChild., new view=" + view + ", Thread=" + Thread.currentThread()
@@ -400,21 +421,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             noAnimation = true;
         }
 
-        Item item = mRegion.items.get(mDisplayedChild);
-        int type = 0; // default to no animation.
-        if (item.ineffect != null && !TextUtils.isEmpty(item.ineffect.Type)) {
-            try {
-                type = Integer.parseInt(item.ineffect.Type);
-            } catch (Exception e) {
-                // Do nothing, as we donnot care.
-            }
-
-        }
-
-        if (!noAnimation && type != 0 && !"1".equals(item.isscroll)) {
+        if (!noAnimation && mRealAnimationType != 0 && !"1".equals(item.isscroll)) {
             if (DBG)
-                Log.d(TAG, "setDisplayedChild. [type=" + type);
-            mCustomAppearingAnim = getAnimationFor(type, item);
+                Log.d(TAG, "setDisplayedChild. [mRealAnimationType=" + mRealAnimationType);
+            mCustomAppearingAnim = getAnimationFor(mRealAnimationType, item);
             if (mCustomAppearingAnim != null) {
                 // mCustomAppearingAnim.setStartDelay(0L);
                 if (DBG)
@@ -425,7 +435,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                         // If there is only one item, the remove old view will remove this item, which
                         // results in empty content.
                         if (DBG)
-                            Log.d(TAG, "onAnimationEnd. [animation=" + animation);
+                            Log.d("addListener", "onAnimationEnd. [animation=" + animation);
 
                         // MUST not remove the view in this handler, otherwise STACKOVERFLOW.!!!
                         // removeOldView();
@@ -454,7 +464,18 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 Log.d(TAG, "setDisplayedChild. [No animation, view=" + view);
         }
 
-        setupAppearingTransition(getLayoutTransition());
+        // long duration = Long.parseLong(item.outeffect.Time);
+        long duration = 500L;
+        try {
+            duration = Long.parseLong(item.ineffect.Time);
+        } catch (Exception e) {
+            e.printStackTrace();;
+        }
+
+        if (DBG)
+            Log.i(TAG, "getAnimationFor. duration=" + duration);
+
+        setupAppearingTransition(getLayoutTransition(), duration);
 
         addView(view);
 
@@ -468,83 +489,105 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.d(TAG, "setDisplayedChild. [add view=" + view);
-
     }
 
-    private ValueAnimator getAnimationFor(int type, Item item) {
-        // long duration = Long.parseLong(item.outeffect.Time);
-        long duration = 500L;
-        if (item.ineffect != null) {
+    private int getRealAnimationType(Item item) {
+        int type = 0;
+        int realAnimType = 0;
+
+        if (item.ineffect != null && !TextUtils.isEmpty(item.ineffect.Type)) {
             try {
-                duration = Long.parseLong(item.ineffect.Time);
+                type = Integer.parseInt(item.ineffect.Type);
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
         }
 
-
-        if (DBG)
-            Log.i(TAG, "getAnimationFor. using ineffect's duration=" + duration);
-
-        PropertyValuesHolder left2Right = PropertyValuesHolder.ofFloat("translationX", -getRegionWidth(), 0f);
-        PropertyValuesHolder right2Left = PropertyValuesHolder.ofFloat("translationX", getRegionWidth(), 0f);
-        PropertyValuesHolder up2Down = PropertyValuesHolder.ofFloat("translationY", -getRegionHeight(), 0f);
-        PropertyValuesHolder down2Up = PropertyValuesHolder.ofFloat("translationY", getRegionHeight(), 0f);
-        // final ObjectAnimator changeIn =
-        // ObjectAnimator.ofPropertyValuesHolder(
-        // this, pvhLeft, pvhTop, pvhRight, pvhBottom);
-        PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat("scaleX", 0f, 1f);
-        PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat("scaleY", 0f, 1f);
-
-        // Random.
         if (type == 1) {
             // type = mRand.nextInt((48 - 2) + 1) + 2;
-            type = sAnimationTypes[mRand.nextInt(sAnimationTypes.length)];
-            if (DBG) {
-                Log.d(TAG, "getAnimationFor. [animation random type=" + type);
+            realAnimType = sTypes[mRand.nextInt(sTypes.length)];
+        } else {
+            realAnimType = type;
+        }
+        if (DBG) {
+            Log.d(TAG, "setDisplayedChild.... type=" + type + ", realAnimType=" + realAnimType);
+        }
+
+        return realAnimType;
+    }
+
+    private ValueAnimator getAnimationFor(final int animationType, Item item) {//
+        ValueAnimator customAppearingAnim = null;
+
+        if (DBG) {
+            Log.d(TAG, "getAnimationFor.... animationType=" + animationType);
+        }
+
+        if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6 || animationType == 7 || animationType == 8
+                  || animationType == 9 || animationType == 10 || animationType == 11 ||animationType == 12 ||animationType == 13 || animationType == 14
+                  || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18 || animationType == 19 || animationType == 28
+                  || animationType == 29 || animationType == 30 || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
+                  || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44 || animationType == 45 || animationType == 46
+                  || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或上下闭合或旋转或中间四周
+            if (DBG)
+                Log.i(TAG, " animationType = "+animationType);
+
+            customAppearingAnim = ObjectAnimator.ofFloat(null, "switchingPercent", 0.0f, 1.0f);//switchingPercent即SwitchableImageView中的一个变量名
+
+        } else {
+            PropertyValuesHolder left2Right = PropertyValuesHolder.ofFloat("translationX", -getRegionWidth(), 0f);
+            PropertyValuesHolder right2Left = PropertyValuesHolder.ofFloat("translationX", getRegionWidth(), 0f);
+            PropertyValuesHolder up2Down = PropertyValuesHolder.ofFloat("translationY", -getRegionHeight(), 0f);
+            PropertyValuesHolder down2Up = PropertyValuesHolder.ofFloat("translationY", getRegionHeight(), 0f);
+            // final ObjectAnimator changeIn =
+            // ObjectAnimator.ofPropertyValuesHolder(
+            // this, pvhLeft, pvhTop, pvhRight, pvhBottom);
+            PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat("scaleX", 0f, 1f);
+            PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat("scaleY", 0f, 1f);
+
+            if (animationType == 20) {
+                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", getRegionHeight(), 0f);
+            } else if (animationType == 21) {
+                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", -getRegionHeight(), 0f);
+            } else if (animationType == 22) {
+                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationX", getRegionWidth(), 0f);
+            } else if (animationType == 23) {
+                // Must set this.
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right);
+                // Diag.
+            } else if (animationType == 24) {
+
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, right2Left, down2Up);
+            } else if (animationType == 25) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right, down2Up);
+            } else if (animationType == 26) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, right2Left, up2Down);
+            } else if (animationType == 27) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right, up2Down);
+            } else if (animationType == 31) {
+                PropertyValuesHolder fadeIn = PropertyValuesHolder.ofFloat("alpha", 0f, 1f);
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, fadeIn);
+            } else if (animationType == 38) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY);
+            } else if (animationType == 39) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, right2Left, down2Up);
+            } else if (animationType == 40) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, left2Right, down2Up);
+            } else if (animationType == 42) { // invert 42 / 41 according to the test.
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, right2Left, up2Down);
+            } else if (animationType == 41) {
+                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, left2Right, up2Down);
             }
         }
 
-        ValueAnimator customAppearingAnim = null;
-        if (type == 20) {
-            customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", getRegionHeight(), 0f);
-        } else if (type == 21) {
-            customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", -getRegionHeight(), 0f);
-        } else if (type == 22) {
-            customAppearingAnim = ObjectAnimator.ofFloat(null, "translationX", getRegionWidth(), 0f);
-        } else if (type == 23) {
-            // Must set this.
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right);
-            // Diag.
-        } else if (type == 24) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, right2Left, down2Up);
-        } else if (type == 25) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right, down2Up);
-        } else if (type == 26) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, right2Left, up2Down);
-        } else if (type == 27) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right, up2Down);
-        } else if (type == 31) {
-            PropertyValuesHolder fadeIn = PropertyValuesHolder.ofFloat("alpha", 0f, 1f);
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, fadeIn);
-        } else if (type == 38) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY);
-        } else if (type == 39) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, right2Left, down2Up);
-        } else if (type == 40) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, left2Right, down2Up);
-        } else if (type == 42) { // invert 42 / 41 according to the test.
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, right2Left, up2Down);
-        } else if (type == 41) {
-            customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, scaleX, scaleY, left2Right, up2Down);
-        }
 
-        if (customAppearingAnim != null) {
-            if (DBG)
-                Log.i(TAG, "getAnimationFor. customAppearingAnim duration=" + duration);
-            customAppearingAnim.setDuration(duration);
-        }
+//        if (customAppearingAnim != null) {
+//            if (DBG)
+//                Log.i(TAG, "getAnimationFor. customAppearingAnim duration=" + duration+"animationType="+animationType);
+//            customAppearingAnim.setDuration(duration);
+//
+//        }
 
         return customAppearingAnim;
     }
@@ -559,14 +602,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
         if (DBG)
-            Log.i(TAG, "onDraw. canvas");
+            Log.i(TAG, "onDraw. canvas type="+ mRealAnimationType);
 
         if (mDrawable != null)
             mDrawable.draw(canvas);
     }
 
     /*
-     * MSUT BE RUN FROM UI THREAD!!!!
+     * MUST BE RUN FROM UI THREAD!!!!
      */
     @Override
     public void notifyOnAllPlayed() {

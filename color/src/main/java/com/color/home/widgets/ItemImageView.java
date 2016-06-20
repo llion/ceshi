@@ -21,7 +21,7 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
     private Item mItem;
     private String mFilePath;
     private Bitmap mBitmap;
-    private Region mRegion;
+    public Region mRegion;//....
 
     // private static BitmapFactory.Options sPurgeOption = new
     // BitmapFactory.Options();
@@ -61,21 +61,39 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
         // TODO Auto-generated constructor stub
     }
 
+    public int mFinalAnimationType = 2;
+
     public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
         this.mItem = item;
-
         mFilePath = item.getAbsFilePath();
-        int width = Integer.parseInt(mRegion.rect.width);
-        int height = Integer.parseInt(mRegion.rect.height);
-        mDuration = Integer.parseInt(mItem.duration);
+        int width = 128;
+        int height = 128;
 
-        setAlpha(Float.parseFloat(item.alhpa));
-        if ("1".equals(item.reserveAS)) {
+        try {
+            width = Integer.parseInt(mRegion.rect.width);
+            height = Integer.parseInt(mRegion.rect.height);
+            mDuration = Integer.parseInt(mItem.duration) + Integer.parseInt(mItem.ineffect.Time) + Integer.parseInt(mItem.outeffect.Time);
+            setAlpha(Float.parseFloat(item.alhpa));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (DBG)
+            Log.i(TAG, "----------alpha    =" +item.alhpa);
+        //setAlpha(Float.parseFloat(item.alhpa));
+
+
+
+        if ("1".equals(item.reserveAS)) {//
             setScaleType(ScaleType.CENTER_INSIDE);
         } else {
             setScaleType(ScaleType.FIT_XY);
         }
+        if (DBG)
+            Log.i("rotation", "-----------goto rotation    =" );
+        //setRotationX(100.f);
         // out = Integer.parseInt(mItem.outeffect.Time);
         // ineffect = Integer.parseInt(mItem.ineffect.Time);
         loadBitmap(width, height);
@@ -103,7 +121,6 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
 
             // Bitmap decodeFile = decodeImagePurgeOnly(file);
             Bitmap decodeFile = getArtworkQuick(info.file, info.width, info.height);
-
             return decodeFile;
         }
 
@@ -128,21 +145,17 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
         if (DBG)
             Log.i(TAG, "onAttachedToWindow. image = " + mItem.filesource.filepath);
 
-        if (mRunnable != null) {
-            removeCallbacks(mRunnable);
-        }
-
         mRunnable = new Runnable() {
 
             @Override
             public void run() {
                 if (DBG)
-                    Log.i(TAG, "run. img duration up = " + mItem.filesource.filepath);
+                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath+"    mduration======="+mDuration);
 
                 tellListener();
             }
         };
-        postDelayed(mRunnable, mDuration);
+        postDelayed(mRunnable, mDuration);//进场 + 停留 + 出场
     }
 
     @Override
@@ -219,10 +232,12 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
 
     public void setRegion(Region mRegion) {
         this.mRegion = mRegion;
+        if (DBG)
+            Log.d(TAG, "setRegion");
     }
 
     private OnPlayFinishedListener mListener;
-    private int mDuration;
+    private int mDuration = 500;
     private Runnable mRunnable;
 
     @Override
@@ -242,5 +257,8 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
             mListener.onPlayFinished(this);
         }
     }
+
+    //
+
 
 }
