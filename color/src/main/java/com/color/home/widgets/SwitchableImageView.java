@@ -104,7 +104,8 @@ public class SwitchableImageView extends ItemImageView {
 				if (thiz.switchingPercent >= 1.0f) {
 					return;
 				}
-				float h = canvas.getHeight() / 10.f;
+				//float h = canvas.getHeight() / 10.f;
+                float h = getShadesCellSize(canvas.getHeight());
 				int dh ;
 					dh = (int)(h * (1 - thiz.switchingPercent ));
                     if (DBG){
@@ -130,7 +131,8 @@ public class SwitchableImageView extends ItemImageView {
 				if (thiz.switchingPercent >= 1.0f) {
 					return;
 				}
-				float w = canvas.getWidth() / 10.f;
+				//float w = canvas.getWidth() / 10.f;
+                float w = getShadesCellSize(canvas.getWidth());
 				int dw;
 				dw = (int)(w * (1 - thiz.switchingPercent ));
 				for (int i=0; i<10; i++) {
@@ -154,12 +156,19 @@ public class SwitchableImageView extends ItemImageView {
                     return;
                 }else{
                     int h = canvas.getHeight() ;
-                    int dh;
+					int w=canvas.getWidth();
+					if (DBG)
+						Log.d(TAG,"canvas.getHeight()="+h+"   canvas.getWidth()="+w);
+
+
+					int dh;
                     dh = (int)(h * (1 - thiz.switchingPercent));
                     canvas.drawRect(0, h/2 - dh/2, canvas.getWidth(), h/2 + dh/2, CLEARING_PAINT);
+//					if (DBG)
+//						Log.d(TAG,"left_top = ( 0,"+( h/2 - dh/2 )+"   right_bottom = ("+);
 
                     if (DBG){
-                        Log.d(TAG," SwitchingStyle..UPDOWNCLOSE_STYLE..dh="+dh);
+                        Log.d(TAG," SwitchingStyle..UPDOWNCLOSE_STYLE..dh = "+dh);
                     }
                 }
 
@@ -810,6 +819,7 @@ public class SwitchableImageView extends ItemImageView {
             }
         },
         RIGHT_TOP_LINE_STYLE {//右上角覆盖--直线
+
             @Override
             protected void switchingPercentChanged(SwitchableImageView thiz) {
                 if (thiz.switchingPercent >= 1.0f) {
@@ -819,6 +829,8 @@ public class SwitchableImageView extends ItemImageView {
 
             @Override
             protected void onDraw(SwitchableImageView thiz, Canvas canvas) {
+
+
                 if (thiz.switchingPercent>=1.0f){
                     return;
                 }
@@ -829,11 +841,14 @@ public class SwitchableImageView extends ItemImageView {
                 canvas.save();
                 if (switchingPercent<1.0f){
                     int h = canvas.getHeight() ;
-                    int w=canvas.getWidth();
+                    int w = canvas.getWidth();
+					if (DBG)
+						Log.d(TAG,"canvas.getHeight()="+h+"   canvas.getWidth()="+w);
+
                     int dh,dw;
                     dh = (int)(h * switchingPercent);
                     dw = (int)(w * switchingPercent);
-                    Rect rect=new Rect((w - dw),0,dw,dh);
+                    Rect rect=new Rect((w - dw),0,w,dh);
                     canvas.clipRect(rect);
                 }
             }
@@ -982,8 +997,19 @@ public class SwitchableImageView extends ItemImageView {
 		}
 	}
     //设置百叶窗每格宽度
-    public static float setShadesCellWidth(int canvasHeight){
-        float height=0.f;
+    public static int getShadesCellSize(int totalSize){
+        int height ;
+        if (totalSize <= 64){
+            height = 10;
+        }else if (totalSize <= 128){
+            height = 40;
+        }else if (totalSize <= 512){
+            height = 60;
+        }else if (totalSize <= 1280){
+            height = 80;
+        }else{
+            height = 100;
+        }
 
         return height;
     }
