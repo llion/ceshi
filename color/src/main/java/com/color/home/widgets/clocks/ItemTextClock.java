@@ -552,15 +552,15 @@ public class ItemTextClock extends TextView {
             format = format + "ss";
         }
 
-        boolean hasAMPM = false;
-        if ((mFlag & FLAG_AMPM) == FLAG_AMPM && (mFlag & HOURS_24) != HOURS_24) {
-            hasAMPM = true;
-            if (hasHour || hasMin || hasSec) {
-                format = format + " ";
-            }
-
-            format = format + "AA";
-        }
+//        boolean hasAMPM = false;
+//        if ((mFlag & FLAG_AMPM) == FLAG_AMPM && (mFlag & HOURS_24) != HOURS_24) {
+//            hasAMPM = true;
+//            if (hasHour || hasMin || hasSec) {
+//                format = format + " ";
+//            }
+//
+//            format = format + "AA";
+//        }
 
         if(DBG)
             Log.d(TAG, "date Format generate : " + format );
