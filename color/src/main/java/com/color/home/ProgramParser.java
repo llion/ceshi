@@ -247,7 +247,6 @@ public class ProgramParser {
 
     public static class Item implements ResourceCollectable {
         private Texts mTexts;
-
         public String id;
         public String name;
         public String type;
@@ -314,6 +313,7 @@ public class ProgramParser {
         public String longitud;
         public String latitude;
         public String timezone;
+        public String zoneDescripId;
         public String language;
         public String useproxy;
         public String proxyserver;
@@ -324,8 +324,10 @@ public class ProgramParser {
         public String showstyle;
         public String isAnalog;
         public DigitalClock digitalClock;
+        public AnologClock anologClock;
+        public HhourScale hhourScale;
+        public MinuteScale minuteScale;
         public String invertClr;
-
         public ProgramParser mPp;
 
         public Item(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring,
@@ -338,8 +340,9 @@ public class ProgramParser {
                 String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix,
                 String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex,
                 String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity,
-                String longitud, String latitude, String timezone, String language, String useproxy, String proxyserver, String proxyport,
+                String longitud, String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport,
                 String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock,
+                AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale,
                 ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
             super();
             this.mPp = pp;
@@ -409,6 +412,7 @@ public class ProgramParser {
             this.longitud = longitud;
             this.latitude = latitude;
             this.timezone = timezone;
+            this.zoneDescripId = zoneDescripId;
             this.language = language;
             this.useproxy = useproxy;
             this.proxyserver = proxyserver;
@@ -419,6 +423,9 @@ public class ProgramParser {
             this.showstyle = showstyle;
             this.isAnalog = isAnalog;
             this.digitalClock = digitalClock;
+            this.anologClock = anologClock;
+            this.hhourScale = hhourScale;
+            this.minuteScale = minuteScale;
             this.scrollpicinfo = scrollpicinfo;
             this.invertClr = invertClr;
 
@@ -503,8 +510,8 @@ public class ProgramParser {
 
         private final boolean isSeekable;
 
-        public VideoItem(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, LogFont logfont, String text, String textColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
-            super(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont, text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, pp);
+        public VideoItem(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, LogFont logfont, String text, String textColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
+            super(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont, text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, pp);
 
              isSeekable = checkSeekable();
         }
@@ -1199,6 +1206,7 @@ public class ProgramParser {
         String longitud = null;
         String latitude = null;
         String timezone = null;
+        String zoneDescripId = null;
         String language = null;
         String useproxy = null;
         String proxyserver = null;
@@ -1210,6 +1218,9 @@ public class ProgramParser {
         String url = null;
         String isAnalog = null;
         DigitalClock digitalClock = null;
+        AnologClock anologClock = null;
+        HhourScale hhourScale = null;
+        MinuteScale minuteScale = null;
         String invertClr = null;
 
         while (parser.next() != XmlPullParser.END_TAG) {
@@ -1356,6 +1367,8 @@ public class ProgramParser {
                 latitude = readText(parser);
             } else if (tagName.equalsIgnoreCase("timezone")) {
                 timezone = readText(parser);
+            } else if (tagName.equalsIgnoreCase("ZoneDescripID")) {
+                zoneDescripId = readText(parser);
             } else if (tagName.equalsIgnoreCase("Language")) {
                 language = readText(parser);
             } else if (tagName.equalsIgnoreCase("useproxy")) {
@@ -1378,6 +1391,12 @@ public class ProgramParser {
                 isAnalog = readText(parser);
             } else if (tagName.equalsIgnoreCase("DigtalClock")) {
                 digitalClock = readDigtalClock(parser);
+            } else if (tagName.equalsIgnoreCase("AnologClock")){
+                anologClock = readAnologClock(parser);
+            } else if (tagName.equalsIgnoreCase("HhourScale")){
+                hhourScale = readHhourScale(parser);
+            } else if (tagName.equalsIgnoreCase("MinuteScale")){
+                minuteScale = readMinuteScale(parser);
             } else {
                 if (DBG)
                     Log.w(TAG, "readItem. [Skipping tag=" + tagName);
@@ -1393,8 +1412,8 @@ public class ProgramParser {
                     showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname,
                     isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet,
                     isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode,
-                    isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
-                    showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, this);
+                    isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
+                    showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, this);
         } else {
             return new Item(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, logfont,
                     text, textColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing,
@@ -1402,8 +1421,8 @@ public class ProgramParser {
                     showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname,
                     isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet,
                     isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode,
-                    isshowhumidity, longitud, latitude, timezone, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
-                    showstyle, isAnalog, digitalClock, scrollpicinfo, invertClr, this);
+                    isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic,
+                    showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, this);
         }
 
     }
@@ -1886,4 +1905,764 @@ public class ProgramParser {
             }
         }
     }
+
+    public static class AnologClock {
+        public String type;
+        public String shape;
+        public String flags;
+        public String name;
+        public String isStrikeOut;
+        public String weight;
+        public String ftSize;
+        public String ftColor;
+        public String bItalic;
+        public String bUnderline;
+        public String bBold;
+        public String charSet;
+        public String hourPinClr;
+        public String minutePinClr;
+        public String secondPinClr;
+        public String textOffset;
+        public String dateOffset;
+        public String lunarOffset;
+        public String weekOffset;
+        public ClockFont clockFont;
+
+        public AnologClock(String type, String shape, String flags, String name, String isStrikeOut, String weight, String ftColor, String ftSize, String bItalic, String bUnderline, String bBold, String charSet, String hourPinClr, String minutePinClr, String secondPinClr, String textOffset, String dateOffset, String lunarOffset, String weekOffset, ClockFont clockFont) {
+            this.type = type;
+            this.shape = shape;
+            this.flags = flags;
+            this.name = name;
+            this.isStrikeOut = isStrikeOut;
+            this.weight = weight;
+            this.ftColor = ftColor;
+            this.ftSize = ftSize;
+            this.bItalic = bItalic;
+            this.bUnderline = bUnderline;
+            this.bBold = bBold;
+            this.charSet = charSet;
+            this.hourPinClr = hourPinClr;
+            this.minutePinClr = minutePinClr;
+            this.secondPinClr = secondPinClr;
+            this.textOffset = textOffset;
+            this.dateOffset = dateOffset;
+            this.lunarOffset = lunarOffset;
+            this.weekOffset = weekOffset;
+            this.clockFont = clockFont;
+        }
+    }
+
+    public static class ClockFont{
+        public HourFont hourFont;
+        public FixedDate fixedDate;
+        public FixedText fixedText;
+        public FixedWeek fixedWeek;
+        public NongLi nongLi;
+        public String fixedTextBold;
+        public String fixedTextColor;
+        public String weekBold;
+        public String weekColor;
+        public String dateBold;
+        public String dateColor;
+
+        public ClockFont(HourFont hourFont, FixedDate fixedDate, FixedText fixedText, FixedWeek fixedWeek, NongLi nongLi, String fixedTextBold, String fixedTextColor, String weekBold, String weekColor, String dateBold, String dateColor) {
+            this.hourFont = hourFont;
+            this.fixedDate = fixedDate;
+            this.fixedText = fixedText;
+            this.fixedWeek = fixedWeek;
+            this.nongLi = nongLi;
+            this.fixedTextBold = fixedTextBold;
+            this.fixedTextColor = fixedTextColor;
+            this.weekBold = weekBold;
+            this.weekColor = weekColor;
+            this.dateBold = dateBold;
+            this.dateColor = dateColor;
+        }
+    }
+
+    public static class HhourScale{
+        public String clr;
+        public String shape;
+        public String width;
+        public String height;
+
+        public HhourScale(String clr, String shape, String width, String height) {
+            this.clr = clr;
+            this.shape = shape;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    public static class MinuteScale{
+        public String clr;
+        public String shape;
+        public String width;
+        public String height;
+
+        public MinuteScale(String clr, String shape, String width, String height) {
+            this.clr = clr;
+            this.shape = shape;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    public static class HourFont{
+        public String lfHeight;
+        public String lfWidth;
+        public String lfEscapement;
+        public String lfOrientation;
+        public String lfWeight;
+        public String lfItalic;
+        public String lfUnderline;
+        public String lfStrikeOut;
+        public String lfCharSet;
+        public String lfOutPrecision;
+        public String lfQuality;
+        public String lfPitchAndFamily;
+        public String lfFaceName;
+
+        public HourFont(String lfHeight, String lfWidth, String lfEscapement, String lfOrientation, String lfWeight, String lfItalic, String lfUnderline, String lfStrikeOut, String lfCharSet, String lfOutPrecision, String lfQuality, String lfPitchAndFamily, String lfFaceName) {
+            this.lfHeight = lfHeight;
+            this.lfWidth = lfWidth;
+            this.lfEscapement = lfEscapement;
+            this.lfOrientation = lfOrientation;
+            this.lfWeight = lfWeight;
+            this.lfItalic = lfItalic;
+            this.lfUnderline = lfUnderline;
+            this.lfStrikeOut = lfStrikeOut;
+            this.lfCharSet = lfCharSet;
+            this.lfOutPrecision = lfOutPrecision;
+            this.lfQuality = lfQuality;
+            this.lfPitchAndFamily = lfPitchAndFamily;
+            this.lfFaceName = lfFaceName;
+        }
+    }
+
+    public static class FixedText {
+        public String lfHeight;
+        public String lfWidth;
+        public String lfEscapement;
+        public String lfOrientation;
+        public String lfWeight;
+        public String lfItalic;
+        public String lfUnderline;
+        public String lfStrikeOut;
+        public String lfCharSet;
+        public String lfOutPrecision;
+        public String lfQuality;
+        public String lfPitchAndFamily;
+        public String lfFaceName;
+
+        public FixedText(String lfHeight, String lfWidth, String lfEscapement, String lfOrientation, String lfWeight, String lfItalic, String lfUnderline, String lfCharSet, String lfStrikeOut, String lfOutPrecision, String lfQuality, String lfPitchAndFamily, String lfFaceName) {
+            this.lfHeight = lfHeight;
+            this.lfWidth = lfWidth;
+            this.lfEscapement = lfEscapement;
+            this.lfOrientation = lfOrientation;
+            this.lfWeight = lfWeight;
+            this.lfItalic = lfItalic;
+            this.lfUnderline = lfUnderline;
+            this.lfCharSet = lfCharSet;
+            this.lfStrikeOut = lfStrikeOut;
+            this.lfOutPrecision = lfOutPrecision;
+            this.lfQuality = lfQuality;
+            this.lfPitchAndFamily = lfPitchAndFamily;
+            this.lfFaceName = lfFaceName;
+        }
+    }
+
+    public static class NongLi {
+        public String lfHeight;
+        public String lfWidth;
+        public String lfEscapement;
+        public String lfOrientation;
+        public String lfWeight;
+        public String lfItalic;
+        public String lfUnderline;
+        public String lfStrikeOut;
+        public String lfCharSet;
+        public String lfOutPrecision;
+        public String lfQuality;
+        public String lfPitchAndFamily;
+        public String lfFaceName;
+
+        public NongLi(String lfHeight, String lfWidth, String lfEscapement, String lfOrientation, String lfWeight, String lfItalic, String lfUnderline, String lfCharSet, String lfStrikeOut, String lfOutPrecision, String lfQuality, String lfPitchAndFamily, String lfFaceName) {
+            this.lfHeight = lfHeight;
+            this.lfWidth = lfWidth;
+            this.lfEscapement = lfEscapement;
+            this.lfOrientation = lfOrientation;
+            this.lfWeight = lfWeight;
+            this.lfItalic = lfItalic;
+            this.lfUnderline = lfUnderline;
+            this.lfCharSet = lfCharSet;
+            this.lfStrikeOut = lfStrikeOut;
+            this.lfOutPrecision = lfOutPrecision;
+            this.lfQuality = lfQuality;
+            this.lfPitchAndFamily = lfPitchAndFamily;
+            this.lfFaceName = lfFaceName;
+        }
+    }
+
+    public static class FixedDate {
+        public String lfHeight;
+        public String lfWidth;
+        public String lfEscapement;
+        public String lfOrientation;
+        public String lfWeight;
+        public String lfItalic;
+        public String lfUnderline;
+        public String lfStrikeOut;
+        public String lfCharSet;
+        public String lfOutPrecision;
+        public String lfQuality;
+        public String lfPitchAndFamily;
+        public String lfFaceName;
+
+        public FixedDate(String lfHeight, String lfWidth, String lfEscapement, String lfOrientation, String lfWeight, String lfItalic, String lfUnderline, String lfCharSet, String lfStrikeOut, String lfOutPrecision, String lfQuality, String lfPitchAndFamily, String lfFaceName) {
+            this.lfHeight = lfHeight;
+            this.lfWidth = lfWidth;
+            this.lfEscapement = lfEscapement;
+            this.lfOrientation = lfOrientation;
+            this.lfWeight = lfWeight;
+            this.lfItalic = lfItalic;
+            this.lfUnderline = lfUnderline;
+            this.lfCharSet = lfCharSet;
+            this.lfStrikeOut = lfStrikeOut;
+            this.lfOutPrecision = lfOutPrecision;
+            this.lfQuality = lfQuality;
+            this.lfPitchAndFamily = lfPitchAndFamily;
+            this.lfFaceName = lfFaceName;
+        }
+    }
+
+    public static class FixedWeek {
+        public String lfHeight;
+        public String lfWidth;
+        public String lfEscapement;
+        public String lfOrientation;
+        public String lfWeight;
+        public String lfItalic;
+        public String lfUnderline;
+        public String lfStrikeOut;
+        public String lfCharSet;
+        public String lfOutPrecision;
+        public String lfQuality;
+        public String lfPitchAndFamily;
+        public String lfFaceName;
+
+        public FixedWeek(String lfHeight, String lfWidth, String lfEscapement, String lfOrientation, String lfWeight, String lfItalic, String lfUnderline, String lfCharSet, String lfStrikeOut, String lfOutPrecision, String lfQuality, String lfPitchAndFamily, String lfFaceName) {
+            this.lfHeight = lfHeight;
+            this.lfWidth = lfWidth;
+            this.lfEscapement = lfEscapement;
+            this.lfOrientation = lfOrientation;
+            this.lfWeight = lfWeight;
+            this.lfItalic = lfItalic;
+            this.lfUnderline = lfUnderline;
+            this.lfCharSet = lfCharSet;
+            this.lfStrikeOut = lfStrikeOut;
+            this.lfOutPrecision = lfOutPrecision;
+            this.lfQuality = lfQuality;
+            this.lfPitchAndFamily = lfPitchAndFamily;
+            this.lfFaceName = lfFaceName;
+        }
+    }
+
+    private AnologClock readAnologClock(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "AnologClock");
+
+        String type = null;
+        String shape = null;
+        String flags = null;
+        String name = null;
+        String isStrikeOut = null;
+        String weight = null;
+        String ftSize = null;
+        String ftColor = null;
+        String bItalic = null;
+        String bUnderline = null;
+        String bBold = null;
+        String charSet = null;
+        String hourPinClr = null;
+        String minutePinClr = null;
+        String secondPinClr = null;
+        String textOffset = null;
+        String dateOffset = null;
+        String lunarOffset = null;
+        String weekOffset = null;
+        ClockFont clockFont = null;
+
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readAnologClock. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("AnologClock")){
+                type = readText(parser);
+            } else if(tagName.equalsIgnoreCase("Shape")) {
+                shape = readText(parser);
+            } else if(tagName.equalsIgnoreCase("Flags")) {
+                flags = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Name")) {
+                name = readText(parser);
+            } else if (tagName.equalsIgnoreCase("IsStrikeOut")) {
+                isStrikeOut = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Weight")) {
+                weight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("ftSize")) {
+                ftSize = readText(parser);
+            } else if (tagName.equalsIgnoreCase("ftColor")) {
+                ftColor = readText(parser);
+            } else if (tagName.equalsIgnoreCase("bItalic")) {
+                bItalic = readText(parser);
+            } else if (tagName.equalsIgnoreCase("bUnderline")) {
+                bUnderline = readText(parser);
+            } else if (tagName.equalsIgnoreCase("bBold")) {
+                bBold = readText(parser);
+            } else if (tagName.equalsIgnoreCase("CharSet")) {
+                charSet = readText(parser);
+            }  else if (tagName.equalsIgnoreCase("HourPinClr")) {
+                hourPinClr = readText(parser);
+            } else if (tagName.equalsIgnoreCase("MinutePinClr")) {
+                minutePinClr = readText(parser);
+            } else if (tagName.equalsIgnoreCase("SecondPinClr")) {
+                secondPinClr = readText(parser);
+            } else if (tagName.equalsIgnoreCase("TextOffset")) {
+                textOffset = readText(parser);
+            } else if (tagName.equalsIgnoreCase("DateOffset")) {
+                dateOffset = readText(parser);
+            } else if (tagName.equalsIgnoreCase("LunarOffset")) {
+                lunarOffset = readText(parser);
+            } else if (tagName.equalsIgnoreCase("WeekOffset")) {
+                weekOffset = readText(parser);
+            } else if (tagName.equalsIgnoreCase("ClockFont")) {
+                clockFont = readClockFont(parser);
+            }else {
+                Log.w(TAG, "readAnologClock. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new AnologClock(type, shape, flags, name, isStrikeOut, weight, ftColor, ftSize, bItalic, bUnderline, bBold, charSet,
+                hourPinClr, minutePinClr, secondPinClr, textOffset, dateOffset, lunarOffset, weekOffset, clockFont);
+
+    }
+
+    private ClockFont readClockFont(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "ClockFont");
+
+        HourFont hourFont = null;
+        FixedText fixedText = null;
+        FixedWeek fixedWeek = null;
+        FixedDate fixedDate = null;
+        NongLi nongLi = null;
+        String fixedTextBold = null;
+        String fixedTextColor = null;
+        String weekBold = null;
+        String weekColor = null;
+        String dateBold = null;
+        String dateColor = null;
+        int i = 0;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readClockFont. [tagName=" + tagName);
+            if (tagName.equalsIgnoreCase("Time")) {
+                hourFont = readHourFont(parser);
+            } else if (tagName.equalsIgnoreCase("FixedText")) {
+                fixedText = readFixedText(parser);
+            } else if (tagName.equalsIgnoreCase("Week")) {
+                fixedWeek = readFixedWeek(parser);
+            } else if (tagName.equalsIgnoreCase("Date")) {
+                fixedDate = readFixedDate(parser);
+            } else if (tagName.equalsIgnoreCase("NongLi")) {
+                nongLi = readNongLi(parser);
+            } else if (tagName.equalsIgnoreCase("FixedTextBold")) {
+                fixedTextBold = readText(parser);
+            } else if (tagName.equalsIgnoreCase("FixedTextColor")) {
+                fixedTextColor = readText(parser);
+            } else if (tagName.equalsIgnoreCase("WeekBold")) {
+                weekBold = readText(parser);
+            } else if (tagName.equalsIgnoreCase("WeekColor")) {
+                weekColor = readText(parser);
+            } else if (tagName.equalsIgnoreCase("DateBold")) {
+                dateBold = readText(parser);
+            } else if (tagName.equalsIgnoreCase("DateColor") && (i == 0)) {
+                dateColor = readText(parser);
+                i++;
+            } else {
+                Log.w(TAG, "readClockFont. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new ClockFont(hourFont, fixedDate, fixedText, fixedWeek, nongLi, fixedTextBold, fixedTextColor, weekBold, weekColor, dateBold, dateColor);
+    }
+
+    private HhourScale readHhourScale(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "HhourScale");
+
+        String clr = null;
+        String shape = null;
+        String width = null;
+        String height = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readHhourScale. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("Clr")) {
+                clr = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Shape")) {
+                shape = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Width")) {
+                width = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Height")) {
+                height = readText(parser);
+            }  else {
+                Log.w(TAG, "readHhourScale. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new HhourScale(clr, shape, width, height);
+    }
+
+    private MinuteScale readMinuteScale(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "MinuteScale");
+
+        String clr = null;
+        String shape = null;
+        String width = null;
+        String height = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readMinuteScale. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("Clr")) {
+                clr = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Shape")) {
+                shape = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Width")) {
+                width = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Height")) {
+                height = readText(parser);
+            }  else {
+                Log.w(TAG, "readMinuteScale. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new MinuteScale(clr, shape, width, height);
+    }
+
+    private HourFont readHourFont(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "Time");
+
+        String lfHeight = null;
+        String lfWidth = null;
+        String lfEscapement = null;
+        String lfOrientation = null;
+        String lfWeight = null;
+        String lfItalic = null;
+        String lfUnderline = null;
+        String lfStrikeOut = null;
+        String lfCharSet = null;
+        String lfOutPrecision = null;
+        String lfQuality = null;
+        String lfPitchAndFamily = null;
+        String lfFaceName = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readHourFont. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("lfHeight")) {
+                lfHeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWidth")) {
+                lfWidth = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfEscapement")) {
+                lfEscapement = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOrientation")) {
+                lfOrientation = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWeight")) {
+                lfWeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfItalic")) {
+                lfItalic = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfUnderline")) {
+                lfUnderline = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfStrikeOut")) {
+                lfStrikeOut = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfCharSet")) {
+                lfCharSet = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOutPrecision")) {
+                lfOutPrecision = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfQuality")) {
+                lfQuality = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfPitchAndFamily")) {
+                lfPitchAndFamily = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfFaceName")) {
+                lfFaceName = readText(parser);
+            } else {
+                Log.w(TAG, "readHourFont. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new HourFont(lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfCharSet, lfOutPrecision, lfQuality, lfPitchAndFamily, lfFaceName);
+    }
+
+    private FixedText readFixedText(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "FixedText");
+
+        String lfHeight = null;
+        String lfWidth = null;
+        String lfEscapement = null;
+        String lfOrientation = null;
+        String lfWeight = null;
+        String lfItalic = null;
+        String lfUnderline = null;
+        String lfStrikeOut = null;
+        String lfCharSet = null;
+        String lfOutPrecision = null;
+        String lfQuality = null;
+        String lfPitchAndFamily = null;
+        String lfFaceName = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readFixedText. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("lfHeight")) {
+                lfHeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWidth")) {
+                lfWidth = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfEscapement")) {
+                lfEscapement = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOrientation")) {
+                lfOrientation = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWeight")) {
+                lfWeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfItalic")) {
+                lfItalic = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfUnderline")) {
+                lfUnderline = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfStrikeOut")) {
+                lfStrikeOut = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfCharSet")) {
+                lfCharSet = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOutPrecision")) {
+                lfOutPrecision = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfQuality")) {
+                lfQuality = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfPitchAndFamily")) {
+                lfPitchAndFamily = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfFaceName")) {
+                lfFaceName = readText(parser);
+            } else {
+                Log.w(TAG, "readFixedText. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new FixedText(lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfCharSet, lfOutPrecision, lfQuality, lfPitchAndFamily, lfFaceName);
+    }
+
+    private NongLi readNongLi(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "NongLi");
+
+        String lfHeight = null;
+        String lfWidth = null;
+        String lfEscapement = null;
+        String lfOrientation = null;
+        String lfWeight = null;
+        String lfItalic = null;
+        String lfUnderline = null;
+        String lfStrikeOut = null;
+        String lfCharSet = null;
+        String lfOutPrecision = null;
+        String lfQuality = null;
+        String lfPitchAndFamily = null;
+        String lfFaceName = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readNongLi. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("lfHeight")) {
+                lfHeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWidth")) {
+                lfWidth = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfEscapement")) {
+                lfEscapement = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOrientation")) {
+                lfOrientation = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWeight")) {
+                lfWeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfItalic")) {
+                lfItalic = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfUnderline")) {
+                lfUnderline = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfStrikeOut")) {
+                lfStrikeOut = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfCharSet")) {
+                lfCharSet = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOutPrecision")) {
+                lfOutPrecision = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfQuality")) {
+                lfQuality = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfPitchAndFamily")) {
+                lfPitchAndFamily = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfFaceName")) {
+                lfFaceName = readText(parser);
+            } else {
+                Log.w(TAG, "readNongLi. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new NongLi(lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfCharSet, lfOutPrecision, lfQuality, lfPitchAndFamily, lfFaceName);
+    }
+
+    private FixedDate readFixedDate(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "Date");
+
+        String lfHeight = null;
+        String lfWidth = null;
+        String lfEscapement = null;
+        String lfOrientation = null;
+        String lfWeight = null;
+        String lfItalic = null;
+        String lfUnderline = null;
+        String lfStrikeOut = null;
+        String lfCharSet = null;
+        String lfOutPrecision = null;
+        String lfQuality = null;
+        String lfPitchAndFamily = null;
+        String lfFaceName = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readFixedDate. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("lfHeight")) {
+                lfHeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWidth")) {
+                lfWidth = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfEscapement")) {
+                lfEscapement = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOrientation")) {
+                lfOrientation = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWeight")) {
+                lfWeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfItalic")) {
+                lfItalic = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfUnderline")) {
+                lfUnderline = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfStrikeOut")) {
+                lfStrikeOut = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfCharSet")) {
+                lfCharSet = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOutPrecision")) {
+                lfOutPrecision = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfQuality")) {
+                lfQuality = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfPitchAndFamily")) {
+                lfPitchAndFamily = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfFaceName")) {
+                lfFaceName = readText(parser);
+            } else {
+                Log.w(TAG, "readFixedDate. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new FixedDate(lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfCharSet, lfOutPrecision, lfQuality, lfPitchAndFamily, lfFaceName);
+    }
+
+    private FixedWeek readFixedWeek(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "Week");
+
+        String lfHeight = null;
+        String lfWidth = null;
+        String lfEscapement = null;
+        String lfOrientation = null;
+        String lfWeight = null;
+        String lfItalic = null;
+        String lfUnderline = null;
+        String lfStrikeOut = null;
+        String lfCharSet = null;
+        String lfOutPrecision = null;
+        String lfQuality = null;
+        String lfPitchAndFamily = null;
+        String lfFaceName = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readFixedWeek. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("lfHeight")) {
+                lfHeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWidth")) {
+                lfWidth = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfEscapement")) {
+                lfEscapement = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOrientation")) {
+                lfOrientation = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfWeight")) {
+                lfWeight = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfItalic")) {
+                lfItalic = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfUnderline")) {
+                lfUnderline = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfStrikeOut")) {
+                lfStrikeOut = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfCharSet")) {
+                lfCharSet = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfOutPrecision")) {
+                lfOutPrecision = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfQuality")) {
+                lfQuality = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfPitchAndFamily")) {
+                lfPitchAndFamily = readText(parser);
+            } else if (tagName.equalsIgnoreCase("lfFaceName")) {
+                lfFaceName = readText(parser);
+            } else {
+                Log.w(TAG, "readFixedWeek. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+        return new FixedWeek(lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfCharSet, lfOutPrecision, lfQuality, lfPitchAndFamily, lfFaceName);
+    }
+
 }
+

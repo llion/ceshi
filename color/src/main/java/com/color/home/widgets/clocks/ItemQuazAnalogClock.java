@@ -1,5 +1,9 @@
 package com.color.home.widgets.clocks;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import android.annotation.TargetApi;
@@ -9,26 +13,32 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.text.format.Time;
+import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import com.color.home.AppController;
+import com.color.home.ProgramParser;
 import com.color.home.R;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
+import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemData;
 import com.color.home.widgets.RegionView;
 
 public class ItemQuazAnalogClock extends View implements ItemData {
     private final static String TAG = "QuazAnalogClock";
     private static final boolean DBG = false;
-    private Time mCalendar;
+    private Calendar mCalendar;
     private GradientDrawable mHourHand;
     private GradientDrawable mMinuteHand;
     private GradientDrawable mSecondHand;
@@ -36,11 +46,13 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     private GradientDrawable mDialOuter;
     private GradientDrawable mDial;
 
-    private GradientDrawable mFiveTick;
-    private static final float sScale = 1.0f;
+    private GradientDrawable mFiveTick;//时标
+    private GradientDrawable mMinuteTick;//分标
+    private int mFiveTickHeight;
+    private int mFrameThickness;
+//    private static final float sScale = 1.0f;
 
-    // private Drawable mDial_frame;
-
+//    private Drawable mDial_frame;
     private int mDialWidth;
     private int mDialHeight;
 
@@ -49,12 +61,45 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     private final Handler mHandler = new Handler();
     private float mMinutes;
     private float mHour;
+    private String mDate;
+    private String mWeek;
     private boolean mChanged;
     private Region mRegion;
     private RegionView mRegionView;
     private Item mItem;
-    
+    private ProgramParser.AnologClock mAnologClock;
+    private ProgramParser.HhourScale mHourScale;
+    private ProgramParser.MinuteScale mMinuteScale;
+    private ProgramParser.ClockFont mClockFont;
+
+    private int mFlag;
+    private boolean hasDate = false, hasWeek = false;
+    private SimpleDateFormat mSdfDate;
+    private SimpleDateFormat mSdfWeek;
+    private String mTzId;
+    private static final int FLAG_DATE = 65536;
+    private static final int FLAG_WEEK = 262144;
+
     private int mScaleType;
+    private float[] mTranslates;//时标为数字时存放画布偏移量
+
+    Paint mHourPaint;//数字时标画笔
+    Paint mTextPaint;//固定文字画笔
+    Paint mDatePaint;//日期画笔
+    Paint mWeekPaint;//星期画笔
+
+    boolean mSecondsChanged = false;
+    float mSecondAngle = 0;
+    private int mCenterOffset;
+    private boolean[] mHasCalculate = {false, false, false, false};//固定文字、日期、星期、时标为数字时画布偏移量等是否计算过
+    private float[] mOrigin = new float[4];
+
+    //夏令时地区ZoneDescripID及对应的AvailableID
+    int[] mZoneDescripIds = new int[]{3, 4, 5, 6, 7, 10, 11, 13, 14, 17, 19, 20, 21, 22, 24, 25, 28, 29, 32, 34, 37, 38, 39, 40,
+                                        42, 43, 44, 45, 46, 49, 51, 52, 54, 57, 59, 60, 63, 72, 75, 77, 82, 85, 88, 90, 91, 93, 94, 96, 97, 100};
+    int[] availableIds = new int[]{0, 0, 0, 0, 9, 14, 0, 10, 0, 29, 8, 41, 3, 0, 26, 21, 34, 0, 1, 39, 19, 21, 24, 40,
+                                    14, 24, 13, 2, 14, 34, 18, 12, 20, 0, 0, 6, 4, 8, 6, 8, 1, 0, 5, 7, 2, 3, 8, 9, 4, 1};
+
 
     @Override
     public void setRegion(Region region) {
@@ -66,36 +111,221 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     public void setItem(RegionView regionView, Item item) {
         mRegionView = regionView;
         mItem = item;
-        
 //        mScaleType = Integer.parseInt(mItem.s)
     }
 
-    public ItemQuazAnalogClock(Context context) {
-        this(context, null);
+    public ItemQuazAnalogClock(Context context, Item item) {
+        this(context, null, item);
     }
 
-    public ItemQuazAnalogClock(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    public ItemQuazAnalogClock(Context context, AttributeSet attrs, Item item) {
+        this(context, attrs, 0, item);
     }
 
-    public ItemQuazAnalogClock(Context context, AttributeSet attrs,
-            int defStyle) {
+    public ItemQuazAnalogClock(Context context, AttributeSet attrs, int defStyle, Item item) {
         super(context, attrs, defStyle);
         Resources r = context.getResources();
 
-        mDial = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
-        mDialOuter = (GradientDrawable) r.getDrawable(R.drawable.round_frame);
-        // mDial_frame = r.getDrawable(R.drawable.clock_frame);
-        mFiveTick = (GradientDrawable) r.getDrawable(R.drawable.round_line_shape);
-        mQuadTick = (GradientDrawable) r.getDrawable(R.drawable.round_line_shape);
+        mItem = item;
+        mAnologClock = item.anologClock;
+        mHourScale = item.hhourScale;
+        mMinuteScale = item.minuteScale;
+        mClockFont = mAnologClock.clockFont;
+
+//        mDial = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
+//        mDialOuter = (GradientDrawable) r.getDrawable(R.drawable.round_frame);
+
+        //时标
+        if ("0".equals(mHourScale.shape))//圆形
+            mFiveTick = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
+        else if ("1".equals(mHourScale.shape))//方形
+            mFiveTick = (GradientDrawable) r.getDrawable(R.drawable.square_shape);
+        else { //数字
+            ProgramParser.HourFont hourFont = mClockFont.hourFont;
+            mHourPaint = new Paint();
+            mHourPaint.setAntiAlias(false);
+            if (hourFont.lfHeight != null)
+                mHourPaint.setTextSize(Integer.parseInt(hourFont.lfHeight));
+            if ("1".equals(hourFont.lfUnderline)) {
+                mHourPaint.setFlags(Paint.UNDERLINE_TEXT_FLAG);
+            }
+            int style = Typeface.NORMAL;
+            if ("1".equals(hourFont.lfItalic)) {
+                style = Typeface.ITALIC;
+            }
+            if ("700".equals(hourFont.lfWeight)) {
+                style |= Typeface.BOLD;
+            }
+            Typeface tf = Typeface.create(AppController.getInstance().getTypeface(hourFont.lfFaceName), style);
+            mHourPaint.setTypeface(tf);
+            mHourPaint.setTextAlign(Paint.Align.CENTER);
+            mHourPaint.setColor(GraphUtils.parseColor(mHourScale.clr));
+            mTranslates = new float[24];
+        }
+
+        //分标
+        if ("0".equals(mMinuteScale.shape))//圆形
+            mMinuteTick = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
+        else//方形
+            mMinuteTick = (GradientDrawable) r.getDrawable(R.drawable.square_shape);
+//        mQuadTick = (GradientDrawable) r.getDrawable(R.drawable.round_line_shape);
         mHourHand = (GradientDrawable) r.getDrawable(R.drawable.round_line_shape);
         mMinuteHand = (GradientDrawable) r.getDrawable(R.drawable.round_line_shape);
         mSecondHand = (GradientDrawable) r.getDrawable(R.drawable.round_line_shape);
 
-        mCalendar = new Time();
 
-        // mDialWidth = mDial.getIntrinsicWidth();
-        // mDialHeight = mDial.getIntrinsicHeight();
+        //时区
+        String tzStr = mItem.timezone;
+        if (!TextUtils.isEmpty(tzStr)){
+            int idx = tzStr.indexOf(".");
+            if (idx != -1){
+                if (idx < (tzStr.length() - 2)){
+                    int offset;
+                    float timezoneFloat = 0.f;
+                    tzStr = tzStr.substring(0, idx + 3);
+                    try {
+                        timezoneFloat = Float.parseFloat(tzStr);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    offset = (int) (timezoneFloat * 60 * 60 * 1000);
+                    if (DBG)
+                        Log.d(TAG,"timezoneFloat = " + timezoneFloat + ", offset = " + offset);
+
+                    String[] ids = TimeZone.getAvailableIDs(offset);
+                    if (ids.length != 0) {
+                        String descripId = mItem.zoneDescripId;
+                        if (!TextUtils.isEmpty(descripId) && descripId.length()>12) {
+                            descripId = descripId.substring(12, descripId.length());
+                            if (DBG)
+                                Log.d(TAG, "descripId = " + descripId);
+
+                            int j;
+                            int desId = 0;
+                            try {
+                                desId = Integer.parseInt(descripId);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            for (j = 0; j < mZoneDescripIds.length; j++){
+                                if (desId == mZoneDescripIds[j])
+                                    break;
+                            }
+
+                            if (j == mZoneDescripIds.length){//不使用夏令时
+                                for (int k = 0; k < ids.length; k++){
+                                    if (!TimeZone.getTimeZone(ids[k]).useDaylightTime()){
+                                        mTzId = ids[k];
+                                        break;
+                                    }
+                                }
+                            }else{//使用夏令时
+                                if (ids.length > availableIds[j])
+                                    mTzId = String.valueOf(ids[availableIds[j]]);
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        if (TextUtils.isEmpty(mTzId)) {
+            mTzId = TimeZone.getDefault().getID();
+        }
+        mCalendar = new GregorianCalendar();
+        mCalendar.setTimeZone(TimeZone.getTimeZone(mTzId));
+        if (DBG)
+            Log.d(TAG, "mTzId = " + mTzId + ", tzStr = " + tzStr + ", mCalendar.getTimeZone() = " + mCalendar.getTimeZone());
+
+//        mDialWidth = mDial.getIntrinsicWidth();
+//        mDialHeight = mDial.getIntrinsicHeight();
+
+        //固定文字画笔
+        if (!TextUtils.isEmpty(mItem.text)){//有固定文字
+            //初始化文字画笔
+            ProgramParser.FixedText fixedText = mClockFont.fixedText;
+            mTextPaint = new Paint();
+            mTextPaint.setAntiAlias(false);
+            if (fixedText.lfHeight != null)
+                mTextPaint.setTextSize(Integer.parseInt(fixedText.lfHeight));
+            if ("1".equals(fixedText.lfUnderline))
+                mTextPaint.setFlags(Paint.UNDERLINE_TEXT_FLAG);
+            int style = Typeface.NORMAL;
+            if ("1".equals(fixedText.lfItalic)) {
+                style = Typeface.ITALIC;
+                if (DBG)
+                    Log.i(TAG, "style1 = " + style);
+            }
+            if ("700".equals(fixedText.lfWeight)) {
+                style |= Typeface.BOLD;
+                if (DBG)
+                    Log.i(TAG, "style2 = " + style);
+            }
+            if (DBG)
+                Log.i(TAG, "style = " + style + ", fixedText.lfItalic = " + fixedText.lfItalic + ", fixedText.lfWeight = " + fixedText.lfWeight);
+            Typeface tf = Typeface.create(AppController.getInstance().getTypeface(fixedText.lfFaceName), style);
+            mTextPaint.setTypeface(tf);
+            mTextPaint.setTextAlign(Paint.Align.CENTER);
+            mTextPaint.setColor((int)(Long.parseLong(mClockFont.fixedTextColor)) | 0xFF000000);
+        }
+
+        try {
+            mFlag = Integer.parseInt(mItem.anologClock.flags);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //日期画笔
+        if (( mFlag & FLAG_DATE) == FLAG_DATE){//显示日期
+            hasDate = true;
+            ProgramParser.FixedDate fixedDate = mClockFont.fixedDate;
+            mDatePaint = new Paint();
+            mDatePaint.setAntiAlias(false);
+            if (fixedDate.lfHeight != null)
+                mDatePaint.setTextSize(Integer.parseInt(fixedDate.lfHeight));
+            if ("1".equals(fixedDate.lfUnderline)) {
+                mDatePaint.setFlags(Paint.UNDERLINE_TEXT_FLAG);
+            }
+            int style = Typeface.NORMAL;
+            if ("1".equals(fixedDate.lfItalic)) {
+                style = Typeface.ITALIC;
+            }
+            if ("700".equals(fixedDate.lfWeight)) {
+                style |= Typeface.BOLD;
+            }
+            Typeface tf = Typeface.create(AppController.getInstance().getTypeface(fixedDate.lfFaceName), style);
+            mDatePaint.setTypeface(tf);
+            mDatePaint.setTextAlign(Paint.Align.CENTER);
+            mDatePaint.setColor((int)(Long.parseLong(mClockFont.weekColor)) | 0xFF000000);//LedVision修改星期字体颜色，日期颜色变化
+            mSdfDate = new SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "MMMMdd"));
+            mSdfDate.setTimeZone(TimeZone.getTimeZone(mTzId));
+        }
+
+        //星期画笔
+        if (( mFlag & FLAG_WEEK) == FLAG_WEEK){//显示星期
+            hasWeek = true;
+            ProgramParser.FixedWeek fixedWeek = mClockFont.fixedWeek;
+            mWeekPaint = new Paint();
+            mWeekPaint.setAntiAlias(false);
+            if (fixedWeek.lfHeight != null)
+                mWeekPaint.setTextSize(Integer.parseInt(fixedWeek.lfHeight));
+            if ("1".equals(fixedWeek.lfUnderline)) {
+                mWeekPaint.setFlags(Paint.UNDERLINE_TEXT_FLAG);
+            }
+            int style = Typeface.NORMAL;
+            if ("1".equals(fixedWeek.lfItalic)) {
+                style = Typeface.ITALIC;
+            }
+            if ("700".equals(fixedWeek.lfWeight)) {
+                style |= Typeface.BOLD;
+            }
+            Typeface tf = Typeface.create(AppController.getInstance().getTypeface(fixedWeek.lfFaceName), style);
+            mWeekPaint.setTypeface(tf);
+            mWeekPaint.setTextAlign(Paint.Align.CENTER);
+            mWeekPaint.setColor((int)(Long.parseLong(mClockFont.dateColor)) | 0xFF000000);//LedVision中第一个DateColor
+            mSdfWeek = new SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEE"));
+            mSdfWeek.setTimeZone(TimeZone.getTimeZone(mTzId));
+        }
     }
 
     @Override
@@ -119,7 +349,6 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         // in the main thread, therefore the receiver can't run before this method returns.
 
         // The time zone may have changed while the receiver wasn't registered, so update the Time
-        mCalendar = new Time();
 
         // Make sure we update to the current time
         onTimeChanged();
@@ -170,12 +399,16 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         }
     }
 
+    public ItemQuazAnalogClock(Context context) {
+        super(context);
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
         if (DBG)
-            Log.i(TAG, "onSizeChanged. w, h, oldw, oldh=" + w + "," + h + ", " + oldw + ", " + oldh + ", Thread=" + Thread.currentThread());
+            Log.i(TAG, "onSizeChanged. w, h, oldw, oldh = " + w + "," + h + ", " + oldw + ", " + oldh);
 
         // Always keep.
         if (w < h) {
@@ -184,38 +417,45 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             w = h;
         }
 
-        mCenterOffset = -w / 10;
+        mCenterOffset = - w / 10;
         mFiveTickHeight = h / 2 * 1 / 8;
         mFrameThickness = mFiveTickHeight / 3;
+//        mDial.mutate();//中心圆点
+//        mDial.setColor(GraphUtils.parseColor(mAnologClock.secondPinClr));
+//        mDial.setSize(w / 7, h / 7);
 
-        mDial.mutate();
-        mDial.setSize(w / 7, h / 7);
+//        mDialOuter.mutate();//最外层边框
+//        mDialOuter.setSize(w, h);
+//        mDialOuter.setStroke(mFrameThickness, 0xFF777777);
 
-        mDialOuter.mutate();
-        mDialOuter.setSize(w, h);
-        mDialOuter.setStroke(mFrameThickness, 0xFF777777);
+        if (mFiveTick != null) {
+            mFiveTick.mutate();//12个时标
+            mFiveTick.setColor(GraphUtils.parseColor(mHourScale.clr));
+            mFiveTick.setSize(Integer.parseInt(mHourScale.width), Integer.parseInt(mHourScale.height));
+        }
 
-        mFiveTick.mutate();
-        mFiveTick.setSize(w * 1 / 60, mFiveTickHeight);
+//        mQuadTick.mutate();//3,6,9,12   四个时标
+//        mQuadTick.setSize(w * 1 / 30, h / 2 * 1 / 7);
 
-        mQuadTick.mutate();
-        mQuadTick.setSize(w * 1 / 30, h / 2 * 1 / 7);
+        //分标
+        mMinuteTick.mutate();
+        mMinuteTick.setColor(GraphUtils.parseColor(mMinuteScale.clr));
+        mMinuteTick.setSize(Integer.parseInt(mMinuteScale.width), Integer.parseInt(mMinuteScale.height));
 
         mHourHand.mutate();
-        mHourHand.setSize(w * 1 / 20, h / 2 * 3 / 7);
+        mHourHand.setColor(GraphUtils.parseColor(mAnologClock.hourPinClr));
+        mHourHand.setSize(w * 1 / 24, h / 2 * 3 / 7);
 
         mMinuteHand.mutate();
+        mMinuteHand.setColor(GraphUtils.parseColor(mAnologClock.minutePinClr));
         mMinuteHand.setSize(w * 1 / 32, h / 2 * 4 / 7);
 
         mSecondHand.mutate();
+        mSecondHand.setColor(GraphUtils.parseColor(mAnologClock.secondPinClr));
         mSecondHand.setSize(w * 1 / 64, h / 2 * 5 / 7);
 
         mChanged = true;
     }
-
-    boolean mSecondsChanged = false;
-    float mSecondAngle = 0;
-    private int mCenterOffset;
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -234,8 +474,8 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         int availableHeight = this.getMeasuredHeight();
         if (DBG)
             Log.i(TAG,
-                    "onDraw. canvas, availableWidth=" + availableWidth + ", availableHeight=" + availableHeight + ", width=" + getWidth()
-                            + ", height=" + getHeight());
+                    "onDraw: availableWidth = " + availableWidth + ", availableHeight = " + availableHeight + ", width = " + getWidth()
+                            + ", height = " + getHeight());
 
         // final Drawable dial_frame = mDial_frame;
         int w = getWidth();
@@ -257,6 +497,8 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             canvas.save();
             canvas.translate(offsetx, offsety);
         }
+        if (DBG)
+            Log.d(TAG,"moved = " + moved + ", offsetx = " + offsetx + ", offsety = " + offsety);
 
         // Log.d(AnalogClock.DEBUGTAG,"onDraw params: " + availableWidth +" "+ availableHeight + " " +
         // x + " " + y + " " + w + " "+ h + " " + changed);
@@ -274,74 +516,169 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         // }
         //
 
-        final Drawable dial = mDial;
-        if (changed) {
-            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2)) + " " + (y - (h / 2)) + " " + ( x + (w / 2)) + " " + (y + (h /
-            // 2)));
-            w = dial.getIntrinsicWidth();
-            h = dial.getIntrinsicHeight();
-            dial.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
-            // dial_frame.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
-            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2 + w/10)) + " " + (y - (h / 2 + h/10)) + " " + ( x + (w / 2 +
-            // w/10)) + " " +
-            // (y + (h / 2 + h/10)));
-            // dial_frame.setBounds(x - (w/2 + w/10), y - (h/2 + h/10), x + (w/2 + w/10), y + (h/2 + h/10));
-        }
-        dial.draw(canvas);
+        canvas.drawColor(GraphUtils.parseColor(mItem.backcolor));
 
-        final Drawable dialOuter = mDialOuter;
-        if (changed) {
-            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2)) + " " + (y - (h / 2)) + " " + ( x + (w / 2)) + " " + (y + (h /
-            // 2)));
-            w = dialOuter.getIntrinsicWidth();
-            h = dialOuter.getIntrinsicHeight();
-            dialOuter.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
-            // dial_frame.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
-            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2 + w/10)) + " " + (y - (h / 2 + h/10)) + " " + ( x + (w / 2 +
-            // w/10)) + " " +
-            // (y + (h / 2 + h/10)));
-            // dial_frame.setBounds(x - (w/2 + w/10), y - (h/2 + h/10), x + (w/2 + w/10), y + (h/2 + h/10));
+        //固定文字
+        if (!TextUtils.isEmpty(mItem.text)){
+            if (!mHasCalculate[0]) {//未绘制过固定文字
+                try {
+                    mOrigin[0] = (x / 3 + Float.parseFloat(mClockFont.fixedText.lfHeight));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                mHasCalculate[0] = true;
+            }
+             canvas.drawText(mItem.text, x, mOrigin[0], mTextPaint);
         }
-        dialOuter.draw(canvas);
-        // dial_frame.draw(canvas);
 
-        // Draw five tick.
+        //日期
+        if (hasDate) {
+            if (!mHasCalculate[1]) {//未绘制过日期
+                mOrigin[1] = 3 * x / 2;
+                mHasCalculate[1] = true;
+            }
+            canvas.drawText(mDate, x, mOrigin[1], mDatePaint);
+        }
+
+        //星期
+        if (hasWeek) {
+            if (!mHasCalculate[2]) {//未绘制过星期
+                mOrigin[2] = 14 * x / 8;
+                mHasCalculate[2] = true;
+            }
+            canvas.drawText(mWeek, x, mOrigin[2], mWeekPaint);
+        }
+
+//        final Drawable dial = mDial;
+//        if (changed) {
+//            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2)) + " " + (y - (h / 2)) + " " + ( x + (w / 2)) + " " + (y + (h /
+//            // 2)));
+//            w = dial.getIntrinsicWidth();
+//            h = dial.getIntrinsicHeight();
+//            dial.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
+//            // dial_frame.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
+//            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2 + w/10)) + " " + (y - (h / 2 + h/10)) + " " + ( x + (w / 2 +
+//            // w/10)) + " " +
+//            // (y + (h / 2 + h/10)));
+//            // dial_frame.setBounds(x - (w/2 + w/10), y - (h/2 + h/10), x + (w/2 + w/10), y + (h/2 + h/10));
+//        }
+//        dial.draw(canvas);
+
+//        final Drawable dialOuter = mDialOuter;
+//        if (changed) {
+//            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2)) + " " + (y - (h / 2)) + " " + ( x + (w / 2)) + " " + (y + (h /
+//            // 2)));
+//            w = dialOuter.getIntrinsicWidth();
+//            h = dialOuter.getIntrinsicHeight();
+//            dialOuter.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
+//            // dial_frame.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
+//            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2 + w/10)) + " " + (y - (h / 2 + h/10)) + " " + ( x + (w / 2 +
+//            // w/10)) + " " +
+//            // (y + (h / 2 + h/10)));
+//            // dial_frame.setBounds(x - (w/2 + w/10), y - (h/2 + h/10), x + (w/2 + w/10), y + (h/2 + h/10));
+//        }
+//        dialOuter.draw(canvas);
+//        // dial_frame.draw(canvas);
+
+        //分标
         canvas.save();
-        final Drawable fiveTick = mFiveTick;
+        final Drawable minuteTick = mMinuteTick;
         if (changed) {
-            w = fiveTick.getIntrinsicWidth();
-            h = fiveTick.getIntrinsicHeight();
+            w = minuteTick.getIntrinsicWidth();
+            h = minuteTick.getIntrinsicHeight();
             // bottom is the center
-            fiveTick.setBounds(x - (w / 2), 0 + 2 * mFrameThickness, x + (w / 2), h + 2 * mFrameThickness);
+            minuteTick.setBounds(x - (w / 2), 0 + 2 * mFrameThickness, x + (w / 2), h + 2 * mFrameThickness);
         }
-        for (int i = 1; i < 12; i++) {
-            canvas.rotate(30, x, y);
-            fiveTick.draw(canvas);
+        for (int i = 1; i <= 72; i++) {//60个分标
+            if ((i % 5) != 0) {//时标位置不画
+                canvas.rotate(6, x, y);
+                minuteTick.draw(canvas);
+            }else
+                canvas.rotate(6, x, y);
+        }
+        canvas.restore();
+
+        // Draw five tick.时标
+        canvas.save();
+        if (!"2".equals(mItem.hhourScale.shape)) {//时标为圆形或方形
+            final Drawable fiveTick = mFiveTick;
+            if (changed) {
+                w = fiveTick.getIntrinsicWidth();
+                h = fiveTick.getIntrinsicHeight();
+                // bottom is the center
+                fiveTick.setBounds(x - (w / 2), 2 * mFrameThickness + minuteTick.getIntrinsicHeight() / 2 - h / 2, x + (w / 2), 2 * mFrameThickness + minuteTick.getIntrinsicHeight() / 2 + h / 2);
+            }
+            for (int i = 1; i <= 12; i++) {//12个时标
+                canvas.rotate(30, x, y);
+                fiveTick.draw(canvas);
+            }
+        }else{//时标为数字
+            if (!mHasCalculate[3]){//未计算过画布偏移量
+                float r = 0.f;
+                try {
+                    mOrigin[3] = 3 * Float.parseFloat(mClockFont.hourFont.lfHeight) / 10 + minuteTick.getIntrinsicHeight() / 2 + 2 * mFrameThickness;
+                    r= x - mOrigin[3] + 3 * Float.parseFloat(mClockFont.hourFont.lfHeight) / 10;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                mTranslates[0] = r * 0.5f;
+                mTranslates[1] = (float) (r * (1 - Math.cos(Math.PI / 6)));
+                mTranslates[2] = (float) (r * (Math.sin(Math.PI / 3) - 0.5f));
+                mTranslates[3] = (float) (r * (Math.cos(Math.PI / 6) - Math.cos(Math.PI / 3)));
+                mTranslates[4] = mTranslates[1];
+                mTranslates[5] = mTranslates[0];
+                mTranslates[6] = - mTranslates[4];
+                mTranslates[7] = mTranslates[5];
+                mTranslates[8] = - mTranslates[2];
+                mTranslates[9] = mTranslates[3];
+                mTranslates[10] = - mTranslates[0];
+                mTranslates[11] = mTranslates[1];
+                mTranslates[12] = - mTranslates[0];
+                mTranslates[13] = - mTranslates[1];
+                mTranslates[14] = - mTranslates[2];
+                mTranslates[15] = - mTranslates[3];
+                mTranslates[16] = - mTranslates[4];
+                mTranslates[17] = - mTranslates[5];
+                mTranslates[18] =  mTranslates[4];
+                mTranslates[19] = - mTranslates[5];
+                mTranslates[20] =  mTranslates[2];
+                mTranslates[21] = - mTranslates[3];
+                mTranslates[22] = mTranslates[0];
+                mTranslates[23] = - mTranslates[1];
+                mHasCalculate[3] = true;
+            }
+            if (DBG)
+                Log.d(TAG,"translate[0] = " + mTranslates[0] + ", " +  mTranslates[1] + ", w = " + w);
+            for (int i = 0; i < 23; ) {//12个数字时标
+                canvas.translate(mTranslates[i], mTranslates[++ i]);
+                canvas.drawText((i + 1) / 2 + "", x, mOrigin[3], mHourPaint);
+                i++;
+            }
         }
         canvas.restore();
 
         // Draw quad tick.
-        canvas.save();
-        final Drawable quadTick = mQuadTick;
-        if (changed) {
-            w = quadTick.getIntrinsicWidth();
-            h = quadTick.getIntrinsicHeight();
-            // bottom is the center
-            quadTick.setBounds(x - (w / 2), 0 + 2 * mFrameThickness, x + (w / 2), h + 2 * mFrameThickness);
-        }
-
-        canvas.rotate(-3, x, y);
-        quadTick.draw(canvas);
-
-        canvas.rotate(6, x, y);
-        quadTick.draw(canvas);
-
-        canvas.rotate(-3, x, y);
-        for (int i = 1; i < 4; i++) {
-            canvas.rotate(90, x, y);
-            quadTick.draw(canvas);
-        }
-        canvas.restore();
+//        canvas.save();
+//        final Drawable quadTick = mQuadTick;
+//        if (changed) {
+//            w = quadTick.getIntrinsicWidth();
+//            h = quadTick.getIntrinsicHeight();
+//            // bottom is the center
+//            quadTick.setBounds(x - (w / 2), 0 + 2 * mFrameThickness, x + (w / 2), h + 2 * mFrameThickness);
+//        }
+//
+//        canvas.rotate(-3, x, y);
+//        quadTick.draw(canvas);
+//
+//        canvas.rotate(6, x, y);
+//        quadTick.draw(canvas);
+//
+//        canvas.rotate(-3, x, y);
+//        for (int i = 1; i < 4; i++) {
+//            canvas.rotate(90, x, y);
+//            quadTick.draw(canvas);
+//        }
+//        canvas.restore();
 
         // Draw Hour.
         canvas.save();
@@ -353,7 +690,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             if (DBG)
                 Log.i(TAG, "onDraw. w,h=" + w + ", " + h + ", Thread=" + Thread.currentThread());
             // bottom is the center
-            hourHand.setBounds(x - (w / 2), y - h + mCenterOffset, x + (w / 2), y + mCenterOffset);
+            hourHand.setBounds(x - (w / 2), y - h, x + (w / 2), y);
         }
         hourHand.draw(canvas);
         canvas.restore();
@@ -365,7 +702,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         if (changed) {
             w = minuteHand.getIntrinsicWidth();
             h = minuteHand.getIntrinsicHeight();
-            minuteHand.setBounds(x - (w / 2), y - h + mCenterOffset, x + (w / 2), y + mCenterOffset);
+            minuteHand.setBounds(x - (w / 2), y - h, x + (w / 2), y);
         }
         minuteHand.draw(canvas);
         canvas.restore();
@@ -377,7 +714,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         if (seconds) {
             w = secondHand.getIntrinsicWidth();
             h = secondHand.getIntrinsicHeight();
-            secondHand.setBounds(x - (w / 2), y - h + mCenterOffset, x + (w / 2), y + mCenterOffset);
+            secondHand.setBounds(x - (w / 2), y - h, x + (w / 2), y);
         }
         secondHand.draw(canvas);
         canvas.restore();
@@ -388,7 +725,6 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     }
 
     MyCount counter = new MyCount(Integer.MAX_VALUE, 1000);
-
     public class MyCount extends CountDownTimer {
         public MyCount(long millisInFuture, long countDownInterval) {
             super(millisInFuture, countDownInterval);
@@ -401,11 +737,10 @@ public class ItemQuazAnalogClock extends View implements ItemData {
 
         @Override
         public void onTick(long millisUntilFinished) {
-            mCalendar.setToNow();
-
+            mCalendar.setTimeInMillis(System.currentTimeMillis());
+            int second = mCalendar.get(Calendar.SECOND);
             if (DBG)
-                Log.i(TAG, "onTick. millisUntilFinished, Thread=" + Thread.currentThread());
-            int second = mCalendar.second;
+                Log.i(TAG, "onTick: Thread = " + Thread.currentThread() + ", second = " + second);
 
             mSecondAngle = 6.0f * second;
             mSecondsChanged = true;
@@ -415,15 +750,30 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     }
 
     private void onTimeChanged() {
-        mCalendar.setToNow();
-
-        int hour = mCalendar.hour;
-        int minute = mCalendar.minute;
-        int second = mCalendar.second;
+        mCalendar.setTimeInMillis(System.currentTimeMillis());
+//        mCalendar.setTimeZone(TimeZone.getTimeZone(mTzId));
+        if (DBG)
+            Log.d(TAG,"mCalendar.getTimeZone().getDisplayName = " + mCalendar.getTimeZone().getDisplayName() + ", useDaylightTime : " + mCalendar.getTimeZone().useDaylightTime());
+        int hour = mCalendar.get(Calendar.HOUR);
+        int minute = mCalendar.get(Calendar.MINUTE);
+        int second = mCalendar.get(Calendar.SECOND);
 
         mMinutes = minute + second / 60.0f;
         mHour = hour + mMinutes / 60.0f;
+
+        if (hasDate || hasWeek){
+            if (hasDate) {
+                mDate = mSdfDate.format(mCalendar.getTimeInMillis());
+            }
+            if (hasWeek) {
+                mWeek = mSdfWeek.format(mCalendar.getTimeInMillis());
+            }
+        }
+
+        if (DBG)
+            Log.d(TAG, "mCalendar = " + mCalendar + ", mDate = " + mDate + ", mWeek = " + mWeek + ", second = " + second);
         mChanged = true;
+
     }
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
@@ -431,7 +781,10 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Intent.ACTION_TIMEZONE_CHANGED)) {
                 String tz = intent.getStringExtra("time-zone");
-                mCalendar = new Time(TimeZone.getTimeZone(tz).getID());
+                mCalendar = new GregorianCalendar();
+                mCalendar.setTimeZone(TimeZone.getTimeZone(mTzId));
+                if (DBG)
+                    Log.d(TAG, "mCalendar.getTimeZone().getID() = " + mCalendar.getTimeZone().getID());
             }
 
             onTimeChanged();
@@ -439,6 +792,5 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             invalidate();
         }
     };
-    private int mFiveTickHeight;
-    private int mFrameThickness;
+
 }

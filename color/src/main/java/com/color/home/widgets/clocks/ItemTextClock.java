@@ -426,11 +426,11 @@ public class ItemTextClock extends TextView {
         //
         // // LocaleData ld = LocaleData.get(getContext().getResources().getConfiguration().locale);
         // if (format24Requested) {
-        // mFormat = mFormat24;
-        // // mFormat = abc(mFormat24, mFormat12, ld.timeFormat24);
+        // weekFormat = mFormat24;
+        // // weekFormat = abc(mFormat24, mFormat12, ld.timeFormat24);
         // } else {
-        // mFormat = mFormat12;
-        // // mFormat = abc(mFormat12, mFormat24, ld.timeFormat12);
+        // weekFormat = mFormat12;
+        // // weekFormat = abc(mFormat12, mFormat24, ld.timeFormat12);
         // }
 
         mFormat = parseFormat();
@@ -466,7 +466,7 @@ public class ItemTextClock extends TextView {
 //        }
 //         year exist.
         if(DBG)
-            Log.e(TAG, "mFormat Type : " + mFormatType);
+            Log.e(TAG, "weekFormat Type : " + mFormatType);
 
         boolean hasYear = false;
         if ((mFlag & FLAG_YEAR) == FLAG_YEAR) {
@@ -710,7 +710,7 @@ public class ItemTextClock extends TextView {
         if(DBG)
             Log.d(TAG, "font family:" + digitalClock.name + " font type: "+ typeface);
         Typeface fontFamily = AppController.getInstance().generateTypeface(digitalClock.name);
-        setTypeface(Typeface.create(fontFamily, typeface), typeface);
+        setTypeface(Typeface.create(fontFamily, typeface));
 
         setGravity(Gravity.CENTER);
         chooseFormat();

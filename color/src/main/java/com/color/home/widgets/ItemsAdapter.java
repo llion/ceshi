@@ -142,6 +142,8 @@ public class ItemsAdapter extends BaseAdapter {
                     itc.setItem(mRegionView, item);
                     return itc;
                 } else {
+                    if (DBG)
+                        Log.i(TAG, "item = " + item + ", item.anologClock = " + item.anologClock);
                     // Currently, use the Item Quaz.
                     return genItemQuazAnalogClock(item);
                 }
@@ -149,7 +151,7 @@ public class ItemsAdapter extends BaseAdapter {
                // int animationType = Integer.parseInt(item.ineffect.Type);
                 int animationType = mRegionView.getmRealAnimationType();
                 if (DBG)
-                    Log.d(TAG, "animationType========" + animationType);
+                    Log.d(TAG, "animationType = " + animationType);
 //                if (animationType == 1) {
 //                    // type = mRand.nextInt((48 - 2) + 1) + 2;
 //                    animationType = stypes[mRand.nextInt(stypes.length)];
@@ -529,12 +531,11 @@ public class ItemsAdapter extends BaseAdapter {
         return tv;
     }
 
-    public View genItemQuazAnalogClock(Item item) {
-        ItemData itemData;
-        itemData = new ItemQuazAnalogClock(mContext);
-        itemData.setRegion(mRegion);
-        itemData.setItem(mRegionView, item);
-        return (View) itemData;
+    private View genItemQuazAnalogClock(Item item) {
+        ItemQuazAnalogClock itemView = new ItemQuazAnalogClock(mContext, item);
+        itemView.setRegion(mRegion);
+        itemView.setItem(mRegionView, item);
+        return itemView;
     }
 
     public static String getAbsFilePathByFileSource(FileSource filesource) {
