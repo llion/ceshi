@@ -132,7 +132,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         mMinuteScale = item.minuteScale;
         mClockFont = mAnologClock.clockFont;
 
-//        mDial = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
+        mDial = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
 //        mDialOuter = (GradientDrawable) r.getDrawable(R.drawable.round_frame);
 
         //时标
@@ -237,8 +237,8 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         if (DBG)
             Log.d(TAG, "mTzId = " + mTzId + ", tzStr = " + tzStr + ", mCalendar.getTimeZone() = " + mCalendar.getTimeZone());
 
-//        mDialWidth = mDial.getIntrinsicWidth();
-//        mDialHeight = mDial.getIntrinsicHeight();
+        mDialWidth = mDial.getIntrinsicWidth();
+        mDialHeight = mDial.getIntrinsicHeight();
 
         //固定文字画笔
         if (!TextUtils.isEmpty(mItem.text)){//有固定文字
@@ -417,12 +417,13 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             w = h;
         }
 
-        mCenterOffset = - w / 10;
+        mCenterOffset = - w / 16;
         mFiveTickHeight = h / 2 * 1 / 8;
         mFrameThickness = mFiveTickHeight / 3;
-//        mDial.mutate();//中心圆点
-//        mDial.setColor(GraphUtils.parseColor(mAnologClock.secondPinClr));
-//        mDial.setSize(w / 7, h / 7);
+
+        mDial.mutate();//中心圆点
+        mDial.setColor(GraphUtils.parseColor(mAnologClock.secondPinClr));
+        mDial.setSize(w / 12, h / 12);
 
 //        mDialOuter.mutate();//最外层边框
 //        mDialOuter.setSize(w, h);
@@ -452,7 +453,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
 
         mSecondHand.mutate();
         mSecondHand.setColor(GraphUtils.parseColor(mAnologClock.secondPinClr));
-        mSecondHand.setSize(w * 1 / 64, h / 2 * 5 / 7);
+        mSecondHand.setSize(w * 1 / 48, h / 2 * 5 / 7);
 
         mChanged = true;
     }
@@ -549,20 +550,20 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             canvas.drawText(mWeek, x, mOrigin[2], mWeekPaint);
         }
 
-//        final Drawable dial = mDial;
-//        if (changed) {
+        final Drawable dial = mDial;
+        if (changed) {
 //            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2)) + " " + (y - (h / 2)) + " " + ( x + (w / 2)) + " " + (y + (h /
 //            // 2)));
-//            w = dial.getIntrinsicWidth();
-//            h = dial.getIntrinsicHeight();
-//            dial.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
+            w = dial.getIntrinsicWidth();
+            h = dial.getIntrinsicHeight();
+            dial.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
 //            // dial_frame.setBounds(x - (w / 2), y - (h / 2), x + (w / 2), y + (h / 2));
 //            // Log.d(AnalogClock.DEBUGTAG,"Bounds params: " + (x - (w / 2 + w/10)) + " " + (y - (h / 2 + h/10)) + " " + ( x + (w / 2 +
 //            // w/10)) + " " +
 //            // (y + (h / 2 + h/10)));
 //            // dial_frame.setBounds(x - (w/2 + w/10), y - (h/2 + h/10), x + (w/2 + w/10), y + (h/2 + h/10));
-//        }
-//        dial.draw(canvas);
+        }
+        dial.draw(canvas);
 
 //        final Drawable dialOuter = mDialOuter;
 //        if (changed) {
@@ -690,7 +691,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             if (DBG)
                 Log.i(TAG, "onDraw. w,h=" + w + ", " + h + ", Thread=" + Thread.currentThread());
             // bottom is the center
-            hourHand.setBounds(x - (w / 2), y - h, x + (w / 2), y);
+            hourHand.setBounds(x - (w / 2), y - h + mCenterOffset, x + (w / 2), y + mCenterOffset);
         }
         hourHand.draw(canvas);
         canvas.restore();
@@ -702,7 +703,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         if (changed) {
             w = minuteHand.getIntrinsicWidth();
             h = minuteHand.getIntrinsicHeight();
-            minuteHand.setBounds(x - (w / 2), y - h, x + (w / 2), y);
+            minuteHand.setBounds(x - (w / 2), y - h + mCenterOffset, x + (w / 2), y + mCenterOffset);
         }
         minuteHand.draw(canvas);
         canvas.restore();
@@ -714,7 +715,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         if (seconds) {
             w = secondHand.getIntrinsicWidth();
             h = secondHand.getIntrinsicHeight();
-            secondHand.setBounds(x - (w / 2), y - h, x + (w / 2), y);
+            secondHand.setBounds(x - (w / 2), y - h + mCenterOffset, x + (w / 2), y + mCenterOffset);
         }
         secondHand.draw(canvas);
         canvas.restore();
