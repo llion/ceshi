@@ -458,42 +458,90 @@ public class ItemTextClock extends TextView {
 
     private CharSequence parseFormat() {
         CharSequence format = "";
-        if(DBG)
+        if (DBG)
             Log.d(TAG, "default dateFormat : " + DateFormat.getTimeFormatString(this.getContext()));
 
 //        if(mFormatType == 3){
 //            return DateFormat.getTimeFormatString(this.getContext());
 //        }
 //         year exist.
-        if(DBG)
-            Log.e(TAG, "weekFormat Type : " + mFormatType);
+        if (DBG)
+            Log.e(TAG, "mFormatType : " + mFormatType);
+
+
+        boolean isMultiLine = false;
+        if((mFlag & FLAG_MULTI_LINE) == FLAG_MULTI_LINE){
+            isMultiLine = true;
+            if(DBG)
+                Log.d(TAG, "Multi line text clock.");
+        }
 
         boolean hasYear = false;
         if ((mFlag & FLAG_YEAR) == FLAG_YEAR) {
             hasYear = true;
-            if ((mFlag & YY) == YY) {
-                format = format + "yy";
-            } else {
-                format = format + "yyyy";
-            }
+
         }
 
         boolean hasMon = false;
         if ((mFlag & FLAG_MONTH) == FLAG_MONTH) {
             hasMon = true;
-            if (hasYear) {
-                format = format + "-";
-            }
-            format = format + "MM";
+
         }
 
         boolean hasDate = false;
         if ((mFlag & FLAG_DATE) == FLAG_DATE) {
             hasDate = true;
+
+        }
+
+        if(hasYear){
+            if ((mFlag & YY) == YY) {
+                format = format + "yy";
+            } else {
+                format = format + "yyyy";
+            }
+
+            if(isMultiLine) {
+                if (mFormatType == 1 || mFormatType == 3) {
+                    if (!hasMon && !hasDate)
+                        format = format + "\n";
+                }else{
+                    format = format + "\n";
+                }
+            }
+        }
+
+        if (hasMon) {
+            if (hasYear) {
+                format = format + "-";
+            }
+            format = format + "MM";
+
+            if(isMultiLine) {
+                if (mFormatType == 1 || mFormatType == 3) {
+                    if (!hasDate)
+                        format = format + "\n";
+                } else {
+                    if (!hasDate && !hasYear)
+                        format = format + "\n";
+                }
+            }
+        }
+
+        if(hasDate){
             if (hasYear || hasMon) {
                 format = format + "-";
             }
             format = format + "dd";
+
+            if(isMultiLine) {
+                if (mFormatType == 1 || mFormatType == 3) {
+                    format = format + "\n";
+                }else{
+                    if(!hasYear)
+                        format = format + "\n";
+                }
+            }
         }
 
         if(mFormatType == 2){
@@ -513,6 +561,9 @@ public class ItemTextClock extends TextView {
                 format = format + " ";
             }
             format = format + "EEEE";
+
+            if(isMultiLine)
+                format = format + "\n";
         }
 
         boolean hasHour = false;
@@ -552,6 +603,8 @@ public class ItemTextClock extends TextView {
             format = format + "ss";
         }
 
+
+
 //        boolean hasAMPM = false;
 //        if ((mFlag & FLAG_AMPM) == FLAG_AMPM && (mFlag & HOURS_24) != HOURS_24) {
 //            hasAMPM = true;
@@ -574,7 +627,29 @@ public class ItemTextClock extends TextView {
             }
             case 3: {
 //                return DateFormat.getLongDateFormat(getContext()).toString();
-                return DateFormat.getBestDateTimePattern(Locale.getDefault(), format.toString().replace("-", ""));
+
+                String bestDateTimePattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), format.toString());
+                StringBuffer stringBuffer = new StringBuffer(bestDateTimePattern);
+
+                if (bestDateTimePattern.contains("E"))
+                    stringBuffer.insert(stringBuffer.indexOf("E"), " ");
+                if(isMultiLine) {
+                    if (bestDateTimePattern.contains("E")) {
+                        stringBuffer.insert(stringBuffer.indexOf("E"), "\n");
+                        stringBuffer.insert(stringBuffer.lastIndexOf("E") + 1, "\n");
+                    } else if (bestDateTimePattern.contains("H")) {
+                        stringBuffer.insert(stringBuffer.indexOf("H"), "\n");
+                    } else if (bestDateTimePattern.contains("m")) {
+                        stringBuffer.insert(stringBuffer.indexOf("m"), "\n");
+                    } else if (bestDateTimePattern.contains("s")) {
+                        stringBuffer.insert(stringBuffer.indexOf("s"), "\n");
+                    }
+                }
+
+                if(DBG)
+                    Log.d(TAG, "Get best date time pattern , format  : " + bestDateTimePattern + " , sb : " + stringBuffer);
+
+                return stringBuffer;
 //                return DateFormat.getBestDateTimePattern(Locale.getDefault(), "MMMMyyyy");
             }
 
@@ -585,7 +660,7 @@ public class ItemTextClock extends TextView {
 //            return DateFormat.getBestDateTimePattern(Locale.getDefault(), "yyyyEEEMMMMdHHmmss");
 //        }
 
-        return DateFormat.getBestDateTimePattern(Locale.getDefault(), "yyyyEEEEMMMMddkkmmss");
+        return null;
     }
 
     // 12, YYYY == 0;
@@ -601,6 +676,7 @@ public class ItemTextClock extends TextView {
 
     private static final int FLAG_WEEK = 512;
     private static final int FLAG_AMPM = 1024;
+    private static final int FLAG_MULTI_LINE = 8192;
 
     @Override
     protected void onAttachedToWindow() {
