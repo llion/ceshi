@@ -603,7 +603,8 @@ public class ItemTextClock extends TextView {
             format = format + "ss";
         }
 
-
+        if(isMultiLine)
+            format = format.toString().replace(" ", "");
 
 //        boolean hasAMPM = false;
 //        if ((mFlag & FLAG_AMPM) == FLAG_AMPM && (mFlag & HOURS_24) != HOURS_24) {
@@ -617,6 +618,7 @@ public class ItemTextClock extends TextView {
 
         if(DBG)
             Log.d(TAG, "date Format generate : " + format );
+
 
         switch (mFormatType){
             case 1: {
@@ -644,6 +646,8 @@ public class ItemTextClock extends TextView {
                     } else if (bestDateTimePattern.contains("s")) {
                         stringBuffer.insert(stringBuffer.indexOf("s"), "\n");
                     }
+
+                    stringBuffer = new StringBuffer(stringBuffer.toString().replace(" ", ""));
                 }
 
                 if(DBG)
