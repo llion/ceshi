@@ -381,6 +381,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         // if there is only one page, no regenerate. add/remove the same contented page.
         // Otherwise, the region inside the page, will be regenerated, and the user
         // could see initial blank to content transition.
+
+        if (mDisplayedChild == 0 && getAdapter().getCount() == 1) {
+            if (DBG)
+                Log.d(TAG, "showNext. [Single item, don't move on to next.");
+            return;
+        }
+
         if (displayedChild >= getAdapter().getCount()) {
             mDisplayedChild = 0;
         } else {

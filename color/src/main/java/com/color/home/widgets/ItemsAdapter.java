@@ -32,6 +32,7 @@ import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+import com.color.home.widgets.timer.ItemTimer;
 import com.color.home.widgets.weather.ItemWeatherInfo;
 
 import java.io.File;
@@ -147,6 +148,12 @@ public class ItemsAdapter extends BaseAdapter {
                     // Currently, use the Item Quaz.
                     return genItemQuazAnalogClock(item);
                 }
+            } else if ("15".equals(item.type)) { // Timer
+                ItemTimer itemTimer = new ItemTimer(mContext);
+                itemTimer.setRegion(mRegion);
+                itemTimer.setItem(mRegionView, item);
+                return itemTimer;
+
             } else if ("2".equals(item.type)) { // Image
                // int animationType = Integer.parseInt(item.ineffect.Type);
                 int animationType = mRegionView.getmRealAnimationType();

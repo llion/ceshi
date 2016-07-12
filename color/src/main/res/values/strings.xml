@@ -5,6 +5,9 @@
 
     <string name="action_settings">Settings</string>
     <string name="action_all_apps">All Apps</string>
-    
 
+    <string name="day">days</string>
+    <string name="hour">hours</string>
+    <string name="minute">minutes</string>
+    <string name="second">seconds</string>
 </resources>
