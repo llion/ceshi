@@ -14,7 +14,7 @@ import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 
 public class ItemImageView extends ImageView implements OnPlayFinishObserverable {
-    private static final boolean DBG = false;;
+    private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemImageView";
 
@@ -73,7 +73,9 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
         try {
             width = Integer.parseInt(mRegion.rect.width);
             height = Integer.parseInt(mRegion.rect.height);
-            mDuration = Integer.parseInt(mItem.duration) + Integer.parseInt(mItem.ineffect.Time) + Integer.parseInt(mItem.outeffect.Time);
+            mDuration = Integer.parseInt(mItem.duration);
+            if (DBG)
+                Log.d(TAG, " mDuration = " + mDuration);
             setAlpha(Float.parseFloat(item.alhpa));
 
         } catch (Exception e) {
