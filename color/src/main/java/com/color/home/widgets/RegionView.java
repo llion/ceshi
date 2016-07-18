@@ -473,10 +473,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         // long duration = Long.parseLong(item.outeffect.Time);
         long duration = 500L;
-        try {
-            duration = Long.parseLong(item.ineffect.Time);
-        } catch (Exception e) {
-            e.printStackTrace();;
+
+        if (item.ineffect != null && item.ineffect.Time != null) {
+            try {
+                duration = Long.parseLong(item.ineffect.Time);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         if (DBG)
