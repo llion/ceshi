@@ -23,7 +23,7 @@ public class PlayPrgmReceiver extends BroadcastReceiver {
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             i.putExtras(intent);
             context.startActivity(i);
-
+            context.sendBroadcast(new Intent("com.clt.broadcast.programChanged").putExtras(intent));
         }
     }
 }

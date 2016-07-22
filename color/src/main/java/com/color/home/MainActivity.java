@@ -181,10 +181,10 @@ public class MainActivity extends Activity {
         // regist screen_on/off boardcast receiver
 
         mScreenStatusReceiver = new ScreenStatusReceiver();
-        IntentFilter recevierFilter = new IntentFilter();
-        recevierFilter.addAction(Intent.ACTION_SCREEN_ON);
-        recevierFilter.addAction(Intent.ACTION_SCREEN_OFF);
-        registerReceiver(mScreenStatusReceiver, recevierFilter);
+        IntentFilter receiverFilter = new IntentFilter();
+        receiverFilter.addAction(Intent.ACTION_SCREEN_ON);
+        receiverFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(mScreenStatusReceiver, receiverFilter);
     }
 
     class ScreenStatusReceiver extends BroadcastReceiver {
