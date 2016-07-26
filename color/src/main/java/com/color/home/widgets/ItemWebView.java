@@ -23,10 +23,10 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemWebView";
 
-    private boolean mIsDetached;
+    private boolean mIsDetached = true;
     private Item mItem;
     private OnPlayFinishedListener mListener;
-    private int mDuration;
+    private int mDuration = 5000;
 
     public ItemWebView(Context context, AttributeSet attrs, int defStyle, Map<String, Object> javaScriptInterfaces, boolean privateBrowsing) {
         super(context, attrs, defStyle, javaScriptInterfaces, privateBrowsing);
@@ -52,12 +52,17 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         mListener = regionView;
         this.mItem = item;
 
-        mDuration = Integer.parseInt(item.duration);
+
+        try {
+            mDuration = Integer.parseInt(item.duration);
+        } catch (Exception e) {
+            // ignore;
+            e.printStackTrace();
+        }
+
 
         if(DBG)
             Log.d(TAG, "WebView item duration : " + mDuration);
-        removeCallbacks(this);
-        postDelayed(this, mDuration);
 
         //url has no protocol
         if(!item.url.contains("http://") && !item.url.contains("https://"))
@@ -222,10 +227,26 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         this.mListener = null;
     }
 
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (mIsDetached) {
+            mIsDetached = false;
+        }
+
+        removeCallbacks(this);
+        postDelayed(this, mDuration);
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        mIsDetached = true;
+
+        if (!mIsDetached) {
+            mIsDetached = true;
+        }
 
         boolean removeCallbacks = removeCallbacks(this);
         if (DBG)
@@ -246,5 +267,9 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         if (DBG)
             Log.i(TAG, "run. Finish item play due to play length time up = ");
         notifyPlayFinished();
+
+        reload();
+        removeCallbacks(this);
+        postDelayed(this, mDuration);
     }
 }
