@@ -27,6 +27,7 @@ import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMLScrollableText;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
+import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
 
@@ -382,9 +383,9 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         // Otherwise, the region inside the page, will be regenerated, and the user
         // could see initial blank to content transition.
 
-        if (mDisplayedChild == 0 && getAdapter().getCount() == 1) {
+        if (mDisplayedChild == 0 && getAdapter().getCount() == 1 && getChildAt(0) instanceof ItemTimer) {
             if (DBG)
-                Log.d(TAG, "showNext. [Single item, don't move on to next.");
+                Log.d(TAG, "showNext. [Single item and the item instance of ItemTimer, don't move on to next.");
             return;
         }
 
