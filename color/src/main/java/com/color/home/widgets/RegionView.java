@@ -384,8 +384,8 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         // could see initial blank to content transition.
 
         if (mDisplayedChild == 0 && getAdapter().getCount() == 1
-                && getChildAt(0) instanceof ItemTimer
-                && getChildAt(0) instanceof ItemWebView
+                && (getChildAt(0) instanceof ItemTimer
+                || getChildAt(0) instanceof ItemWebView)
                 ) {
             if (DBG)
                 Log.d(TAG, "showNext. [Single item and the item instance of ItemTimer,ItemWebView. Don't move on to next.");
