@@ -16,24 +16,6 @@
 
 package com.color.home.android.providers.downloads;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import com.color.home.MainActivity;
-import com.color.home.ProgramParser.Page;
-import com.color.home.ProgramParser.Program;
-import com.color.home.R;
-import com.color.home.R.layout;
-import com.color.home.widgets.PagesAdapter;
-import com.color.home.widgets.ProgramView;
-import com.google.common.primitives.Longs;
-
-import android.animation.Animator;
-import android.animation.Animator.AnimatorListener;
-import android.animation.ObjectAnimator;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -47,11 +29,11 @@ import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewGroup.OnHierarchyChangeListener;
-import android.widget.Adapter;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The download manager is a system service that handles long-running HTTP downloads. Clients may request that a URI be downloaded to a
