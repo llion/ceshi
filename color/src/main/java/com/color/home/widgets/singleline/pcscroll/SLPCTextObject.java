@@ -45,6 +45,7 @@ public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
     static final boolean DBG = false;
     private static final boolean DBG_FPS = false;
+    private static final boolean DBG_MATRIX = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -138,6 +139,8 @@ public class SLPCTextObject {
 
         // Only one mem cache bitmap currently.
         MyBitmap texFromMemCache = texFromMemCache();
+        if (DBG)
+            Log.d(TAG,"texFromMemCache = " + texFromMemCache);
         if (texFromMemCache == null)
             prepareTexture();
         else {
@@ -202,7 +205,9 @@ public class SLPCTextObject {
 
         Matrix.setIdentityM(mVMatrix, 0);
         // Move the view (content/coordination origin) up.
-        Matrix.translateM(mVMatrix, 0, mEvenedWidth / 2.0f, getEvenPcHeight() / 2.0f, 0);
+        if(DBG)
+            Log.d(TAG, "getEvenPcHeight() =  " + getEvenPcHeight() + ", mPcHeight = " + mPcHeight);
+        Matrix.translateM(mVMatrix, 0, mEvenedWidth / 2.0f, getEvenPcHeight() / 2.0f , 0);
         Matrix.multiplyMM(mMVPMatrix, 0, mMVPMatrix, 0, mVMatrix, 0);
 
         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
@@ -231,6 +236,7 @@ public class SLPCTextObject {
     }
 
     private void initTexParam(int texId) {
+        if (DBG) Log.d(TAG, "initTexParam, texId = " + texId);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         TextRenderer.checkGLError("glBindTexture");
         // Setup texture parameters
@@ -270,6 +276,8 @@ public class SLPCTextObject {
 
         StreamResolver streamResolver = null;
         final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
+        if (DBG)
+            Log.d(TAG,"absFilePath = " + absFilePath);
         try {
             streamResolver = new StreamResolver(absFilePath).resolve();
             InputStream readFromIs = streamResolver.getReadFromIs();
@@ -297,6 +305,8 @@ public class SLPCTextObject {
 
             // Always square.
             byte[] content = new byte[getTexDim() * getTexDim() * 4];
+            if (DBG)
+                Log.i(TAG, "getTexDim = " + getTexDim());
 
             int readHeight = getPcHeight();
             // There could be empty heights.
@@ -434,7 +444,7 @@ public class SLPCTextObject {
             }
         }
 
-        if(DBG)
+        if(DBG_MATRIX)
             Log.d(TAG, "mMMatrix [12]  = " + mMMatrix[12]);
 
         if (mMMatrix[12] < -mEvenedWidth - mPcWidth) {

@@ -183,8 +183,8 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (DBG)
-            Log.i(TAG, "onAttachedToWindow. image = " + mItem.filesource.filepath);
-        
+            Log.i(TAG, "onAttachedToWindow. image = " + (mItem.filesource == null ? "NULL" : mItem.filesource.filepath));
+
         removeCallbacks(this);
         postDelayed(this, mDuration);
     }

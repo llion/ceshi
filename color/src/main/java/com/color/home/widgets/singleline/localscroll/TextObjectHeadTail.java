@@ -21,6 +21,7 @@ import com.color.home.widgets.singleline.QuadSegment;
 public class TextObjectHeadTail extends TextObject {
     private final static String TAG = "TextObjectHeadTail";
     private static final boolean DBG = false;
+    private static final boolean DBG_MATRIX = false;
 
     public TextObjectHeadTail(Context context) {
         super(context);
@@ -52,7 +53,7 @@ public class TextObjectHeadTail extends TextObject {
             }
         }
 
-        if(DBG) {
+        if(DBG_MATRIX) {
             Log.d(TAG, "matrix[12] = " + mMMatrix[12]);
             Log.d(TAG, "pixelTemp = " + pixelTemp);
         }

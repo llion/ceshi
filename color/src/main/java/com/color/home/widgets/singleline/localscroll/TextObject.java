@@ -77,6 +77,9 @@ public class TextObject extends SLPCTextObject {
         if (mLineHeight % 2 == 1) {
             mLineHeight ++;
         }
+        if (DBG)
+            Log.d(TAG, " mTextSize = " + mTextSize + ", mLineHeight = " + mLineHeight);
+
         setPcHeight(mLineHeight);
         float measuredWidth = mPaint.measureText(text);
         Rect bounds = new Rect();
@@ -87,7 +90,7 @@ public class TextObject extends SLPCTextObject {
         final float myw = ensuredWidth(bounds, measuredWidth);
         mPcWidth = (int) myw;
 
-        LineSegment aline = new LineSegment(text, mLineHeight, mPaint);
+        LineSegment aline = new LineSegment(text, mLineHeight, mPaint, mEvenedHeight);
 
         File cacheDir = mContext.getCacheDir();
         if (DBG)
@@ -105,7 +108,6 @@ public class TextObject extends SLPCTextObject {
 
             mPcWidth = savedBitmap.getWidth();
             setPcHeight(savedBitmap.getHeight());
-
             if (DBG)
                 Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
         } else {
@@ -148,6 +150,8 @@ public class TextObject extends SLPCTextObject {
         
         Bitmap textureBm = Bitmap.createBitmap(intArray, getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
 
+        if (DBG)
+            Log.d(TAG, "textureBm.getWidth() = " + textureBm.getWidth() + ", textureBm.getHeight() = " + textureBm.getHeight());
         if (textureBm != null) {
             AppController.getInstance().addBitmapToMemoryCache(getKeyImgId(0), new MyBitmap(textureBm, mPcWidth, getPcHeight()));
         }
@@ -216,9 +220,10 @@ public class TextObject extends SLPCTextObject {
         private String mText;
         private Rect mBounds;
         private Paint mPaint2;
+        private int mEvenedHeight;
 
         // private String mLine;
-        public LineSegment(String text, int lineHeight, Paint paint) {
+        public LineSegment(String text, int lineHeight, Paint paint, int evenedHeight) {
             mPaint2 = paint;
             if (DBG)
                 Log.d(TAG,
@@ -235,6 +240,7 @@ public class TextObject extends SLPCTextObject {
                 Log.d(TAG, "draw. [textBounds=" + mBounds + ", realTextWidth=" + (measuredWidth) + ", mText=" + mText);
             final float myw = ensuredWidth(mBounds, measuredWidth);
             mWidth = (int) myw;
+            mEvenedHeight = evenedHeight;
         }
 
         /**
@@ -246,12 +252,20 @@ public class TextObject extends SLPCTextObject {
          */
         public void draw(Canvas bitmapCanvas, Paint paint, int topAllText) {
 //            paint.setLinearText(true);
+
+            float baseline = (mEvenedHeight + mBounds.height() - 1.0f) / 2.0f - mBounds.bottom ;
+
             if (DBG)
                 Log.d(TAG, "draw. [paint antialias=" + paint.isAntiAlias()
-                        + ", isLinear=" + paint.isLinearText());
+                        + ", isLinear=" + paint.isLinearText() + ", topAllText = " + topAllText
+                        + ",  bitmapCanvas.getHeight() = " + bitmapCanvas.getHeight() + ", mEvenedHeight =" + mEvenedHeight
+                        + ", mBounds.height() = " +  mBounds.height() +  ", mBounds.bottom = " + mBounds.bottom + ", baseline = " + baseline);
 
-            // Must align baseline with topAlLText.
-            bitmapCanvas.drawText(mText, mBounds.left < 0 ? -mBounds.left : 0, -topAllText + 1.0f, paint);
+            // Must align baseline.
+            bitmapCanvas.save();
+            bitmapCanvas.translate(0.f, (bitmapCanvas.getHeight() - mEvenedHeight) / 2.0f);
+            bitmapCanvas.drawText(mText, mBounds.left < 0 ? -mBounds.left : 0, baseline, paint);
+            bitmapCanvas.restore();
             // bitmapCanvas.drawText(mText, bounds.left < 0 ? -bounds.left : 0, -bounds.top + 1.0f, paint);
         }
 

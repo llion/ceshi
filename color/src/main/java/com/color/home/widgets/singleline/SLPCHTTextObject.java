@@ -191,6 +191,8 @@ public class SLPCHTTextObject {
 
         Matrix.setIdentityM(mVMatrix, 0);
         // Move the view (content/coordination origin) up.
+        if(DBG)
+            Log.d(TAG, "Even height : " + getEvenPcHeight());
         Matrix.translateM(mVMatrix, 0, mWidth / 2.0f, getEvenPcHeight() / 2.0f, 0);
         Matrix.multiplyMM(mMVPMatrix, 0, mMVPMatrix, 0, mVMatrix, 0);
 
