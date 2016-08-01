@@ -41,7 +41,12 @@ public class QuadGenerator {
             Log.d(TAG, "initShapes. [askingForModelWholeWidth=" + askingForModelWholeWidth + ", mPcWidth=" + mPcWidth
                     + ", mItemWidth=" + mItemWidth + ", mTexWidth=" + mTexWidth + ", mLastQuadWidth=" + mLastQuadWidth);
 
-        int repeat = (int) askingForModelWholeWidth / (int) mPcWidth; // At least 1.
+        int repeat = 1; // At least 1.
+        try {
+            repeat = (int) askingForModelWholeWidth / (int) mPcWidth;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         repeat++;
         mRepeatedQuadsSize = mWholeTexQuadsCount * repeat;
     }

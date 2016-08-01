@@ -353,6 +353,8 @@ public class SLPCTextObject {
     }
 
     public MyBitmap texFromMemCache() {
+        if (DBG)
+            Log.d(TAG, "getKeyImgId(0) = " + getKeyImgId(0));
         return AppController.getInstance().getBitmapFromMemCache(getKeyImgId(0));
     }
 

@@ -176,6 +176,10 @@ public class ProgramParser {
             sb.append(lfHeight).append(lfWidth).append(lfEscapement).append(lfOrientation).append(lfWeight)
                     .append(lfItalic).append(lfUnderline).append(lfStrikeOut).append(lfCharSet).append(lfOutPrecision).append(lfQuality)
                     .append(lfPitchAndFamily).append(lfFaceName);
+            if (DBG)
+                Log.d(TAG, "lfHeight = " + lfHeight + ", lfWidth = " + lfWidth + ", lfEscapement = " + lfEscapement + ", lfOrientation = " + lfOrientation
+                 + ", lfWeight = " + lfWeight + ", lfItalic = " + lfItalic + ", lfUnderline = " + lfUnderline + ", lfStrikeOut = " + lfStrikeOut
+                 + ", lfCharSet = " + lfCharSet + ", lfOutPrecision = " + lfOutPrecision + ", lfQuality = " + lfQuality + ", lfPitchAndFamily = " + lfPitchAndFamily + ", lfFaceName = " + lfFaceName);
             return sb.toString();
         }
 
@@ -497,13 +501,17 @@ public class ProgramParser {
                 final String idString = logfont.getIdString();
                 // 16 is the string length of textColor and beglaring.
                 // textColor.length() + beglaring.length()
-                final StringBuilder sb = new StringBuilder(text.length() + idString.length() + 16);
-                sb.append(text).append(textColor).append(beglaring).append(idString);
+                String texts = text;
+                if ("1".equals(isfromfile))
+                    texts = getTexts().mText;
+                final StringBuilder sb = new StringBuilder(texts.length() + idString.length() + 16);
+                sb.append(texts).append(textColor).append(beglaring).append(idString);
                 mHash = Hashing.sha1().hashString(sb.toString(), Charset.forName("UTF-16"));
                 // mHash = Hashing.sha1().hashString(sb.toString(), Charset.forName("iso-8859-1"));
                 if (DBG) {
                     // Log.d(TAG, "Error:" + Hex.encodeHex(new byte[] { 0x2f, 0x34}));
-                    Log.d(TAG, "getTextBitmapHash. [sb=" + sb.toString() + ", mHash=" + mHash);
+                    Log.d(TAG, "getTextBitmapHash. [sb=" + sb.toString() + ", mHash=" + mHash
+                            + ", textColor = " + textColor + ", beglaring = " + beglaring);
                 }
 
                 return mHash;
