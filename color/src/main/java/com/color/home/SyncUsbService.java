@@ -230,7 +230,7 @@ public class SyncUsbService extends IntentService {
         args.add("-R");
         args.add("-v");
         args.add(absolutePath);
-        args.add(Constants.FOLDER_SYNCED_USB);
+        args.add(absolutePath.replace(Constants.FOLDER_USB_0, Constants.FOLDER_SYNCED_USB));
         return executeCommand(args.toArray(new String[0]));
     }
 
