@@ -77,7 +77,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         webSettings.setPluginState(WebSettings.PluginState.ON);
         
         setWebViewClient(new MyWebViewClient());
-        
+
+        setBackgroundColor(0x00000000);
     }
 
     private class MyWebViewClient extends WebViewClient {
