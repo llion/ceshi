@@ -30,8 +30,8 @@ android {
 
     productFlavors {
         resolution_independent {
-            versionCode 1066
-            versionName "1.25.308"
+            versionCode 1067
+            versionName "1.25.309_cleaning"
         }
     }
 
@@ -50,9 +50,9 @@ android {
 }
 
 dependencies {
-    compile project(':openWeatherSimple')
+
     compile 'com.google.guava:guava:18.0'
     compile 'com.android.support:support-v4:19.1.0'
-    compile files('libs/volley.jar')
+
     //    compile files('libs/temp_android_full.jar')
 }

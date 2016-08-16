@@ -22,7 +22,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Toast;
 
-import com.color.home.android.providers.downloads.CLDownloadManager;
 import com.color.home.keyboard.KeyBoardNav;
 import com.color.home.program.sync.FailedProgram;
 import com.color.home.program.sync.SyncService;
@@ -147,7 +146,6 @@ public class MainActivity extends Activity {
 
         // This init must be the first init. Otherwise, the others calling
         // getInst() w/o the context will fail.
-        CLDownloadManager.getInst(this.getApplicationContext().getContentResolver(), this.getPackageName());
 
         mContentVG = (ViewGroup) findViewById(android.R.id.content);
 
@@ -379,11 +377,6 @@ public class MainActivity extends Activity {
         SyncService.startService(getApplicationContext(), Uri.fromFile(vsn), Constants.ACTION_PROGRAM_STARTED);
     }
 
-    public void showDownload() {
-        Intent i = new Intent();
-        i.setAction(CLDownloadManager.ACTION_VIEW_DOWNLOADS);
-        startActivity(i);
-    }
 
     File generateVsnFile(boolean isNetwork, String path, String fileName) {
         return new File(path + "/" + fileName);

@@ -78,29 +78,9 @@
             -->
         </receiver>
 
-        <provider
-            android:name=".android.providers.downloads.DownloadProvider"
-            android:authorities="color_downloads"
-            android:exported="true" >
-        </provider>
-
-        <service android:name=".android.providers.downloads.DownloadService" />
         <service android:name="com.color.home.program.sync.SyncService" />
         <service android:name=".SyncUsbService" />
 
-        <receiver android:name=".android.providers.downloads.DownloadReceiver" >
-            <intent-filter>
-
-                <!-- <action android:name="android.intent.action.BOOT_COMPLETED" /> -->
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_MOUNTED" />
-
-                <data android:scheme="file" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>

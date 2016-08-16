@@ -505,7 +505,7 @@ public class ItemsAdapter extends BaseAdapter {
                     }
                 }
             } else if ("14".equals(item.type)) {// web
-                ItemWeatherInfo weather = (ItemWeatherInfo) mInflater.inflate(R.layout.layout_weather_info, null);
+                ItemWeatherInfo weather = new ItemWeatherInfo(mContext);
                 // String filePath = getAbsFilePath(item);
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);

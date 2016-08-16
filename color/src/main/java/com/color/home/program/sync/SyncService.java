@@ -1,6 +1,7 @@
 package com.color.home.program.sync;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,14 +22,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.color.home.AppController;
 import com.color.home.Constants;
 import com.color.home.ProgramParser.Program;
 import com.color.home.SyncUsbService;
-import com.color.home.android.providers.downloads.CLDownloadManager;
 //         /storage/sdcard0/Android/data/com.color.home/files/Download
 // setprop com.tag.Volley VERBOSE
 // adb logcat Volley:V SyncService:V VsnSync:V *:S SyncBase:V SyncedPrograms:V CLIntentService:V AppController:V
@@ -64,15 +61,9 @@ import com.color.home.netplay.Config;
 
 public class SyncService extends CLIntentService {
     private final static String TAG = "SyncService";
-    private static final boolean DBG = false;
-    private ProgramRequest mProgramReq;
+    private static final boolean DBG = true;
     private Strategy mStrategy = AppController.getInstance().getStrategy();;
 
-    private static class ProgramRequest extends JsonObjectRequest {
-        public ProgramRequest(String url, Response.Listener<JSONObject> listener, Response.ErrorListener error) {
-            super(url, null, listener, error);
-        }
-    }
 
     private Handler mHandler;
 
@@ -83,25 +74,7 @@ public class SyncService extends CLIntentService {
         mHandler = new Handler();
     }
 
-    private class ProgramListeners implements Response.Listener<JSONObject>, Response.ErrorListener {
-        private String mUrl;
 
-        public ProgramListeners(String url) {
-            mUrl = url;
-        }
-
-        @Override
-        public void onErrorResponse(VolleyError error) {
-            if (DBG)
-                Log.e(TAG, "error response=" + error.getMessage());
-        }
-
-        @Override
-        public void onResponse(JSONObject response) {
-            new ProgramSync(mUrl, Constants.PROGRAMS_JSON, response);
-        }
-
-    }
 
     public static void startService(Context context, Uri uri, String action) {
         context.startService(new Intent(action, uri, context, SyncService.class));
@@ -119,18 +92,7 @@ public class SyncService extends CLIntentService {
         if (DBG)
             Log.v(TAG, "onHandleIntent. [action=" + action);
 
-        if (Constants.HTTP_SERVER_SUPPORT && Constants.ACTION_REFRESH.equals(action)) {
-            final String URL = AppController.getInstance().getConnectivity().getColorControlUri() + "/" + Constants.PROGRAMS_JSON;
-            ProgramListeners pl = new ProgramListeners(URL);
-            mProgramReq = new ProgramRequest(URL, pl, pl);
-            mProgramReq.setShouldDeliverCache(false);
-            // add the request object to the queue to be executed
-            AppController.getInstance().addToRequestQueue(mProgramReq);
-        } else if (CLDownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-            ProgramSync.notifyIfAllDownloaded();
-        } else if (Constants.ACTION_ALL_DOWNLOAD_FINISHED.equals(action)) {
-            mStrategy.onAllDownloaded();
-        } else if (Constants.ACTION_FORCE_PLAY_NET_PROGRAMJSON.equals(action)) {
+        if (Constants.ACTION_FORCE_PLAY_NET_PROGRAMJSON.equals(action)) {
             mStrategy.onForcePlayNet();
         } else if (Constants.ACTION_PROGRAM_STARTED.equals(action)) {
             if (DBG)
@@ -141,7 +103,19 @@ public class SyncService extends CLIntentService {
                 @Override
                 public void run() {
                     AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(typeID) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
-                    
+
+                    // Sync dirty files whenever a program started.
+                    try {
+                        if (DBG)
+                            Log.d(TAG, "Start sync files into disk.");
+                        Runtime.getRuntime().exec("sync");
+                        if (DBG)
+                            Log.d(TAG, "Sync files finished.");
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
 
                 public String normalizePlayingVsn() {

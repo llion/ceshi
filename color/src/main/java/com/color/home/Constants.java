@@ -1,16 +1,13 @@
 package com.color.home;
 
-import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.color.home.android.providers.downloads.CLStorageManager;
 import com.color.home.network.IpUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Arrays;
-import java.util.Set;
 
 public class Constants {
     private final static String TAG = "Constants";
@@ -61,15 +58,6 @@ public class Constants {
     // // return context.getFilesDir().getAbsolutePath() + "/new.vsn.downing";
     // }
 
-    public static String[] convertToAbsPaths(Context context, Set<String> collectedFiles) {
-        final String[] fileArray = collectedFiles.toArray(new String[0]);
-        String downloadDataDir = CLStorageManager.getDownloadDataDirectory(context).toString();
-        int count = fileArray.length;
-        for (int i = 0; i < count; i++) {
-            fileArray[i] = downloadDataDir + fileArray[i];
-        }
-        return fileArray;
-    }
 
     // file abs path as extra.
     public static final String ACTION_COLOR_CONFIG = "com.color.intent.action.CONFIG";

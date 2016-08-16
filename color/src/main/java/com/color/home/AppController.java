@@ -1,13 +1,5 @@
 package com.color.home;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-
 import android.app.Application;
 import android.content.ContentValues;
 import android.content.Context;
@@ -19,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -30,21 +23,18 @@ import android.view.Gravity;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Cache;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.Volley;
-import com.color.home.android.providers.downloads.CLDownloadManager;
-import com.color.home.android.providers.downloads.CLStorageManager;
 import com.color.home.netplay.Config;
 import com.color.home.netplay.ConfigAPI;
 import com.color.home.netplay.Connectivity;
-import com.color.home.netplay.FtpServer;
 import com.color.home.program.sync.PollingUtils;
 import com.color.home.program.sync.Strategy;
 import com.color.home.program.sync.SyncService;
 import com.color.home.provider.ColorContract;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class AppController extends Application {
 
@@ -55,7 +45,6 @@ public class AppController extends Application {
     /**
      * Global request queue for Volley
      */
-    private RequestQueue mRequestQueue;
     private static Handler sHandler;
     static {
         final HandlerThread thread = new HandlerThread(TAG, android.os.Process.THREAD_PRIORITY_BACKGROUND);
@@ -126,9 +115,7 @@ public class AppController extends Application {
 
     private Connectivity mConnectivity;
 
-    private CLDownloadManager mDownloadMngr;
 
-    private Cache mCache;
     private Model mModel;
     private Strategy mStrategy;
 
@@ -139,14 +126,6 @@ public class AppController extends Application {
 
     public SharedPreferences getSettings() {
         return mSettings;
-    }
-
-    public Cache getCache() {
-        return mCache;
-    }
-
-    public CLDownloadManager getDownloadMngr() {
-        return mDownloadMngr;
     }
 
     public Typeface generateTypeface(String fontName) {
@@ -267,20 +246,15 @@ public class AppController extends Application {
 
         scheduleEnsureFTP(mFtpFacilities, 3000);
 
-        mDownloadMngr = CLDownloadManager.getInst(getContentResolver(), getPackageName());
 
         mModel = new Model();
         mStrategy = new Strategy();
 
-        try {
-            mDownloadDataDir = CLStorageManager.getDownloadDataDirectory(this);
-            if (mDownloadDataDir != null) {
-                mDownloadDataDir.createNewFile();
-            } else {
-                Log.d(TAG, "onCreate. [mDownloadDataDir is NULL.");
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "onCreate", e);
+        mDownloadDataDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (mDownloadDataDir != null) {
+            mDownloadDataDir.mkdirs();
+        } else {
+            Log.d(TAG, "onCreate. [mDownloadDataDir is NULL.");
         }
 
     }
@@ -346,22 +320,7 @@ public class AppController extends Application {
         return sInstance;
     }
 
-    /**
-     * @return The Volley Request queue, the queue will be created if it is null
-     */
-    public RequestQueue getRequestQueue() {
-        // lazy initialize the request queue, the queue instance will be
-        // created when it is accessed for the first time
-        if (mRequestQueue == null) {
-            mRequestQueue = Volley.newRequestQueue(getApplicationContext(), 1, sHandler);
-            mCache = mRequestQueue.getCache();
-            // Do not clear, as cur algorithm is if there is ALL DOWNLOADED broadcast, start net play.
-            // But we could be playing USB or Synced USB.
-            // mCache.clear();
-        }
 
-        return mRequestQueue;
-    }
 
     public Config getCfg() {
         return mCfg;
@@ -369,33 +328,6 @@ public class AppController extends Application {
 
     public static Handler getHandler() {
         return sHandler;
-    }
-
-    /**
-     * Adds the specified request to the global queue, if tag is specified then it is used else Default TAG is used.
-     * 
-     * @param req
-     * @param tag
-     */
-    public <T> void addToRequestQueue(Request<T> req, String tag) {
-        // set the default tag if tag is empty
-        req.setTag(TextUtils.isEmpty(tag) ? TAG : tag);
-
-        VolleyLog.d("Adding request to queue: %s", req.getUrl());
-
-        getRequestQueue().add(req);
-    }
-
-    /**
-     * Adds the specified request to the global queue using the Default TAG.
-     * 
-     * @param req
-     */
-    public <T> void addToRequestQueue(Request<T> req) {
-        // set the default tag if tag is empty
-        req.setTag(TAG);
-
-        getRequestQueue().add(req);
     }
 
     @Override
@@ -407,18 +339,6 @@ public class AppController extends Application {
             PollingUtils.stopPollingService(this, SyncService.class, Constants.ACTION_REFRESH);
         }
         super.onTerminate();
-    }
-
-    /**
-     * Cancels all pending requests by the specified TAG, it is important to specify a TAG so that the pending/ongoing requests can be
-     * cancelled.
-     * 
-     * @param tag
-     */
-    public void cancelPendingRequests(Object tag) {
-        if (mRequestQueue != null) {
-            mRequestQueue.cancelAll(tag);
-        }
     }
 
     public static String getPlayingRootPath() {
