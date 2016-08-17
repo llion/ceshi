@@ -79,9 +79,6 @@ public class FailedProgram {
             int badvsn_total = SystemProperties.getInt(BADVSN_TOTAL, 0);
             badvsn_total++;
 
-            SystemProperties.set(BADVSN_TOTAL, String.valueOf(badvsn_total));
-            SystemProperties.set(BAD_VSN + badvsn_total, SystemProperties.get(TRYING_VSN));
-
 
             ArrayList<String> commands = new ArrayList<String>();
             commands.add("setprop " + BADVSN_TOTAL + " " + String.valueOf(badvsn_total));

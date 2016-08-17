@@ -106,12 +106,12 @@ public class ProgramsViewer{
 
         @Override
         protected void onPostExecute(List<Program> result) {
-            setPrograms(result);
-
-            if (getPrograms() == null) {
-                Log.e(TAG, "onCreate. [Program is null.");
+            if (result == null) {
+                Log.e(TAG, "onCreate. [Program is null ignore.");
                 return;
             }
+
+            setPrograms(result);
 
             mMainActivity.onProgramStarted(mVsnFile);
             inflatePrograms();
