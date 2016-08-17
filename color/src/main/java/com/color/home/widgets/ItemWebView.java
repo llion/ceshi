@@ -1,7 +1,9 @@
 package com.color.home.widgets;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
 import android.net.http.SslError;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -15,6 +17,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.color.home.ProgramParser.Item;
+import com.color.home.network.NetworkConnectReceiver;
 
 import java.util.Map;
 
@@ -71,14 +74,24 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         if (DBG)
             Log.i(TAG, "setItem. url=" + item.url);
 
+
         WebSettings webSettings = this.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setPluginsEnabled(true);
         webSettings.setPluginState(WebSettings.PluginState.ON);
-        
         setWebViewClient(new MyWebViewClient());
 
         setBackgroundColor(0x00000000);
+//        setWebChromeClient(new WebChromeClient() {
+//            @Override
+//            public void onProgressChanged(WebView view, int newProgress) {
+//                super.onProgressChanged(view, newProgress);
+//
+//                if (DBG)
+//                    Log.d(TAG, "Progress=" + newProgress + " ,view=" + view);
+//            }
+//        });
+        
     }
 
     private class MyWebViewClient extends WebViewClient {
@@ -113,7 +126,9 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         @Override
         public void onPageFinished(WebView view, String url) {
             if (DBG)
-                Log.i(TAG, "onPageFinished. view, url");
+                Log.i(TAG, "onPageFinished. view, url=" + url
+                );
+
             // TODO Auto-generated method stub
             super.onPageFinished(view, url);
         }
@@ -147,8 +162,22 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             // TODO Auto-generated method stub
             if (DBG)
-                Log.i(TAG, "onReceivedError. view, errorCode, description, failingUrl");
-            super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.i(TAG, "onReceivedError:--- errorCode:" + errorCode
+                + ", failingUrl=" + failingUrl
+                + ", errorCode" + errorCode + ", description= " + description
+                );
+
+            if (errorCode == -2 && ! mIsDetached){
+                if (DBG)
+                    Log.d(TAG, "Error code is -2, schedule another refresh retry after 5 secs." +
+                            " for url=" + failingUrl
+                    + ", view=" +view);
+
+                removeCallbacks(mRefresh);
+                postDelayed(mRefresh, 30000L);
+            }
+
+
         }
 
         @Override
@@ -182,6 +211,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
                 Log.i(TAG, "onReceivedHttpAuthRequest. view, handler, host, realm");
             super.onReceivedHttpAuthRequest(view, handler, host, realm);
         }
+
 
         @Override
         public boolean shouldOverrideKeyEvent(WebView view, KeyEvent event) {
@@ -218,6 +248,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         
     }
 
+
+
     @Override
     public void setListener(OnPlayFinishedListener listener) {
         this.mListener = listener;
@@ -228,6 +260,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         this.mListener = null;
     }
 
+    private NetworkConnectReceiver mNcl = new NetworkConnectReceiver(this);
 
     @Override
     protected void onAttachedToWindow() {
@@ -236,6 +269,13 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         if (mIsDetached) {
             mIsDetached = false;
         }
+
+        if (DBG){
+            Log.i(TAG,"-----------onAttachedToWindow");
+        }
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        getContext().registerReceiver(mNcl, filter);
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
@@ -249,6 +289,9 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             mIsDetached = true;
         }
 
+        removeCallbacks(mRefresh);
+
+        getContext().unregisterReceiver(mNcl);
         boolean removeCallbacks = removeCallbacks(this);
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
@@ -262,14 +305,27 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             mListener.onPlayFinished(this);
         }
     }
+    private Runnable mRefresh = new Runnable() {
+        @Override
+        public void run() {
+            if(DBG){
+                Log.d(TAG,"mRefresh:---itemWebView.reload()");
+            }
+            if (!mIsDetached) {
+                reload();
+            }
+        }
+    };
 
     @Override
     public void run() {
         if (DBG)
-            Log.i(TAG, "run. Finish item play due to play length time up = ");
+            Log.i(TAG, "run. Finish item play due to play length time up = " + mDuration);
+
         notifyPlayFinished();
 
         reload();
+
         removeCallbacks(this);
         postDelayed(this, mDuration);
     }
