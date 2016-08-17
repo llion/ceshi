@@ -1,5 +1,9 @@
 package com.color.home;
 
+import android.content.Context;
+import android.os.Environment;
+import android.os.StatFs;
+
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -7,6 +11,7 @@ import com.color.home.network.IpUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Constants {
@@ -135,6 +140,30 @@ public class Constants {
         return files;
     }
 
+    public static File[] listSyncedUsbSubFiles(){
+        ArrayList<File> files = listAllSubFilesUnderFolder(FOLDER_SYNCED_USB);
+        return files.toArray(new File[files.size()]);
+    }
+
+    public static File[] listUsbSubFiles(){
+        ArrayList<File> files = listAllSubFilesUnderFolder(FOLDER_USB_0);
+        return files.toArray(new File[files.size()]);
+    }
+
+    public static ArrayList<File> listAllSubFilesUnderFolder(String folder){
+        if(DBG)
+            Log.d(TAG, "listAllSubFilesUnderFolder of : " + folder);
+        File dir = new File(folder);
+        ArrayList<File> files = new ArrayList<File>();
+        for(File f : dir.listFiles()){
+            if(!f.isDirectory())
+                files.add(f);
+            else
+                files.addAll(listAllSubFilesUnderFolder(f.getAbsolutePath()));
+        }
+        return files;
+    }
+
     public static File[] listSyncedUsbVsnAndFilesFolders() {
         return listVsnAndFilesFolders(FOLDER_SYNCED_USB);
     }
@@ -160,6 +189,7 @@ public class Constants {
 
     public static final String EXTRA_INDEX = "index";
     public static final String EXTRA_USB_SYNC_RESULT = "usb_sync_result";
+    public static final String EXTRA_REASON_FOR_SYNC_FAILURE = "reason_for_usb_sync_failure";
     public static final String EXTRA_FILE_NAME = "file_name";
     public static final String EXTRA_PATH = "path";
     public static final String ACTION_PLAY_PROGRAM = "com.clt.broadcast.playProgram";
@@ -199,6 +229,15 @@ public class Constants {
     
         return STOP;
     
+    }
+
+    public static long availableSizeOfSdcard(){
+        File path = Environment.getExternalStorageDirectory();
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSize();
+        long availableBlocks = stat.getAvailableBlocks();
+
+        return availableBlocks * blockSize;
     }
 
     public static String absFolderToSourceType(String playingFolder) {
