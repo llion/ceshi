@@ -134,6 +134,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         mIsAttached = true;
         // Must setupItems after the window attached, otherwise, there no is initial appearing animation.
+        // TODO: Try catch. HMH 0819
         setupItems();
     }
 

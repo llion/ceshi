@@ -61,7 +61,7 @@ import com.color.home.netplay.Config;
 
 public class SyncService extends CLIntentService {
     private final static String TAG = "SyncService";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private Strategy mStrategy = AppController.getInstance().getStrategy();;
 
 
@@ -265,17 +265,23 @@ public class SyncService extends CLIntentService {
 
         if (!path.startsWith("/mnt/sdcard")) {
             if (DBG)
-                Log.d(TAG, "keepOnlyPlayingVSNUsingResources. [Not /mnt/sdcard, maybe USB key, so ignore.");
+                Log.d(TAG, "keepOnlyPlayingVSNUsingResources. [Not /mnt/sdcard, maybe USB key, so ignore.path=" + path);
             return;
         }
 
         String resFolder = fileName.replace(".vsn", ".files");
         File resFolderFile = new File(path, resFolder);
-        String[] listFiles = resFolderFile.list();
-        if (listFiles == null) {
+        if (! resFolderFile.isDirectory()) {
             Log.e(TAG, "Not a dir resFolder=" + resFolderFile);
             return;
         }
+
+        String[] listFiles = resFolderFile.list();
+        if (listFiles == null) {
+            Log.e(TAG, "List failed dir resFolder=" + resFolderFile);
+            return;
+        }
+
         Set<String> collectPathFiles = Program.collectFiles(programs);
 
         Set<String> pureFilenames = new HashSet<String>(collectPathFiles.size());

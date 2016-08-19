@@ -25,7 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.color.home.keyboard.KeyBoardNav;
-import com.color.home.program.sync.FailedProgram;
+import com.color.home.program.sync.FailedProgramChecker;
 import com.color.home.program.sync.SyncService;
 import com.color.widgets.floating.FloatingLayout;
 
@@ -375,7 +375,6 @@ public class MainActivity extends Activity {
         SyncService.startService(getApplicationContext(), Uri.parse("content://com.color.home/play/"), Constants.ACTION_PROGRAM_STARTED);
     }
 
-
     private void startProgram(File vsn) {
         if (DBG)
             Log.i(TAG, "startProgram. programVsnFile=" + vsn);
@@ -383,7 +382,7 @@ public class MainActivity extends Activity {
         // Mark in the SystemProperties the time and the vsn file we are trying to playback.
         // If later the Home is restart, and the interval is quite short,
         // Maybe we could not playback this program.
-        new FailedProgram(vsn); // Mark
+        new FailedProgramChecker(this, vsn); // Mark
 
         mProgramsViewer.parsePrograms(vsn);
     }
@@ -391,11 +390,10 @@ public class MainActivity extends Activity {
     public void onProgramStarted(File vsn) {
         // Must be before startProgram. Otherwise, the item data source's path will be the previous one.
         // Check AppController.getPlayingRootPath()'s usage.
-        AppController.getInstance().getModel().setCurProgramPathFile(vsn.getParentFile().getAbsolutePath(), vsn.getName());
-
+        AppController.getInstance().getModel().setCurProgramPathFile(vsn);
 
         AppController.getInstance().getModel().setPrograms(mProgramsViewer.getPrograms());
-        AppController.getInstance().markProgram(vsn.getParentFile().getAbsolutePath(), vsn.getName());
+        AppController.getInstance().markProgram(vsn);
         SyncService.startService(getApplicationContext(), Uri.fromFile(vsn), Constants.ACTION_PROGRAM_STARTED);
     }
 

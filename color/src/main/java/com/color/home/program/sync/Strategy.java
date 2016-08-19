@@ -17,7 +17,7 @@ public class Strategy {
         if (DBG)
             Log.d(TAG, "onUsbMounted. [");
 
-        FailedProgram fp = new FailedProgram();
+        FailedProgramChecker fp = new FailedProgramChecker(AppController.getInstance().getApplicationContext());
         fp.clear();
         // Try to play usb content. If no vsn, do nothing.
         // i.e., keep current playing.
@@ -56,7 +56,7 @@ public class Strategy {
     public void onHomeStarted() {
         if (DBG)
             Log.d(TAG, "onHomeStarted. [");
-        FailedProgram failedProgram = new FailedProgram();
+        FailedProgramChecker failedProgram = new FailedProgramChecker(AppController.getInstance().getApplicationContext());
         failedProgram.check();
 
         ProgramFile pf = PairedProgramFile.fromSettings(AppController.getInstance().getSettings());
@@ -152,7 +152,7 @@ public class Strategy {
         File[] vsns = Constants.listVsns(dir);
         if (vsns != null && vsns.length > 0) {
             // Always sort Usb program.
-            FailedProgram fp = new FailedProgram();
+            FailedProgramChecker fp = new FailedProgramChecker(AppController.getInstance().getApplicationContext());
             for (int i = 0; i < vsns.length; i++) {
                 if (fp.okToPlay(vsns[i])) {
                     new FileProgramFile(vsns[i]).play();

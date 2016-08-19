@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.color.home.netplay.Config;
 import com.color.home.netplay.ConfigAPI;
 import com.color.home.netplay.Connectivity;
+import com.color.home.program.sync.PairedProgramFile;
 import com.color.home.program.sync.PollingUtils;
 import com.color.home.program.sync.Strategy;
 import com.color.home.program.sync.SyncService;
@@ -51,7 +52,6 @@ public class AppController extends Application {
         thread.start();
         sHandler = new Handler(thread.getLooper());
     }
-
 
     public static class MyBitmap {
         private Bitmap mBitmap;
@@ -164,31 +164,38 @@ public class AppController extends Application {
         return sMemoryCache.get(key);
     }
 
+    public void markProgram(File vsn) {
+        markProgram(vsn.getParentFile().getAbsolutePath(), vsn.getName());
+    }
+
     public void markProgram(String path, String fileName) {
-        String pathNorm = TextUtils.isEmpty(path) ? "" : path;
-        String fileNameNorm = TextUtils.isEmpty(fileName) ? "" : fileName;
+        PairedProgramFile file = new PairedProgramFile(path, fileName);
         
         Intent intent = new Intent(Constants.ACTION_CURRENT_PROG_INDEX);
         intent.putExtra(Constants.EXTRA_INDEX, 999);
-        intent.putExtra(Constants.EXTRA_PATH, pathNorm);
-        intent.putExtra(Constants.EXTRA_FILE_NAME, fileNameNorm);
+        intent.putExtra(Constants.EXTRA_PATH, file.getPath());
+        intent.putExtra(Constants.EXTRA_FILE_NAME, file.getFilename());
         sendStickyBroadcast(intent);
 
         Editor edit = getSettings().edit();
-        edit.putString(Constants.EXTRA_PATH, pathNorm);
-        edit.putString(Constants.EXTRA_FILE_NAME, fileNameNorm);
+        edit.putString(Constants.EXTRA_PATH, file.getPath());
+        edit.putString(Constants.EXTRA_FILE_NAME, file.getFilename());
         edit.apply();
         
-        ContentValues values = new ContentValues();
-        values.put(ColorContract.COLUMN_PROGRAM_SOURCE, "updated path");
-        values.put(ColorContract.COLUMN_PROGRAM_SOURCE, Constants.absFolderToSourceType(pathNorm));
-        values.put(ColorContract.COLUMN_PROGRAM_PATH, pathNorm);
-        values.put(ColorContract.COLUMN_PROGRAM_FILENAME, fileNameNorm);
-        int update = getContentResolver()
-                .update(Uri.withAppendedPath(ColorContract.PROGRAM_CONTENT_URI, "playing"), values, null, null);
-        if (DBG)
-            Log.i(TAG, "markProgram. [PROGRAM_CONTENT_URI update count=" + update);
+//        ContentValues values = new ContentValues();
+//        values.put(ColorContract.COLUMN_PROGRAM_SOURCE, "updated path");
+//        values.put(ColorContract.COLUMN_PROGRAM_SOURCE, Constants.absFolderToSourceType(pathNorm));
+//        values.put(ColorContract.COLUMN_PROGRAM_PATH, pathNorm);
+//        values.put(ColorContract.COLUMN_PROGRAM_FILENAME, fileNameNorm);
+//        int update = getContentResolver()
+//                .update(Uri.withAppendedPath(ColorContract.PROGRAM_CONTENT_URI, "playing"), values, null, null);
+//        if (DBG)
+//            Log.i(TAG, "markProgram. [PROGRAM_CONTENT_URI update count=" + update);
         
+    }
+
+    public static String normPathNameInternalSdToSdcard(String pathNorm) {
+        return pathNorm.replace("/mnt/internal_sd/", "/mnt/sdcard/");
     }
 
     public Typeface getTypeface(String fontName) {

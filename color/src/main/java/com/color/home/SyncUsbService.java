@@ -26,7 +26,7 @@ import java.util.TreeSet;
 
 public class SyncUsbService extends IntentService {
     private final static String TAG = "SyncUsbService";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     public SyncUsbService() {
         super(SyncUsbService.class.getName());
