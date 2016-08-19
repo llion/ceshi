@@ -122,6 +122,9 @@ public class SyncService extends CLIntentService {
                     String playingVsn = Strategy.getPlayingVsn();
                     if (playingVsn != null) {
                         playingVsn = playingVsn.replace(".vsn", "");
+                        String md5Tag = getMd5Tag(playingVsn);
+                        if(!TextUtils.isEmpty(md5Tag))
+                            playingVsn = playingVsn.substring(0, playingVsn.indexOf(md5Tag) - 1);
                     }
                     if (TextUtils.isEmpty(playingVsn)) {
                         playingVsn = "";
@@ -228,6 +231,22 @@ public class SyncService extends CLIntentService {
                 mStrategy.onUsbRemoved();
             }
         }
+
+    }
+
+    private String getMd5Tag(String s) {
+
+        while (s.contains("_") && (s.indexOf("_") != s.lastIndexOf("_"))) {
+            String temp = s.substring(0, s.lastIndexOf("_"));
+            temp = temp.substring(temp.lastIndexOf("_") + 1, temp.length());
+            if (temp.length() == 32) {
+                return temp;
+            } else {
+                s = s.substring(0, s.lastIndexOf("_"));
+            }
+        }
+
+        return "";
 
     }
 
