@@ -155,7 +155,7 @@ public class ItemsAdapter extends BaseAdapter {
                 return itemTimer;
 
             } else if ("2".equals(item.type)) { // Image
-               // int animationType = Integer.parseInt(item.ineffect.Type);
+                // int animationType = Integer.parseInt(item.ineffect.Type);
                 int animationType = mRegionView.getmRealAnimationType();
                 if (DBG)
                     Log.d(TAG, "animationType = " + animationType);
@@ -167,116 +167,40 @@ public class ItemsAdapter extends BaseAdapter {
 //                    }
 //                }
                 if (DBG)
-                    Log.d(TAG,"convertView==" + convertView );
+                    Log.d(TAG, "convertView==" + convertView);
+
+                // if (convertView != null && convertView.getContext().toString())
+//                    if (DBG)
+                ItemImageView iiv;
+                if (convertView != null
+                    //&&
+//                            convertView instanceof ItemImageView &&
+//                            !(convertView instanceof  SwitchableImageView)
+                        ) {
+                    iiv = (ItemImageView) convertView;
+                    if (DBG)
+                        Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
+                                "!(convertView instanceof  SwitchableImageView)");
+                } else {
+                    iiv = new ItemImageView(mContext);
+                    iiv.setRegion(mRegion);
+                    if (DBG)
+                        Log.d(TAG, "new ItemImageView(mContext)");
+                }
+                iiv.setItem(mRegionView, item);
                 if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
                         || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
-                        || animationType == 11 ||animationType == 12 ||animationType == 13 || animationType == 14
+                        || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
                         || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
                         || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
                         || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
                         || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
                         || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
 
-                    SwitchableImageView siv;
-                    if (convertView != null && convertView instanceof  SwitchableImageView) {
-                        siv = (SwitchableImageView) convertView;
-                        if (DBG)
-                            Log.d(TAG,"convertView != null && convertView instanceof  SwitchableImageView");
-                    } else {
-                        siv = new SwitchableImageView(mContext);
-                        siv.setRegion(mRegion);
-                        if (DBG)
-                            Log.d(TAG,"new SwitchableImageView(mContext)");
-                    }
-                    siv.setItem(mRegionView, item);
+                    iiv.setEffectStyle(animationType);
 
-                    if (animationType == 2)//左覆盖
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_COVER_STYLE);
-                    else if (animationType == 3)//右覆盖
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.RIGHT_COVER_STYLE);
-                    else if (animationType == 4)//上覆盖
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.OVER_COVER_STYLE);
-                    else if (animationType == 5)//下覆盖
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.UNDER_COVER_STYLE);
-                    else if (animationType == 6)//左上覆盖--斜线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_TOP_DIAGONAL_STYLE);
-                    else if (animationType == 7)//右上覆盖--斜线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.RIGHT_TOP_DIAGONAL_STYLE);
-                    else if (animationType == 8)//左下覆盖--斜线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_BOTTOM_DIAGONAL_STYLE);
-                    else if (animationType == 9)//右下覆盖--斜线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.RIGHT_BOTTOM_DIAGONAL_STYLE);
-                    else if (animationType == 10)//左上角覆盖--直线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_TOP_LINE_STYLE);
-                    else if (animationType == 11)//右上角覆盖--直线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.RIGHT_TOP_LINE_STYLE);
-                    else if (animationType == 12)//左下角覆盖--直线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_BOTTOM_LINE_STYLE);
-                    else if (animationType == 13)//右下角覆盖--直线
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.RIGHT_BOTTOM_LINE_STYLE);
-                    else if (animationType == 14)//水平百叶
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.HORIZONTAL_STYLE);
-                    else if (animationType == 15)//垂直百叶
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.VERTICAL_STYLE);
-                    else if (animationType == 16) //左右对开
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_RIGHT_OPEN_STYLE);
-                    else if (animationType == 17) //上下对开
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.UP_DOWN_OPEN_STYLE);
-                    else if (animationType == 18) //左右闭合
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.LEFT_RIGHT_CLOSE_STYLE);
-                    else if (animationType == 19) //上下闭合
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.UP_DOWN_CLOSE_STYLE);
-                    else if (animationType == 28 || animationType == 29 || animationType == 30)
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.MOZAIC_STYLE);
-                    else if (animationType == 32) //右旋360
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.ALL_RIGHT_ROTA_STYLE);
-                    else if (animationType == 33) //左旋360
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.ALL_LEFT_ROTA_STYLE);
-                    else if (animationType == 34) //右旋180
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.HALF_RIGHT_ROTA_STYLE);
-                    else if (animationType == 35) //左旋180
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.HALF_LEFT_ROTA_STYLE);
-                    else if (animationType == 36) //右旋90
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.QUARTER_RIGHT_ROTA_STYLE);
-                    else if (animationType == 37) //左旋90
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.QUARTER_LEFT_ROTA_STYLE);
-                    else if (animationType == 43) //中间向四周--矩形
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.CENTER_AROUND_RECT_STYLE);
-                    else if (animationType == 44) //四周向中间--矩形
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.AROUND_CENTER_RECT_STYLE);
-                    else if (animationType == 45) //中间向四周--菱形
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.DIAMOND_CENTER_OUTER_STYLE);
-                    else if (animationType == 46) //四周向中间--菱形
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.DIAMOND_AROUND_CENTER_STYLE);
-                    else if (animationType == 47) //中间向四周--十字
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.CENTER_AROUND_CROSS_STYLE);
-                    else if (animationType == 48) //四周向中间--十字
-                        siv.setSwitchingStyle(SwitchableImageView.SwitchingStyle.AROUND_CENTER_CROSS_STYLE);
-
-                    return siv;
-                }  else {
-                   // if (convertView != null && convertView.getContext().toString())
-//                    if (DBG)
-                    ItemImageView iiv;
-                    if (convertView != null
-                            //&&
-//                            convertView instanceof ItemImageView &&
-//                            !(convertView instanceof  SwitchableImageView)
-                            ) {
-                        iiv = (ItemImageView) convertView;
-                        if (DBG)
-                            Log.d(TAG,"convertView != null && convertView instanceof ItemImageView && " +
-                                    "!(convertView instanceof  SwitchableImageView)");
-                    } else {
-                        iiv = new ItemImageView(mContext);
-                        iiv.setRegion(mRegion);
-                        if (DBG)
-                            Log.d(TAG,"new ItemImageView(mContext)");
-                    }
-                    iiv.setItem(mRegionView, item);
-                    return iiv;
                 }
-
+                return iiv;
 
             } else if ("4".equals(item.type)) {// Single line text.
                 if ("1".equals(item.isscroll)) {
@@ -432,13 +356,32 @@ public class ItemsAdapter extends BaseAdapter {
                             return view;
                         } else { // Multi lines text?
                             ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
                             // String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
                             view.setItem(mRegionView, mRegion, item);
+                            int animationType = mRegionView.getmRealAnimationType();
                             if (DBG)
-                                Log.d(TAG, "getView. [view=" + view);
+                                Log.d(TAG, "animationType = " + animationType);
+
+                            if (DBG)
+                                Log.d(TAG, "convertView==" + convertView);
+                            if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
+                                    || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
+                                    || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
+                                    || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
+                                    || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
+                                    || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
+                                    || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
+                                    || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
+
+                                view.setEffectStyle(animationType);
+
+                            }
+
                             return view;
                         }
                     } else {
@@ -496,9 +439,28 @@ public class ItemsAdapter extends BaseAdapter {
                     /*
                      * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                      */
-                        view.setItem(mRegionView, mRegion, item);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
+                        view.setItem(mRegionView, mRegion, item);
+                        int animationType = mRegionView.getmRealAnimationType();
+                        if (DBG)
+                            Log.d(TAG, "animationType = " + animationType);
+
+                        if (DBG)
+                            Log.d(TAG, "convertView==" + convertView);
+                        if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
+                                || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
+                                || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
+                                || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
+                                || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
+                                || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
+                                || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
+                                || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
+
+                            view.setEffectStyle(animationType);
+
+                        }
+
                         return view;
                     } else {
                         return unknowView(item);
