@@ -1,7 +1,9 @@
 package com.color.home.widgets.multilines;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
@@ -17,6 +19,7 @@ import com.color.home.ProgramParser.MultiPicInfo;
 import com.color.home.ProgramParser.Region;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.utils.GraphUtils;
+import com.color.home.widgets.EffectView;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
@@ -30,13 +33,15 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable {
+public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishObserverable {
     // public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable, Runnable {
     private static final boolean DBG = false;
+    private static final boolean DBG_DRAW = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemMultiLinesMultipic";
 
     private Item mItem;
+    private RegionView mRegionView;
     private int mHeight;
     private OnPlayFinishedListener mListener;
     private boolean mIsAttached;
@@ -44,6 +49,8 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
     private int mOnePicDuration;
     private int mPicCount;
     private ScrollPicInfo mScrollpicinfo;
+
+    long duration = 500L;
 
     public ItemMultiLinesMultipic(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -60,12 +67,35 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
     public void setItem(RegionView regionView, Region region, Item item) {
         mListener = regionView;
         this.mItem = item;
+        this.mRegionView = regionView;
 
         mMultipicinfo = item.multipicinfo;
-        mOnePicDuration = Integer.parseInt(mMultipicinfo.onePicDuration);
-        mPicCount = Integer.parseInt(mMultipicinfo.picCount);
+        try {
+            mOnePicDuration = Integer.parseInt(mMultipicinfo.onePicDuration);
+            mPicCount = Integer.parseInt(mMultipicinfo.picCount);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+        if (DBG)
+            Log.d(TAG, "mOnePicDuration= " + mOnePicDuration);
 
         mPageIndex = 0;
+
+        if (DBG)
+            Log.d(TAG, "ineffect= " + item.ineffect);
+        if (item.ineffect != null && item.ineffect.Time != null) {
+
+            try {
+                duration = Long.parseLong(item.ineffect.Time);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (DBG)
+            Log.i(TAG, "ineffect duration=" + duration);
+
         setPageText();
     }
 
@@ -73,12 +103,19 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
         final String keyImgId = mMultipicinfo.filePath.MD5 + mPageIndex;
 
         MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
+        if (DBG)
+            Log.d(TAG, "keyImgId= " + keyImgId + ", bitmapFromMemCache= " + bitmapFromMemCache);
         if (bitmapFromMemCache == null) {
             new MulpicBmLoader().execute(new MulpicInfo(keyImgId, mPageIndex, mMultipicinfo.filePath));
         } else {
             Bitmap resultBm = bitmapFromMemCache.getBitmap();
-            if (resultBm != null)
+            if (resultBm != null) {
+                if (DBG)
+                    Log.d(TAG, "mPageIndex= " + mPageIndex);
+                if (mPageIndex > 0)
+                    startAnimation();
                 setImageBitmap(resultBm);
+            }
         }
 
     }
@@ -111,6 +148,10 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
 
         @Override
         protected void onPostExecute(Bitmap result) {
+            if (DBG)
+                Log.d(TAG, "onPostExecute, result= " + result);
+            if (mPageIndex > 0)
+                startAnimation();
             setImageBitmap(result);
         }
     }
@@ -276,11 +317,12 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
             mPageIndex = 0;
             // On multiline finished play once, tell region view.
             tellListener();
-        }
+        } else {
 
-        if (DBG)
-            Log.i(TAG, "run. next page. mPageIndex=" + mPageIndex);
-        setPageText();
+            if (DBG)
+                Log.i(TAG, "run. next page. mPageIndex=" + mPageIndex);
+            setPageText();
+        }
     }
 
     // @Override
@@ -295,9 +337,9 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
 
         private final WeakReference<ItemMultiLinesMultipic> mView;
         private boolean mShouldStop;
-        private int mMarqueeDelay;
+        private long mMarqueeDelay;
 
-        public MTextMarquee(ItemMultiLinesMultipic view, int delay) {
+        public MTextMarquee(ItemMultiLinesMultipic view, long delay) {
             mMarqueeDelay = delay;
             mView = new WeakReference<ItemMultiLinesMultipic>(view);
         }
@@ -351,6 +393,35 @@ public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObs
                 view.nextPage();
             }
         }
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (DBG_DRAW) {
+            Log.d(TAG, " onDraw(Canvas canvas), effect2= " + effect2 + ", switchingPercent= " + switchingPercent);
+        }
+        if (effect2)
+            effectStyle.beforeDraw(canvas, switchingPercent);//限制新图出来的形状
+
+        super.onDraw(canvas);//画图
+
+        if (effect2)
+            effectStyle.onDraw(this, canvas);//处理图
+
+    }
+
+    public void startAnimation() {
+        ValueAnimator animator = mRegionView.getmCustomAppearingAnim();
+
+        if (DBG) {
+            Log.d(TAG, "animator= " + animator);
+        }
+        if (animator != null) {
+            animator.setTarget(this);
+            animator.setDuration(duration);
+            animator.start();
+        }
+
     }
 
 }

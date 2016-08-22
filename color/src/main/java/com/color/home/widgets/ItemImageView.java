@@ -3,6 +3,7 @@ package com.color.home.widgets;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -13,7 +14,7 @@ import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 
-public class ItemImageView extends ImageView implements OnPlayFinishObserverable {
+public class ItemImageView extends EffectView implements OnPlayFinishObserverable {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemImageView";
@@ -83,9 +84,8 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
         }
 
         if (DBG)
-            Log.i(TAG, "----------alpha    =" +item.alhpa);
+            Log.i(TAG, "----------alpha    =" + item.alhpa);
         //setAlpha(Float.parseFloat(item.alhpa));
-
 
 
         if ("1".equals(item.reserveAS)) {//
@@ -94,7 +94,7 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
             setScaleType(ScaleType.FIT_XY);
         }
         if (DBG)
-            Log.i("rotation", "-----------goto rotation    =" );
+            Log.i("rotation", "-----------goto rotation    =");
         //setRotationX(100.f);
         // out = Integer.parseInt(mItem.outeffect.Time);
         // ineffect = Integer.parseInt(mItem.ineffect.Time);
@@ -152,7 +152,7 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
             @Override
             public void run() {
                 if (DBG)
-                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath+"    mduration======="+mDuration);
+                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath + "    mduration=======" + mDuration);
 
                 tellListener();
             }
@@ -261,6 +261,20 @@ public class ItemImageView extends ImageView implements OnPlayFinishObserverable
     }
 
     //
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (DBG) {
+            Log.d(TAG, " onDraw(Canvas canvas), effect2= " + effect2 + ", switchingPercent= " + switchingPercent);
+        }
+        if (effect2)
+            effectStyle.beforeDraw(canvas, switchingPercent);//限制新图出来的形状
+
+        super.onDraw(canvas);//画图
+
+        if (effect2)
+            effectStyle.onDraw(this, canvas);//处理图
+
+    }
 
 
 }
