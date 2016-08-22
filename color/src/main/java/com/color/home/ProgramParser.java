@@ -504,7 +504,11 @@ public class ProgramParser {
                 String texts = text;
                 if ("1".equals(isfromfile))
                     texts = getTexts().mText;
-                final StringBuilder sb = new StringBuilder(texts.length() + idString.length() + 16);
+                int length = 0;
+                if (texts != null)
+                    length = texts.length();
+
+                final StringBuilder sb = new StringBuilder(length + idString.length() + 16);
                 sb.append(texts).append(textColor).append(beglaring).append(idString);
                 mHash = Hashing.sha1().hashString(sb.toString(), Charset.forName("UTF-16"));
                 // mHash = Hashing.sha1().hashString(sb.toString(), Charset.forName("iso-8859-1"));

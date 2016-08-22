@@ -8,7 +8,9 @@ import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.widgets.ItemsAdapter;
 import com.google.common.base.CharMatcher;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -98,6 +100,61 @@ public class Texts {
     }
 
     private String getStringFromFile(String absFilePath) {
+        String fileContent = "";
+        final int BUFLEN = 1024;
+        BufferedInputStream is = null;
+        try {
+            is = new BufferedInputStream(new FileInputStream(absFilePath), BUFLEN);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFLEN);
+            byte[] bytes = new byte[BUFLEN];
+            boolean isUTF8 = false;
+            boolean isUNICODE = false;
+            boolean isUNICODEBE = false;
+            int read, count = 0;
+            while ((read = is.read(bytes)) != -1) {
+                if (count == 0 && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
+                    isUTF8 = true;
+                    baos.write(bytes, 3, read - 3); // drop UTF8 bom marker
+                } else if (count == 0 && bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xFE) {
+                    isUNICODE = true;
+                    baos.write(bytes, 2, read - 2);  // drop UNICODE bom marker
+                } else if (count == 0 && bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xFF) {
+                    isUNICODEBE = true;
+                    baos.write(bytes, 2, read - 2);  // drop UNICODE Big Endia bom marker
+                } else {
+                    baos.write(bytes, 0, read);
+                }
+                count += read;
+            }
+
+            if (isUTF8)
+                fileContent = new String(baos.toByteArray(), "UTF-8");
+            else if (isUNICODE)
+                fileContent = new String(baos.toByteArray(), "UTF-16LE");
+            else if (isUNICODEBE)
+                fileContent = new String(baos.toByteArray(), "UTF-16BE");
+            else
+                fileContent = new String(baos.toByteArray(), AppController.sCharset);
+
+            if (DBG)
+                Log.d(TAG, "isUTF8= " + isUTF8 + ", isUNICODE= " + isUNICODE + ", isUNICODEBE= " + isUNICODEBE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        if (DBG)
+            Log.d(TAG, "fileContent= " + fileContent);
+        return fileContent;
+    }
+
+    private String loadAnsiFile(String absFilePath) {
         StringBuffer fileContent = new StringBuffer("");
 
         BufferedReader reader = null;
