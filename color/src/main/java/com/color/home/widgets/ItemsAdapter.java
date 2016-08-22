@@ -308,7 +308,7 @@ public class ItemsAdapter extends BaseAdapter {
 
             } else if ("5".equals(item.type)) {// Multi lines text.
 
-                if ("1".equals(item.isscroll)) {
+                if ("1".equals(item.isscroll)) {// multiline scroll
                     if (DBG)
                         Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo);
                     final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;

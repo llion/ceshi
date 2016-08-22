@@ -14,6 +14,7 @@ import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
+import com.color.home.widgets.multilines.MultiPicScrollRenderer;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
 public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver {
@@ -159,6 +160,8 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
         this.mListener = null;
     }
 
-
+    public SLPCRenderer getmRenderer() {
+        return mRenderer;
+    }
 
 }

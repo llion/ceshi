@@ -18,6 +18,7 @@ import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
+import com.color.home.widgets.multilines.MultiPicScrollRenderer;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
 public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver {
@@ -179,4 +180,7 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         this.mListener = null;
     }
 
+    public TextRenderer getmRenderer() {
+        return mRenderer;
+    }
 }

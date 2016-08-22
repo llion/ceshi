@@ -141,4 +141,7 @@ private long mLastTime = 0L;
         mIsFinished = true;
     }
 
+    public void notFinish() {
+        mIsFinished = false;
+    }
 }

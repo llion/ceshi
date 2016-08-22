@@ -141,4 +141,7 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         this.mListener = null;
     }
 
+    public MultiPicScrollRenderer getmRenderer() {
+        return mRenderer;
+    }
 }
