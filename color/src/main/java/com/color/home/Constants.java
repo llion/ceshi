@@ -1,9 +1,7 @@
 package com.color.home;
 
-import android.content.Context;
 import android.os.Environment;
 import android.os.StatFs;
-
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -38,6 +36,7 @@ public class Constants {
     public static final String FOLDER_USB_0 = "/mnt/usb_storage/USB_DISK0/udisk0";
     public static final String FOLDER_SYNCED_USB = "/mnt/sdcard/Android/data/com.color.home/files/Usb";
     public static final String FOLDER_FTP = "/mnt/sdcard/Android/data/com.color.home/files/Ftp";
+    public static final String FOLDER_COLOR_FILES = "/mnt/sdcard/Android/data/com.color.home/files";
     public static final String FOLDER_FTP_CONFIG = FOLDER_FTP + "/config";
     
     public final static String FTP_PROGRAM_PATH = FOLDER_FTP + "/program";

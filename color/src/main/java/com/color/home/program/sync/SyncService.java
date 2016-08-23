@@ -143,7 +143,7 @@ public class SyncService extends CLIntentService {
 //            }
 
             // Clean up excluding the INTERNET.
-            if (typeID == Constants.TYPE_USB || typeID == Constants.TYPE_SYNCED_USB || typeID == Constants.TYPE_FTP) {
+            if (typeID == Constants.TYPE_SYNCED_USB || typeID == Constants.TYPE_FTP) {
                 keepOnlyPlayingVSNUsingResources();
             }
 
@@ -234,7 +234,7 @@ public class SyncService extends CLIntentService {
 
     }
 
-    private String getMd5Tag(String s) {
+    public static String getMd5Tag(String s) {
 
         while (s.contains("_") && (s.indexOf("_") != s.lastIndexOf("_"))) {
             String temp = s.substring(0, s.lastIndexOf("_"));
@@ -289,6 +289,14 @@ public class SyncService extends CLIntentService {
         // "/new.files/xx"
         final String folderPattern = "/" + resFolder + "/";
         for (String collectFile : collectPathFiles) {
+            if (collectFile.endsWith("mulpic")) {
+                // Add twice the mulpic, as from synced usb we
+                // could find either mulpic or mulpic.zip.
+                pureFilenames.add(collectFile.replace(folderPattern, ""));
+
+                collectFile += ".zip";
+            }
+
             pureFilenames.add(collectFile.replace(folderPattern, ""));
         }
 
@@ -310,12 +318,6 @@ public class SyncService extends CLIntentService {
         mutable.removeAll(pureFilenames);
 
         for (String shouldDel : mutable) {
-            if (shouldDel.endsWith(".zip")) {
-                if (DBG) {
-                    Log.e(TAG, "onHandleIntent. [do not del zip file=" + shouldDel);
-                }
-                continue;
-            }
             File toDel = new File(path, resFolder + "/" + shouldDel);
             boolean deleted = toDel.delete();
 
