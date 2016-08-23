@@ -139,4 +139,7 @@ public class TextRenderer implements GLSurfaceView.Renderer {
         mIsFinished = true;
     }
 
+    public void notFinish() {
+        mIsFinished = false;
+    }
 }

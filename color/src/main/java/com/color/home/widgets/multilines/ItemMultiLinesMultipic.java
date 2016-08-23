@@ -50,7 +50,10 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
     private int mPicCount;
     private ScrollPicInfo mScrollpicinfo;
 
-    long duration = 500L;
+    private long duration = 500L;
+    private int ineffectType = 0;
+    private boolean isFirst = true;// the first time display picture, the view already has ineffect animation
+
 
     public ItemMultiLinesMultipic(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -69,11 +72,18 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         this.mItem = item;
         this.mRegionView = regionView;
 
+        if (item.ineffect != null) {
+            try {
+                ineffectType = Integer.parseInt(item.ineffect.Type);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         mMultipicinfo = item.multipicinfo;
         try {
             mOnePicDuration = Integer.parseInt(mMultipicinfo.onePicDuration);
             mPicCount = Integer.parseInt(mMultipicinfo.picCount);
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -97,6 +107,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
             Log.i(TAG, "ineffect duration=" + duration);
 
         setPageText();
+        isFirst = false;
     }
 
     private void setPageText() {
@@ -112,9 +123,11 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
             if (resultBm != null) {
                 if (DBG)
                     Log.d(TAG, "mPageIndex= " + mPageIndex);
-                if (mPageIndex > 0)
+                if (!isFirst && ineffectType != 0) {
                     startAnimation();
-                setImageBitmap(resultBm);
+                }
+                    setImageBitmap(resultBm);
+
             }
         }
 
@@ -150,7 +163,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         protected void onPostExecute(Bitmap result) {
             if (DBG)
                 Log.d(TAG, "onPostExecute, result= " + result);
-            if (mPageIndex > 0)
+            if (!isFirst && ineffectType != 0)
                 startAnimation();
             setImageBitmap(result);
         }
@@ -317,12 +330,13 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
             mPageIndex = 0;
             // On multiline finished play once, tell region view.
             tellListener();
-        } else {
-
-            if (DBG)
-                Log.i(TAG, "run. next page. mPageIndex=" + mPageIndex);
-            setPageText();
         }
+//        else {
+//
+//            if (DBG)
+//                Log.i(TAG, "run. next page. mPageIndex=" + mPageIndex);
+            setPageText();
+//        }
     }
 
     // @Override

@@ -16,6 +16,7 @@ import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
+import com.color.home.widgets.singleline.pcscroll.SLPCRenderer;
 
 public class SLPCHTSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver {
     private final static String TAG = "SLPCHTSurfaceView";
@@ -141,4 +142,7 @@ public class SLPCHTSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         this.mListener = null;
     }
 
+    public SLPCHTRenderer getmRenderer() {
+        return mRenderer;
+    }
 }

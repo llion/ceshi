@@ -142,4 +142,7 @@ public class MultiPicScrollRenderer implements GLSurfaceView.Renderer {
         mIsFinished = true;
     }
 
+    public void notFinish() {
+        mIsFinished = false;
+    }
 }

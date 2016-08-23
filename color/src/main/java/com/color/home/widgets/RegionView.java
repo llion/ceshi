@@ -25,8 +25,12 @@ import com.color.home.ProgramParser.Region;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMLScrollableText;
+import com.color.home.widgets.multilines.ItemMultiLinesMultipic;
 import com.color.home.widgets.singleline.MovingTextUtils;
+import com.color.home.widgets.singleline.PCItemSingleLineText;
+import com.color.home.widgets.singleline.SLPCHTSurfaceView;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
+import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
 import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
@@ -126,9 +130,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         setupRegionLayout();
     }
 
-    public int getmRealAnimationType(){
+    public int getmRealAnimationType() {
         return mRealAnimationType;
     }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -310,11 +315,11 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                         Log.i(TAG, "Continue play region next item, onPlayFinished.  Thread=" + Thread.currentThread());
                 }
 
-                if (view instanceof  ItemVideoView) {
+                if (view instanceof ItemVideoView) {
                     if (DBG) {
                         Log.d(TAG, "is ItemVideoView.");
                     }
-                    if (((ItemVideoView)view).ismIsLoop() && ((ItemVideoView)view).ismSeekable()) {
+                    if (((ItemVideoView) view).ismIsLoop() && ((ItemVideoView) view).ismSeekable()) {
                         if (DBG) {
                             Log.d(TAG, "The video can loop itself, and there is only one item (ismIsLoop()), do not show next view.");
                         }
@@ -387,10 +392,43 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (mDisplayedChild == 0 && getAdapter().getCount() == 1
                 && (getChildAt(0) instanceof ItemTimer
-                || getChildAt(0) instanceof ItemWebView)
+                || getChildAt(0) instanceof ItemWebView
+                || getChildAt(0) instanceof ItemMultiLinesMultipic
+                || getChildAt(0) instanceof ItemMLScrollMultipic2View
+                || getChildAt(0) instanceof SLTextSurfaceView
+                || getChildAt(0) instanceof SLPCSurfaceView
+                || getChildAt(0) instanceof SLPCHTSurfaceView
+                || getChildAt(0) instanceof PCItemSingleLineText)
                 ) {
             if (DBG)
-                Log.d(TAG, "showNext. [Single item and the item instance of ItemTimer,ItemWebView. Don't move on to next.");
+                Log.d(TAG, "showNext. getChildAt(0)= " + getChildAt(0));
+
+            if (DBG)
+                Log.d(TAG, "showNext. [Single item and the item instance of ItemTimer, " +
+                        "ItemWebView, ItemMultiLinesMultipic, ItemMLScrollMultipic2View," +
+                        "SLTextSurfaceView, SLPCSurfaceView,SLPCHTSurfaceView . Don't move on to next.");
+
+            //ItemMLScrollMultipic2View
+            if (getChildAt(0) instanceof ItemMLScrollMultipic2View) {
+                ((ItemMLScrollMultipic2View) getChildAt(0)).getmRenderer().notFinish();
+            }
+
+            //SLTextSurfaceView
+            if (getChildAt(0) instanceof SLTextSurfaceView) {
+                ((SLTextSurfaceView) getChildAt(0)).getmRenderer().notFinish();
+            }
+
+            //SLPCSurfaceView
+            if (getChildAt(0) instanceof SLPCSurfaceView) {
+                ((SLPCSurfaceView) getChildAt(0)).getmRenderer().notFinish();
+            }
+
+            //SLPCHTSurfaceView
+            if (getChildAt(0) instanceof SLPCHTSurfaceView) {
+                ((SLPCHTSurfaceView) getChildAt(0)).getmRenderer().notFinish();
+            }
+
+
             return;
         }
 
@@ -541,13 +579,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         }
 
         if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6 || animationType == 7 || animationType == 8
-                  || animationType == 9 || animationType == 10 || animationType == 11 ||animationType == 12 ||animationType == 13 || animationType == 14
-                  || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18 || animationType == 19 || animationType == 28
-                  || animationType == 29 || animationType == 30 || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
-                  || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44 || animationType == 45 || animationType == 46
-                  || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或上下闭合或旋转或中间四周
+                || animationType == 9 || animationType == 10 || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
+                || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18 || animationType == 19 || animationType == 28
+                || animationType == 29 || animationType == 30 || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
+                || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44 || animationType == 45 || animationType == 46
+                || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或上下闭合或旋转或中间四周
             if (DBG)
-                Log.i(TAG, " animationType = "+animationType);
+                Log.i(TAG, " animationType = " + animationType);
 
             customAppearingAnim = ObjectAnimator.ofFloat(null, "switchingPercent", 0.0f, 1.0f);//switchingPercent即SwitchableImageView中的一个变量名
 
@@ -618,7 +656,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
         if (DRAW_DBG)
-            Log.i(TAG, "onDraw. canvas type="+ mRealAnimationType);
+            Log.i(TAG, "onDraw. canvas type=" + mRealAnimationType);
 
         if (mDrawable != null)
             mDrawable.draw(canvas);
@@ -668,13 +706,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 //        if (regionWidth % 2 == 1) {
 //            mRegionWidth = regionWidth - 1;
 //        } else {
-            mRegionWidth = MovingTextUtils.evenIt(regionWidth); // TODO, check sanity.
+        mRegionWidth = MovingTextUtils.evenIt(regionWidth); // TODO, check sanity.
 //        }
     }
 
     private void setRegionHeight(int regionHeight) {
 //        if (regionHeight % 2 == 1) {
-            mRegionHeight = MovingTextUtils.evenIt(regionHeight);
+        mRegionHeight = MovingTextUtils.evenIt(regionHeight);
 //        } else {
 //            mRegionHeight = regionHeight;
 //        }
