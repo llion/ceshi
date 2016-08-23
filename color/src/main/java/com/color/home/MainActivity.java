@@ -79,7 +79,8 @@ public class MainActivity extends Activity {
                     }
                 }
             } else if (Intent.ACTION_MEDIA_REMOVED.equals(action) && intent.getData().toString().endsWith("0")){
-                mSyncInfolayout.hideLayout();
+                if(mSyncInfolayout != null)
+                    mSyncInfolayout.hideLayout();
             }
         }
 

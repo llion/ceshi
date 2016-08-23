@@ -1,6 +1,7 @@
 package com.color.home;
 
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.widget.Adapter;
 import com.color.home.ProgramParser.Page;
 import com.color.home.ProgramParser.Program;
 import com.color.home.R.layout;
+import com.color.home.program.sync.SyncService;
 import com.color.home.widgets.PagesAdapter;
 import com.color.home.widgets.ProgramView;
 
@@ -24,10 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ProgramsViewer{
     private final static String TAG = "ProgramsViewer";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
 
     ProgramView mProgramView;
     public List<Program> mPrograms;
@@ -69,9 +72,17 @@ public class ProgramsViewer{
         @Override
         protected List<Program> doInBackground(File... params) {
             mVsnFile = params[0];
-            ProgramParser pp = new ProgramParser(mVsnFile);
+
+
+
             InputStream in = null;
             try {
+
+                if(!validateFile(mVsnFile))
+                    throw new Exception("VsnFile does not exist. : (" + mVsnFile + ")");
+
+                ProgramParser pp = new ProgramParser(mVsnFile);
+
                 in = new BufferedInputStream(new FileInputStream(mVsnFile));
                 // Be aware of that he VsnSync also parse the vsn file, but it's deprecated.
                 // - hmh 2016-02-25
@@ -81,7 +92,55 @@ public class ProgramsViewer{
                     if (parsed != null)
                         for (ResourceCollectable prog : parsed) {
                             Log.i(TAG, "onCreate. [program=" + prog);
+
                         }
+                Set<String> files = Program.collectFiles(parsed);
+                if(files == null)
+                    throw new FileNotFoundException("No files collected.");
+                for (String resPath : files) {
+                    if (DBG)
+                        Log.d(TAG, "Program parse , resFilePath : " + resPath);
+                    if(resPath.endsWith("mulpic")) {
+                        if(DBG)
+                            Log.d(TAG, "multi pic ");
+
+                        // TODO:::::: remove the continue below, once the LEDVISION is ready to
+                        // send us correct md5_size.xxxmulpic.zip in its VSN file spec.
+                        continue;
+//                        resPath += ".zip";
+                    }
+
+                    File resFile = new File(mVsnFile.getAbsoluteFile().getParent(), resPath);
+
+                    if(!validateFile(resFile))
+                        throw new Exception("ResFile does not exist. : (" + resFile + ")");
+
+                    String md5Tag = SyncService.getMd5Tag(resPath);
+                    if(DBG)
+                        Log.d(TAG, "Program parse , md5Tag : " + md5Tag);
+                    if(!TextUtils.isEmpty(md5Tag)){
+                        long resSize;
+                        try {
+                            String resPathSubStr = resPath.substring(resPath.lastIndexOf("_") + 1);
+                            resSize = Long.parseLong(resPathSubStr.substring(0, resPathSubStr.indexOf(".")));
+                            if(DBG)
+                                Log.d(TAG, "Program parse , resSize : " + resSize);
+
+                            if(DBG)
+                                Log.d(TAG, "Program parse , resSize : " + resSize
+                                        + " , resFile="  + resFile);
+
+                        } catch (Exception e){
+                            e.printStackTrace();
+                            // Ignore the file name with unexpected format.
+                            continue;
+                        }
+
+                        if (resSize != resFile.length())
+                            throw new Exception("Illegal resource file : (" + resPath + ")");
+
+                    }
+                }
                 return parsed;
 
             } catch (FileNotFoundException e) {
@@ -102,6 +161,10 @@ public class ProgramsViewer{
                 }
             }
             return null;
+        }
+
+        private boolean validateFile(File file) {
+            return file.exists() && file.isFile() && file.length() != 0;
         }
 
         @Override
