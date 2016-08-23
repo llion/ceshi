@@ -1,5 +1,6 @@
 package com.color.home.netplay;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -11,6 +12,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.color.home.AppController;
+import com.color.home.provider.ColorContract;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -401,21 +403,21 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
         if (dirty) {
             if (DBG)
                 Log.d(TAG, "Dirty.");
-            // updateDb(isAPConfiged, ssid, pass, channel);
+             updateDb(isAPConfiged, ssid, pass, channel);
         }
 
         return dirty;
     }
 
-//    private void updateDb(boolean isAPConfiged, String ssid, String pass, String channel) {
-//        ContentValues values = new ContentValues(3);
-//        values.put(ColorContract.COLUMN_ENABLED, isAPConfiged ? 1 : 0);
-//        values.put(ColorContract.COLUMN_SSID, Wifi.normalize(ssid));
-//        values.put(ColorContract.COLUMN_PASS, Wifi.normalize(pass));
-//        // Not
-//        values.put(ColorContract.COLUMN_RES1, Wifi.normalize(channel));
-//        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_AP_CONTENT_URI, values, null, null);
-//        if (DBG)
-//            Log.d(TAG, "updateDb AP. [update=" + update);
-//    }
+    private void updateDb(boolean isAPConfiged, String ssid, String pass, String channel) {
+        ContentValues values = new ContentValues(3);
+        values.put(ColorContract.COLUMN_ENABLED, isAPConfiged ? 1 : 0);
+        values.put(ColorContract.COLUMN_SSID, Wifi.normalize(ssid));
+        values.put(ColorContract.COLUMN_PASS, Wifi.normalize(pass));
+        // Not
+        values.put(ColorContract.COLUMN_RES1, Wifi.normalize(channel));
+        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_AP_CONTENT_URI, values, null, null);
+        if (DBG)
+            Log.d(TAG, "updateDb AP. [update=" + update);
+    }
 }
