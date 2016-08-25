@@ -596,12 +596,12 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             if (DBG)
                 Log.i(TAG, " animationType = " + animationType);
 
-            customAppearingAnim = ObjectAnimator.ofFloat(null, "switchingPercent", 0.0f, 1.0f);//switchingPercent即SwitchableImageView中的一个变量名
+            if (view instanceof EffectView) {
+                customAppearingAnim = ObjectAnimator.ofFloat(null, "switchingPercent", 0.0f, 1.0f);//switchingPercent即SwitchableImageView中的一个变量名
 
-            if (view instanceof ItemImageView)
-                ((ItemImageView) view).setEffectStyle(animationType);
-            else if (view instanceof ItemMultiLinesMultipic)
-                ((ItemMultiLinesMultipic) view).setEffectStyle(animationType);
+                ((EffectView) view).setEffectStyle(animationType);
+
+            }
 
         } else {
             PropertyValuesHolder left2Right = PropertyValuesHolder.ofFloat("translationX", -getRegionWidth(), 0f);
