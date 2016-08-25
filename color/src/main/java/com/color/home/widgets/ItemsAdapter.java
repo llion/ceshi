@@ -156,9 +156,9 @@ public class ItemsAdapter extends BaseAdapter {
 
             } else if ("2".equals(item.type)) { // Image
                 // int animationType = Integer.parseInt(item.ineffect.Type);
-                int animationType = mRegionView.getmRealAnimationType();
-                if (DBG)
-                    Log.d(TAG, "animationType = " + animationType);
+//                int animationType = mRegionView.getmRealAnimationType();
+//                if (DBG)
+//                    Log.d(TAG, "animationType = " + animationType);
 //                if (animationType == 1) {
 //                    // type = mRand.nextInt((48 - 2) + 1) + 2;
 //                    animationType = stypes[mRand.nextInt(stypes.length)];
@@ -188,18 +188,6 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "new ItemImageView(mContext)");
                 }
                 iiv.setItem(mRegionView, item);
-                if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
-                        || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
-                        || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
-                        || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
-                        || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
-                        || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
-                        || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
-                        || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
-
-                    iiv.setEffectStyle(animationType);
-
-                }
                 return iiv;
 
             } else if ("4".equals(item.type)) {// Single line text.
@@ -345,7 +333,7 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "multipicinfo= " + multipicinfo);
                     // if we have multipic and it's correctly packed into relative path.
                     if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
-                       // Multi lines text?  multi page, not scroll
+                        // Multi lines text?  multi page, not scroll
                         ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
@@ -354,24 +342,12 @@ public class ItemsAdapter extends BaseAdapter {
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
                         view.setItem(mRegionView, mRegion, item);
-                        int animationType = mRegionView.getmRealAnimationType();
-                        if (DBG)
-                            Log.d(TAG, "animationType = " + animationType);
+//                        int animationType = mRegionView.getmRealAnimationType();
+//                        if (DBG)
+//                            Log.d(TAG, "animationType = " + animationType);
 
                         if (DBG)
                             Log.d(TAG, "convertView==" + convertView);
-                        if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
-                                || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
-                                || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
-                                || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
-                                || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
-                                || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
-                                || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
-                                || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
-
-                            view.setEffectStyle(animationType);
-
-                        }
 
                         return view;
 //
