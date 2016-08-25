@@ -26,9 +26,17 @@ public class StreamResolver {
     }
 
     public StreamResolver resolve() throws IOException {
-        if (new File(absFilePath + ".zip").exists()) {
-            if (DBG) Log.e(TAG, "Zipped. file=" + new File(absFilePath + ".zip"));
-            isInsideZip = new ZipInputStream(new BufferedInputStream(new FileInputStream(new File(absFilePath + ".zip"))));
+        if (DBG) Log.e(TAG, "absFilePath= " + absFilePath);
+
+        File file;
+        if (absFilePath.endsWith(".zip"))
+            file = new File(absFilePath);
+        else
+            file = new File(absFilePath + ".zip");
+
+        if (file.exists()) {
+            if (DBG) Log.e(TAG, "Zipped. file=" + file);
+            isInsideZip = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
             ZipEntry ze = isInsideZip.getNextEntry();
             if (ze == null) {
                 Log.e(TAG, "Bad zip file.absFilePath=" + absFilePath);
@@ -41,7 +49,7 @@ public class StreamResolver {
 
         } else {
             if (DBG)
-                Log.e(TAG, "Not zipped,  use plain pic. trying to find file=" + new File(absFilePath + ".zip"));
+                Log.e(TAG, "Not zipped,  use plain pic. trying to find file= " + file);
             is = new FileInputStream(absFilePath);
         }
 
