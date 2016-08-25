@@ -325,7 +325,7 @@ public class ItemsAdapter extends BaseAdapter {
                             Log.d(TAG, "getView. [view=" + view);
 
                         return view;
-                    } else { // legacy scroll view.
+                    } else { // legacy scroll view.   one page, scroll
                         if (DBG)
                             Log.d(TAG, "getView. [legacy scroll view");
                         ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
@@ -339,72 +339,49 @@ public class ItemsAdapter extends BaseAdapter {
                         view.setItem(mRegionView, item);
                         return view;
                     }
-                } else {
+                } else {  // not scroll
                     final MultiPicInfo multipicinfo = item.multipicinfo;
+                    if (DBG)
+                        Log.d(TAG, "multipicinfo= " + multipicinfo);
                     // if we have multipic and it's correctly packed into relative path.
                     if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
-                        // It's scrolling txt.
-                        if ("1".equals(item.isscroll)) {
-                            ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
-                            // String filePath = getAbsFilePath(item);
+                       // Multi lines text?  multi page, not scroll
+                        ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+                        // String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
-                            view.setItem(mRegionView, item);
-                            if (DBG)
-                                Log.d(TAG, "getView. [view=" + view);
-                            return view;
-                        } else { // Multi lines text?
-                            ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
-                            if (DBG)
-                                Log.d(TAG, "getView. [view=" + view);
-                            // String filePath = getAbsFilePath(item);
-                        /*
-                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                         */
-                            view.setItem(mRegionView, mRegion, item);
-                            int animationType = mRegionView.getmRealAnimationType();
-                            if (DBG)
-                                Log.d(TAG, "animationType = " + animationType);
+                        view.setItem(mRegionView, mRegion, item);
+                        int animationType = mRegionView.getmRealAnimationType();
+                        if (DBG)
+                            Log.d(TAG, "animationType = " + animationType);
 
-                            if (DBG)
-                                Log.d(TAG, "convertView==" + convertView);
-                            if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
-                                    || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
-                                    || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
-                                    || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
-                                    || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
-                                    || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
-                                    || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
-                                    || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
+                        if (DBG)
+                            Log.d(TAG, "convertView==" + convertView);
+                        if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
+                                || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
+                                || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
+                                || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
+                                || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
+                                || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
+                                || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
+                                || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
 
-                                view.setEffectStyle(animationType);
+                            view.setEffectStyle(animationType);
 
-                            }
-
-                            return view;
                         }
+
+                        return view;
+//
                     } else {
-                        if ("1".equals(item.isscroll)) {
-                            ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
-                                    R.layout.layout_multilines_scrollable_text, null);
-                            // String filePath = getAbsFilePath(item);
-                        /*
-                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                         */
-                            view.setItem(mRegionView, item);
-                            if (DBG)
-                                Log.d(TAG, "getView. [view=" + view);
-
-                            return view;
-                        } else {
-                            ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
-                                    R.layout.layout_multilines_paged_text, null);
-                            view.setItem(mRegionView, mRegion, item);
-                            if (DBG)
-                                Log.d(TAG, "getView. [view=" + view);
-                            return view;
-                        }
+                        ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
+                                R.layout.layout_multilines_paged_text, null);
+                        view.setItem(mRegionView, mRegion, item);
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+                        return view;
                     }
                 }
             } else if ("11".equals(item.type) || "12".equals(item.type) || "13".equals(item.type)) {
@@ -442,25 +419,8 @@ public class ItemsAdapter extends BaseAdapter {
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
                         view.setItem(mRegionView, mRegion, item);
-                        int animationType = mRegionView.getmRealAnimationType();
-                        if (DBG)
-                            Log.d(TAG, "animationType = " + animationType);
-
                         if (DBG)
                             Log.d(TAG, "convertView==" + convertView);
-                        if (animationType == 2 || animationType == 3 || animationType == 4 || animationType == 5 || animationType == 6
-                                || animationType == 7 || animationType == 8 || animationType == 9 || animationType == 10
-                                || animationType == 11 || animationType == 12 || animationType == 13 || animationType == 14
-                                || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18
-                                || animationType == 19 || animationType == 28 || animationType == 29 || animationType == 30
-                                || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
-                                || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44
-                                || animationType == 45 || animationType == 46 || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或闭合或对开
-
-                            view.setEffectStyle(animationType);
-
-                        }
-
                         return view;
                     } else {
                         return unknowView(item);

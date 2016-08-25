@@ -26,6 +26,8 @@ import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMLScrollableText;
 import com.color.home.widgets.multilines.ItemMultiLinesMultipic;
+import com.color.home.widgets.multilines.ItemMultiLinesPagedText;
+import com.color.home.widgets.singleline.ItemSingleLineText;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.PCItemSingleLineText;
 import com.color.home.widgets.singleline.SLPCHTSurfaceView;
@@ -103,7 +105,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.color.home.widgets.AdaptedRegion#setRegion(com.color.home.widgets .PageView, com.color.home.ProgramParser.Region)
      */
     @Override
@@ -393,6 +395,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (mDisplayedChild == 0 && getAdapter().getCount() == 1
                 && (getChildAt(0) instanceof ItemTimer
                 || getChildAt(0) instanceof ItemWebView
+                || getChildAt(0) instanceof ItemMultiLinesPagedText
                 || getChildAt(0) instanceof ItemMultiLinesMultipic
                 || getChildAt(0) instanceof ItemMLScrollMultipic2View
                 || getChildAt(0) instanceof SLTextSurfaceView
@@ -405,8 +408,8 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
             if (DBG)
                 Log.d(TAG, "showNext. [Single item and the item instance of ItemTimer, " +
-                        "ItemWebView, ItemMultiLinesMultipic, ItemMLScrollMultipic2View," +
-                        "SLTextSurfaceView, SLPCSurfaceView,SLPCHTSurfaceView . Don't move on to next.");
+                        "ItemWebView, ItemMultiLinesPagedText, ItemMultiLinesMultipic, ItemMLScrollMultipic2View," +
+                        "SLTextSurfaceView, SLPCSurfaceView,SLPCHTSurfaceView. Don't move on to next.");
 
             //ItemMLScrollMultipic2View
             if (getChildAt(0) instanceof ItemMLScrollMultipic2View) {
