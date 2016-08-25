@@ -42,7 +42,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private final static String TAG = "RegionView";
     private static final boolean DBG = false;
     private static final boolean DRAW_DBG = false;
-    private static final int[] sTypes = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+    private static final int[] sTypes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
             23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
             42, 43, 44, 45, 46, 47, 48};
 
@@ -64,6 +64,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private ObjectAnimator customDisappearingAnim;
     private int mRegionWidth;
     private int mRegionHeight;
+
     public int getRegionHeight() {
         return mRegionHeight;
     }
@@ -469,7 +470,12 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (view instanceof SLTextSurfaceView
                 || view instanceof ItemMLScrollMultipic2View
                 || view instanceof ItemMLScrollableText
-                || view instanceof ItemVideoView) {
+                || view instanceof ItemVideoView
+                || view instanceof ItemMultiLinesPagedText
+                || view instanceof SLPCSurfaceView
+                || view instanceof SLPCHTSurfaceView
+                || view instanceof ItemSingleLineText
+                || view instanceof PCItemSingleLineText) {
             if (DBG)
                 Log.d(TAG, "setDisplayedChild. [No animation true.");
             noAnimation = true;
@@ -478,7 +484,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (!noAnimation && mRealAnimationType != 0 && !"1".equals(item.isscroll)) {
             if (DBG)
                 Log.d(TAG, "setDisplayedChild. [mRealAnimationType=" + mRealAnimationType);
-            mCustomAppearingAnim = getAnimationFor(mRealAnimationType, item);
+            mCustomAppearingAnim = getAnimationFor(mRealAnimationType, item, view);
             if (mCustomAppearingAnim != null) {
                 // mCustomAppearingAnim.setStartDelay(0L);
                 if (DBG)
@@ -574,7 +580,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         return realAnimType;
     }
 
-    private ValueAnimator getAnimationFor(final int animationType, Item item) {//
+    private ValueAnimator getAnimationFor(final int animationType, Item item, View view) {//
         ValueAnimator customAppearingAnim = null;
 
         if (DBG) {
@@ -591,6 +597,11 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 Log.i(TAG, " animationType = " + animationType);
 
             customAppearingAnim = ObjectAnimator.ofFloat(null, "switchingPercent", 0.0f, 1.0f);//switchingPercent即SwitchableImageView中的一个变量名
+
+            if (view instanceof ItemImageView)
+                ((ItemImageView) view).setEffectStyle(animationType);
+            else if (view instanceof ItemMultiLinesMultipic)
+                ((ItemMultiLinesMultipic) view).setEffectStyle(animationType);
 
         } else {
             PropertyValuesHolder left2Right = PropertyValuesHolder.ofFloat("translationX", -getRegionWidth(), 0f);
