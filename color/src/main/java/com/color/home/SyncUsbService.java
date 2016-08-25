@@ -146,16 +146,15 @@ public class SyncUsbService extends IntentService {
                 String digest = getMd5ByFile(file);
                 String digest2 = getMd5ByFile(file2);
                 if (!digest.equals(digest2)) {
-//                        copies.add(filename.replace(".vsn", ".files"));
-//                        copies.add(filename);
+
                     filesToOverwrite.add(filename);
-                    sameFilesFolder.add(filename.replace(".vsn", ".files"));
                     if (DBG)
                         Log.d(TAG, "onHandleIntent. [synced usb file's md5 differs from USB.=" + filename);
                 } else {
                     if (DBG)
                         Log.d(TAG, "onHandleIntent. [synced usb file's md5 is identical to USB's.=" + filename);
                 }
+                sameFilesFolder.add(filename.replace(".vsn", ".files"));
             }
         }
 
