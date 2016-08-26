@@ -25,7 +25,7 @@ import java.io.IOException;
 public class ItemExternalVideoView extends SurfaceView implements ItemData, OnPlayFinishObserverable, Runnable {
 
     private static final String TAG = "ItemExternalVideoView";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     public SurfaceHolder surfaceHolder;
     public Camera camera;
@@ -230,23 +230,6 @@ public class ItemExternalVideoView extends SurfaceView implements ItemData, OnPl
 
     }
 
-    /**
-     * Check if this device has a camera
-     */
-    private boolean checkCameraHardware(Context context) {
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            // this device has a camera
-            return true;
-        } else {
-            // no camera on this device
-            return false;
-        }
-    }
-
-    public Camera getCamera() {
-        return camera;
-    }
-
     public SurfaceHolder getSurfaceHolder() {
         return surfaceHolder;
     }
@@ -259,5 +242,16 @@ public class ItemExternalVideoView extends SurfaceView implements ItemData, OnPl
                 || Camera.getNumberOfCameras() > 0;
     }
 
-
+    /**
+     * Check if this device has a camera
+     */
+    private boolean checkCameraHardware(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            // this device has a camera
+            return true;
+        } else {
+            // no camera on this device
+            return false;
+        }
+    }
 }
