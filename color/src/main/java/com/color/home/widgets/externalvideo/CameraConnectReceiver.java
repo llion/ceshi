@@ -17,8 +17,8 @@ import java.util.Set;
  */
 public class CameraConnectReceiver extends BroadcastReceiver {
 
-    public  static final String TAG ="CameraConnectReceiver";
-    public  static final boolean DBG = true;
+    public static final String TAG = "CameraConnectReceiver";
+    public static final boolean DBG = false;
     private ItemExternalVideoView externalVideoView;
     private UsbDevice usbDevice;
 
@@ -30,39 +30,33 @@ public class CameraConnectReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         usbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-        int vendorId = usbDevice.getVendorId();
-        int productId = usbDevice.getProductId();
-        UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
-        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
-        while(deviceIterator.hasNext()){
-            UsbDevice device = deviceIterator.next();
-            Log.d(TAG,"[device." + device);
-            Log.d(TAG,"[device.getClass= " + device.getInterface(0).getClass());
-        }
 
-//        for (int i = 0; i < 10; i++){
-//            if (usbDevice.getInterface(i) != null){
-//                Log.i(TAG, "getInterfaceClass : " +  usbDevice.getInterface(i).getInterfaceClass());//14,14,14,1,1,1
-//            }else{
-//                break;
-//            }
+//        int vendorId = usbDevice.getVendorId();
+//        int productId = usbDevice.getProductId();
+//        UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+//        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+//        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+//        while(deviceIterator.hasNext()){
+//            UsbDevice device = deviceIterator.next();
+//            Log.d(TAG,"[device." + device);
+//            Log.d(TAG,"[device.getClass= " + device.getInterface(0).getClass());
 //        }
 
-        int deviceClass = usbDevice.getInterface(0).getInterfaceClass();
+
+        int interfaceClass = -1;
+        if (usbDevice.getInterface(0) != null)
+            interfaceClass = usbDevice.getInterface(0).getInterfaceClass();
+
         if (DBG)
-            Log.d(TAG, "action= " + action + ", externalVideoView= " + externalVideoView +", class= " +  usbDevice.getInterface(0).getInterfaceClass()
-            + ", usbDevice.getDeviceClass()= " + usbDevice.getDeviceClass());
+            Log.d(TAG, "action= " + action + ", externalVideoView= " + externalVideoView
+                    + ", interfaceClass= " + interfaceClass);
 
         if (DBG)
             Log.d(TAG, "usbDevice= " + usbDevice);
 
-        if (DBG)
-            Log.d(TAG, "getVendorId= " + vendorId + ", getProductId" + productId);
 
-
-        if ("android.hardware.usb.action.USB_DEVICE_ATTACHED".equals(action)){
-            if (deviceClass == UsbConstants.USB_CLASS_VIDEO && externalVideoView !=null){
+        if ("android.hardware.usb.action.USB_DEVICE_ATTACHED".equals(action)) {
+            if (interfaceClass == UsbConstants.USB_CLASS_VIDEO && externalVideoView != null) {
 
                 externalVideoView.clear();
                 externalVideoView.openCamera();
@@ -70,8 +64,8 @@ public class CameraConnectReceiver extends BroadcastReceiver {
                 externalVideoView.startPreview();
 
             }
-        } else if ("android.hardware.usb.action.USB_DEVICE_DETACHED".equals(action)){
-            if (deviceClass == UsbConstants.USB_CLASS_VIDEO && externalVideoView !=null){
+        } else if ("android.hardware.usb.action.USB_DEVICE_DETACHED".equals(action)) {
+            if (interfaceClass == UsbConstants.USB_CLASS_VIDEO && externalVideoView != null) {
                 externalVideoView.clear();
             }
         }

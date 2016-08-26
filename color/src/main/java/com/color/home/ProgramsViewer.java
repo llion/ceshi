@@ -100,15 +100,6 @@ public class ProgramsViewer{
                 for (String resPath : files) {
                     if (DBG)
                         Log.d(TAG, "Program parse , resFilePath : " + resPath);
-                    if(resPath.endsWith("mulpic")) {
-                        if(DBG)
-                            Log.d(TAG, "multi pic ");
-
-                        // TODO:::::: remove the continue below, once the LEDVISION is ready to
-                        // send us correct md5_size.xxxmulpic.zip in its VSN file spec.
-                        continue;
-//                        resPath += ".zip";
-                    }
 
                     File resFile = new File(mVsnFile.getAbsoluteFile().getParent(), resPath);
 

@@ -41,8 +41,7 @@ import java.nio.FloatBuffer;
 public class MultiPicScrollObject {
     // private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
     private final static String TAG = "MultiPicScrollObject";
-    private static final boolean DBG = true;
-    private static final boolean MATRIX_DBG = false;
+    private static final boolean DBG = false;
     private static final boolean PNG_DBG = false;
     // private static final String MNT_SDCARD_PNGS = "/mnt/sdcard/pngs";
     private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
@@ -294,7 +293,7 @@ public class MultiPicScrollObject {
 
         //        Matrix.translateM(modelMat, 0, 0.f, -mPixelPerFrame, 0.f);
 
-        if(MATRIX_DBG)
+        if(DBG)
             Log.d(TAG, "matrix[13] = " + mMMatrix[13]);
         // resetPos();
         // Matrix.translateM(modelMat, 0, 0.f, -200.f, 0.f);
@@ -496,8 +495,6 @@ public class MultiPicScrollObject {
             // byte[] converted = new byte[mWidth * mHeight * 4];
             for (int i = 0; i < mTexCount; i++) {
                 String keyImgId = mScrollpicinfo.filePath.MD5 + i;
-                if (DBG)
-                    Log.i(TAG, "keyImgId= " + keyImgId + ", cache= " + AppController.getInstance().getBitmapFromMemCache(keyImgId));
                 // Image already exist, offset to next image.
                 if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
                     if (DBG)

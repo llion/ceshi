@@ -17,7 +17,7 @@ import com.color.home.widgets.singleline.MovingTextUtils;
 
 public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver {
     private final static String TAG = "ItemMLScrollMultipic2V";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private MultiPicScrollRenderer mRenderer;
     private OnPlayFinishedListener mListener;
     private Item mItem;
