@@ -378,8 +378,8 @@ public class MultiPicScrollObject {
             // drawQuad(mCurQuadIndex - 1);
             // drawQuad(mCurQuadIndex);
             // } else {
-
-            if (offset >= MAX_TEXTURE_WIDTH_HEIGHT * (mCurQuadIndex + 1) && mCurQuadIndex <= (mQuadSegs.length - 1)) {
+            // TODO: check the correctness of the following mTextureHeight variable. (mTextureWidth?)
+            if (offset >= mTextureHeight * (mCurQuadIndex + 1) && mCurQuadIndex <= (mQuadSegs.length - 1)) {
                 mCurQuadIndex++; // NOTE: mCurQuadIndex could be mQuadSegs.length
                 if (DBG)
                     Log.d(TAG, "render. [mCurQuadIndex=" + mCurQuadIndex);
@@ -394,8 +394,8 @@ public class MultiPicScrollObject {
                 }
             }
 
-            if (mCurQuadIndex - 1 >= 0 && offset >= MAX_TEXTURE_WIDTH_HEIGHT * mCurQuadIndex
-                    && offset <= mWindowHeight + MAX_TEXTURE_WIDTH_HEIGHT * mCurQuadIndex) { // Always draw the prev quad.
+            if (mCurQuadIndex - 1 >= 0 && offset >= mTextureHeight * mCurQuadIndex
+                    && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex) { // Always draw the prev quad.
                 drawQuad(mCurQuadIndex - 1);
             }
 
@@ -438,8 +438,8 @@ public class MultiPicScrollObject {
             mMultilinesScrollMultipic2View.notifyPlayFinished();
     }
 
-    private final int mTextureWidth = MAX_TEXTURE_WIDTH_HEIGHT;
-    private final int mTextureHeight = MAX_TEXTURE_WIDTH_HEIGHT;
+    private int mTextureWidth = MAX_TEXTURE_WIDTH_HEIGHT;
+    private int mTextureHeight = MAX_TEXTURE_WIDTH_HEIGHT;
 
     /* [Draw Canvas To Texture] */
     private void drawCanvasToTexture() {
@@ -470,14 +470,16 @@ public class MultiPicScrollObject {
             mPcWidth = bb.getInt();
             mPcHeight = bb.getInt();
 
-            mMaxColsPerTexContain = MAX_TEXTURE_WIDTH_HEIGHT / mPcWidth;
+            mTextureHeight = mTextureWidth = QuadGenerator.findClosestPOT(mPcWidth, mPcHeight);
+
+            mMaxColsPerTexContain = mTextureWidth / mPcWidth;
             if (mMaxColsPerTexContain == 0) {
                 if (DBG)
-                    Log.d(TAG, "drawCanvasToTexture. [pc width is more than 2048, abort.");
+                    Log.d(TAG, "drawCanvasToTexture. [pc width is more than 4096, abort.");
                 return;
             }
 
-            int heightConsumedPerTex = mMaxColsPerTexContain * MAX_TEXTURE_WIDTH_HEIGHT;
+            int heightConsumedPerTex = mMaxColsPerTexContain * mTextureHeight;
             // final int heightRemaining = mPcHeight % heightPerTex;
             mTexCount = ceilingBlocks(mPcHeight, heightConsumedPerTex);
 
@@ -508,7 +510,7 @@ public class MultiPicScrollObject {
                             Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
                         continue;
                     }
-                    ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                    ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxColsPerTexContain * 4);
                     continue;
                 }
 
@@ -516,17 +518,17 @@ public class MultiPicScrollObject {
                 byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
 
                 int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
-                int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, MAX_TEXTURE_WIDTH_HEIGHT) : mMaxColsPerTexContain;
+                int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxColsPerTexContain;
                 for (int j = 0; j < columns; j++) {
                     // last column in last texture => (lastTex && j == columns - 1)
-                    int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : MAX_TEXTURE_WIDTH_HEIGHT);
+                    int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
                     // int targetStrip = MAX_TEXTURE_WIDTH_HEIGHT;
                     // int targetOffset = j * mPcWidth;
                     // int readSrcWidth = Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT);
                     // // last column in last texture => (lastTex && j == columns - 1)
                     // int readSrcHeight = ((lastTex && j == columns - 1) ? ((mLastTexReadHeight - 1) % MAX_TEXTURE_WIDTH_HEIGHT + 1) :
                     // MAX_TEXTURE_WIDTH_HEIGHT);
-                    readBlock(is, content, MAX_TEXTURE_WIDTH_HEIGHT, j * mPcWidth, Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT),
+                    readBlock(is, content, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth),
                             readSrcHeight, mPcWidth);
                 }
 
@@ -560,7 +562,7 @@ public class MultiPicScrollObject {
         }
 
         // setImageBitmap(resultBm);
-        final int quadSize = ceilingBlocks(mPcHeight, MAX_TEXTURE_WIDTH_HEIGHT);
+        final int quadSize = ceilingBlocks(mPcHeight, mTextureHeight);
         if (DBG)
             Log.d(TAG, "drawCanvasToTexture. [quadSize=" + quadSize);
         mQuadSegs = new QuadSegment[quadSize];
@@ -573,8 +575,8 @@ public class MultiPicScrollObject {
             // mQuadSegs[i] = new QuadSegment(mPcWidth, mTextureHeight, -mWidth / 2);
             // }
 
-            int top = -i * MAX_TEXTURE_WIDTH_HEIGHT;
-            int quadHeight = (i == quadSize - 1) ? lastColumnHeight() : MAX_TEXTURE_WIDTH_HEIGHT;
+            int top = -i * mTextureHeight;
+            int quadHeight = (i == quadSize - 1) ? lastColumnHeight() : mTextureHeight;
             mQuadSegs[i] = new QuadSegment(top, 0, mPcWidth, quadHeight, 0, (i % mMaxColsPerTexContain) * mPcWidth);
         }
 
@@ -590,7 +592,7 @@ public class MultiPicScrollObject {
     }
 
     public int lastColumnHeight() {
-        return ((mPcHeight - 1) % MAX_TEXTURE_WIDTH_HEIGHT) + 1;
+        return ((mPcHeight - 1) % mTextureHeight) + 1;
     }
 
     /**
@@ -683,7 +685,7 @@ public class MultiPicScrollObject {
         mQuadTCB = vbb_t.asFloatBuffer(); // Create a floating point buffer from the ByteBuffer
 
         for (int i = 0; i < mQuadSegs.length; i++) {
-            mQuadTCB.put(mQuadSegs[i].getCoords(MAX_TEXTURE_WIDTH_HEIGHT, MAX_TEXTURE_WIDTH_HEIGHT)); // Add the
+            mQuadTCB.put(mQuadSegs[i].getCoords(mTextureWidth, mTextureHeight)); // Add the
                                                                                                       // coordinates
             // to the FloatBuffer
         }
