@@ -21,6 +21,7 @@ import com.color.home.Texts;
 import com.color.home.widgets.clocks.ItemQuazAnalogClock;
 import com.color.home.widgets.clocks.ItemSmoothAnalogClock;
 import com.color.home.widgets.clocks.ItemTextClock;
+import com.color.home.widgets.externalvideo.ItemExternalVideoView;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMLScrollableText;
 import com.color.home.widgets.multilines.ItemMultiLinesMultipic;
@@ -135,6 +136,12 @@ public class ItemsAdapter extends BaseAdapter {
                     itemData.setItem(mRegionView, item);
                     return (View) itemData;
                 }
+
+            } else if ("8".equals(item.type)) { // external video
+                ItemExternalVideoView ievv = new ItemExternalVideoView(mContext);
+                ievv.setRegion(mRegion);
+                ievv.setItem(mRegionView, item);
+                return ievv;
 
             } else if ("9".equals(item.type)) { // NormalClock
                 if ("0".equals(item.isAnalog)) {
