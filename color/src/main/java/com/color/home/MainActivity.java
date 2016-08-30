@@ -47,6 +47,7 @@ import java.io.File;
  */
 public class MainActivity extends Activity {
     private static final boolean DBG = false;
+    private static final boolean DBG_RESULT = true;
     final static String TAG = "MainActivity";
 
     public ProgramsViewer mProgramsViewer;
@@ -69,6 +70,8 @@ public class MainActivity extends Activity {
                 mCp.removeProgress();
 
                 boolean result = intent.getBooleanExtra(Constants.EXTRA_USB_SYNC_RESULT, true);
+                if(DBG_RESULT)
+                    Log.d(TAG, "result of usb synced : " + result);
                 if (result) {
                     AppController.getInstance().toast(getApplicationContext(), "USB-SYNCED", Toast.LENGTH_LONG);
                 } else {

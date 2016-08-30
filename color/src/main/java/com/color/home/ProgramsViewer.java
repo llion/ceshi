@@ -162,6 +162,7 @@ public class ProgramsViewer{
         protected void onPostExecute(List<Program> result) {
             if (result == null) {
                 Log.e(TAG, "onCreate. [Program is null ignore.");
+
                 return;
             }
 

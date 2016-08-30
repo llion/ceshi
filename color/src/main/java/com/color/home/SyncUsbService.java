@@ -38,7 +38,8 @@ public class SyncUsbService extends IntentService {
                 || fileInUsb.lastModified() != fileOrDirInSyncedUsb.lastModified()) {
             if (DBG)
                 Log.d(TAG, "copyFilesUnderFolder. [file diff, start copy. fileInUsb=" + fileInUsb
-                        + ", destFile=" + fileOrDirInSyncedUsb);
+                        + " , lastModified : " + fileInUsb.lastModified() + ", destFile=" + fileOrDirInSyncedUsb
+                        + ", lastModified : " + fileOrDirInSyncedUsb.lastModified());
             boolean result = FileUtils.copyFile(fileInUsb, fileOrDirInSyncedUsb);
             if (DBG)
                 Log.d(TAG, "onHandleIntent. [copyFile result=" + result + ", src=" + fileInUsb + ", dest="
@@ -91,9 +92,8 @@ public class SyncUsbService extends IntentService {
                 if (sameFilesFolder != null && sameFilesFolder.size() > 0)
                     intersectTheSameFilesFolders(sameFilesFolder);
 
-            } catch (IllegalAccessException e) {
+            } catch (IOException e) {
                 failedSync(e.getMessage());
-
                 e.printStackTrace();
                 return;
             }
@@ -105,11 +105,12 @@ public class SyncUsbService extends IntentService {
             // }
 
         } catch (Exception e) {
+            failedSync(e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private Set<String> intersectUsbAndSynced() {
+    private Set<String> intersectUsbAndSynced() throws IOException {
 
         File[] inUsb = Constants.listUsbVsnAndFilesFolders();
         File[] inSyncedUsb = Constants.listSyncedUsbVsnAndFilesFolders();
@@ -186,13 +187,13 @@ public class SyncUsbService extends IntentService {
                 if(availableSize > sizeNeeded){
                     copyResult = copyFileOrDirToSynced(absolutePath);
                     if (copyResult != 0) {
-                        failedSync("Failed to copy " + acopy + ".");
-                        break;
+                        throw new IOException("Failed to copy " + acopy + ".");
+//                        break;
                     }
                 }else{
                     Log.e(TAG, "No enough space in sdcard.", new IOException("CopyingException"));
-                    failedSync("Failed to copy " + acopy + ", No enough space in sdcard.");
-                    break;
+                    throw new IOException("Failed to copy " + acopy + ", No enough space in sdcard.");
+//                    break;
                 }
             }
 
@@ -210,13 +211,13 @@ public class SyncUsbService extends IntentService {
                 if(availableSize > sizeNeeded){
                     copyResult = copyFileOrDirToSynced(usbAbsolutePath);
                     if (copyResult != 0) {
-                        failedSync("Failed to copy " + overwrite + ".");
-                        break;
+                        throw new IOException("Failed to copy " + overwrite + ".");
+//                        break;
                     }
                 }else{
                     Log.e(TAG, "No enough space in sdcard.", new IOException("CopyingException"));
-                    failedSync("Failed to copy " + overwrite + ", No enough space in sdcard.");
-                    break;
+                    throw new IOException("Failed to copy " + overwrite + ", No enough space in sdcard.");
+//                    break;
                 }
             }
         }
@@ -226,15 +227,17 @@ public class SyncUsbService extends IntentService {
 
     private int copyFileOrDirToSynced(String absolutePath) {
         ArrayList<String> args = new ArrayList<String>(12);
+        args.add("busybox");
         args.add("cp");
-        args.add("-R");
-        args.add("-v");
+        args.add("-a");
+//        args.add("-R");
+//        args.add("-v");
         args.add(absolutePath);
         args.add(absolutePath.replace(Constants.FOLDER_USB_0, Constants.FOLDER_SYNCED_USB));
         return executeCommand(args.toArray(new String[0]));
     }
 
-    private void intersectTheSameFilesFolders(Set<String> sameFilesFolderNames) throws IllegalAccessException {
+    private void intersectTheSameFilesFolders(Set<String> sameFilesFolderNames) throws IOException {
         if (DBG)
             Log.d(TAG, "sameFilesFolderNames : " + sameFilesFolderNames + " , size : " + sameFilesFolderNames.size());
         if (sameFilesFolderNames.size() <= 0)
@@ -283,8 +286,9 @@ public class SyncUsbService extends IntentService {
                         file.lastModified() != file2.lastModified()) {
                     filesToOverwrite.add(filename);
                     if (DBG)
-                        Log.d(TAG, "onHandleIntent. [synced usb file's differs from USB.=" + filename +
-                                " in " + filesFolderName);
+                        Log.d(TAG, "copyFilesUnderFolder. [file diff, start copy. file1=" + file
+                                + " , lastModified : " + file.lastModified() + ", file2=" + file2
+                                + ", lastModified : " + file2.lastModified());
                 } else {
                     if (DBG)
                         Log.d(TAG, "onHandleIntent. [synced usb file's is identical to USB's.=" + filename
@@ -318,14 +322,14 @@ public class SyncUsbService extends IntentService {
                     if(availableSize > sizeNeeded){
                         copyResult = copyFileOrDirToSynced(absolutePath);
                         if (copyResult != 0) {
-                            failedSync("Failed to copy " + acopy + ".");
-                            break;
+                            throw new IOException("Failed to copy " + acopy + ".");
+//                            break;
                         }
                     }else{
                         Log.e(TAG, "No enough space in sdcard.", new IOException("CopyingException"));
                         //TODO show alert in floating window
-                        failedSync("Failed to copy " + acopy + ", No enough space in sdcard.");
-                        break;
+                        throw new IOException("Failed to copy " + acopy + ", No enough space in sdcard.");
+//                        break;
                     }
                 }
             }
@@ -342,14 +346,14 @@ public class SyncUsbService extends IntentService {
                     if(availableSize > sizeNeeded){
                         copyResult = copyFileOrDirToSynced(usbAbsolutePath);
                         if (copyResult != 0) {
-                            failedSync("Failed to copy " + overwrite + ".");
-                            break;
+                            throw new IOException("Failed to copy " + overwrite + ".");
+//                            break;
                         }
                     }else{
                         Log.e(TAG, "No enough space in sdcard.", new IOException("CopyingException"));
                         //TODO show alert in floating window
-                        failedSync("Failed to copy " + overwrite + ", No enough space in sdcard.");
-                        break;
+                        throw new IOException("Failed to copy " + overwrite + ", No enough space in sdcard.");
+//                        break;
                     }
                 }
             }
@@ -401,8 +405,7 @@ public class SyncUsbService extends IntentService {
     }
 
     public void failedSync(String reason) {
-        Log.e(TAG, "failedSync. [COPY FAILED.");
-
+        Log.e(TAG, "failedSync. [COPY FAILED.", new Exception("copy failed.."));
         Intent intent2 = new Intent(Constants.ACTION_USB_SYNCED);
         intent2.putExtra(Constants.EXTRA_USB_SYNC_RESULT, false);
         intent2.putExtra(Constants.EXTRA_REASON_FOR_SYNC_FAILURE, reason);
