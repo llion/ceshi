@@ -795,6 +795,86 @@ public enum EffectStyle {
                 canvas.clipRect(rect);
             }
         }
+    },LEFT_TRANSLATE_STYLE {//左移
+        @Override
+        protected void switchingPercentChanged(EffectView thiz) {
+            if (thiz.switchingPercent >= 1.0f) {
+                thiz.setLayerType(View.LAYER_TYPE_NONE, null);
+            }
+        }
+
+        @Override
+        public void onDraw(EffectView thiz, Canvas canvas) {
+            if (thiz.switchingPercent >= 1.0f) {
+                return;
+            }
+            int h = canvas.getHeight();
+            int w = canvas.getWidth();
+            int dw;
+            dw = (int) (w * thiz.switchingPercent);
+           Rect rect = new Rect(0, 0, w - dw, h);
+            canvas.drawRect(rect, CLEARING_PAINT);
+        }
+    },RIGHT_TRANSLATE_STYLE {//右移
+        @Override
+        protected void switchingPercentChanged(EffectView thiz) {
+            if (thiz.switchingPercent >= 1.0f) {
+                thiz.setLayerType(View.LAYER_TYPE_NONE, null);
+            }
+        }
+
+        @Override
+        public void onDraw(EffectView thiz, Canvas canvas) {
+            if (thiz.switchingPercent >= 1.0f) {
+                return;
+            }
+            int h = canvas.getHeight();
+            int w = canvas.getWidth();
+            int dw;
+            dw = (int) (w * thiz.switchingPercent);
+            Rect rect = new Rect(dw, 0, w, h);
+            canvas.drawRect(rect, CLEARING_PAINT);
+        }
+    },UP_TRANSLATE_STYLE {//上移
+        @Override
+        protected void switchingPercentChanged(EffectView thiz) {
+            if (thiz.switchingPercent >= 1.0f) {
+                thiz.setLayerType(View.LAYER_TYPE_NONE, null);
+            }
+        }
+
+        @Override
+        public void onDraw(EffectView thiz, Canvas canvas) {
+            if (thiz.switchingPercent >= 1.0f) {
+                return;
+            }
+            int h = canvas.getHeight();
+            int w = canvas.getWidth();
+            int dh;
+            dh = (int) (h * thiz.switchingPercent);
+            Rect rect = new Rect(0, 0, w, h - dh);
+            canvas.drawRect(rect, CLEARING_PAINT);
+        }
+    },DOWN_TRANSLATE_STYLE {//下移
+        @Override
+        protected void switchingPercentChanged(EffectView thiz) {
+            if (thiz.switchingPercent >= 1.0f) {
+                thiz.setLayerType(View.LAYER_TYPE_NONE, null);
+            }
+        }
+
+        @Override
+        public void onDraw(EffectView thiz, Canvas canvas) {
+            if (thiz.switchingPercent >= 1.0f) {
+                return;
+            }
+            int h = canvas.getHeight();
+            int w = canvas.getWidth();
+            int dh;
+            dh = (int) (h * thiz.switchingPercent);
+            Rect rect = new Rect(0, dh, w, h);
+            canvas.drawRect(rect, CLEARING_PAINT);
+        }
     },;
 
     private static final Paint CLEARING_PAINT;

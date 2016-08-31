@@ -477,7 +477,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || view instanceof SLPCSurfaceView
                 || view instanceof SLPCHTSurfaceView
                 || view instanceof ItemSingleLineText
-                || view instanceof PCItemSingleLineText
+//                || view instanceof PCItemSingleLineText
                 || view instanceof ItemExternalVideoView) {
             if (DBG)
                 Log.d(TAG, "setDisplayedChild. [No animation true.");
@@ -595,7 +595,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || animationType == 15 || animationType == 16 || animationType == 17 || animationType == 18 || animationType == 19 || animationType == 28
                 || animationType == 29 || animationType == 30 || animationType == 32 || animationType == 33 || animationType == 34 || animationType == 35
                 || animationType == 36 || animationType == 37 || animationType == 43 || animationType == 44 || animationType == 45 || animationType == 46
-                || animationType == 47 || animationType == 48) { //覆盖或百叶窗或马赛克或上下闭合或旋转或中间四周
+                || animationType == 47 || animationType == 48 || animationType == 20 || animationType == 21 || animationType == 22 || animationType == 23) { //覆盖或百叶窗或马赛克或上下闭合或旋转或中间四周
             if (DBG)
                 Log.i(TAG, " animationType = " + animationType);
 
@@ -617,17 +617,18 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat("scaleX", 0f, 1f);
             PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat("scaleY", 0f, 1f);
 
-            if (animationType == 20) {
-                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", getRegionHeight(), 0f);
-            } else if (animationType == 21) {
-                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", -getRegionHeight(), 0f);
-            } else if (animationType == 22) {
-                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationX", getRegionWidth(), 0f);
-            } else if (animationType == 23) {
-                // Must set this.
-                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right);
-                // Diag.
-            } else if (animationType == 24) {
+//            if (animationType == 20) {
+//                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", getRegionHeight(), 0f);
+//            } else if (animationType == 21) {
+//                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationY", -getRegionHeight(), 0f);
+//            } else if (animationType == 22) {
+//                customAppearingAnim = ObjectAnimator.ofFloat(null, "translationX", getRegionWidth(), 0f);
+//            } else if (animationType == 23) {
+//                // Must set this.
+//                customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, left2Right);
+//                // Diag.
+//            } else
+            if (animationType == 24) {
 
                 customAppearingAnim = ObjectAnimator.ofPropertyValuesHolder(this, right2Left, down2Up);
             } else if (animationType == 25) {
