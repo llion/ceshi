@@ -43,6 +43,7 @@ public class MultiPicScrollObject {
     private final static String TAG = "MultiPicScrollObject";
     private static final boolean DBG = false;
     private static final boolean PNG_DBG = false;
+    private static final boolean MATRIX_DBG = false;
     // private static final String MNT_SDCARD_PNGS = "/mnt/sdcard/pngs";
     private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
     /**
@@ -64,6 +65,8 @@ public class MultiPicScrollObject {
      * We split the whole big bitmap into how many pieces.
      */
     private int mTexCount;
+    private boolean mIsTallPCPic;
+    private boolean mIsFatPCPic;
 
     // Constructor initialize all necessary members
     public MultiPicScrollObject(Context context, ScrollPicInfo scrollpicinfo) {
@@ -82,6 +85,13 @@ public class MultiPicScrollObject {
 
         // 3. Generate texture with the new evaluated font size
         drawCanvasToTexture();
+
+        if (mIsTallPCPic) {
+            generateTallPCMulpicQuads();
+        } else {
+            // TODO: Handle Fat PC multipic.
+            generateFatPCMulpicQuads();
+        }
 
         initUpdateTex();
 
@@ -126,6 +136,8 @@ public class MultiPicScrollObject {
 
         // isUpdateNeeded = false;
     }
+
+
 
     public void resetPos() {
         Matrix.setIdentityM(mMMatrix, 0);
@@ -268,6 +280,7 @@ public class MultiPicScrollObject {
 
     private float pixelTemp = 0.0f;
     private boolean mIsGreaterThanAPixelPerFrame = false;
+
     public void render() {
         float[] modelMat = mMMatrix;
         // // Add program to OpenGL environment
@@ -284,7 +297,7 @@ public class MultiPicScrollObject {
             Matrix.translateM(modelMat, 0, 0.f, mPixelPerFrame, 0.f);
         else {
             pixelTemp += mPixelPerFrame;
-            if(pixelTemp >= 1.0f) {
+            if (pixelTemp >= 1.0f) {
                 Matrix.translateM(modelMat, 0, 0.f, 1.0f, 0.f);
                 pixelTemp -= 1;
             }
@@ -293,7 +306,7 @@ public class MultiPicScrollObject {
 
         //        Matrix.translateM(modelMat, 0, 0.f, -mPixelPerFrame, 0.f);
 
-        if(DBG)
+        if (MATRIX_DBG)
             Log.d(TAG, "matrix[13] = " + mMMatrix[13]);
         // resetPos();
         // Matrix.translateM(modelMat, 0, 0.f, -200.f, 0.f);
@@ -407,7 +420,7 @@ public class MultiPicScrollObject {
 
         /**
          * Even and odd page draw w/ even/odd texture from the textids.
-         * 
+         *
          * @param quadIndex
          */
         private void drawQuad(int quadIndex) {
@@ -455,7 +468,7 @@ public class MultiPicScrollObject {
             InputStream is = streamResolver.getReadFromIs();
             if (is == null) {
                 Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
-                return ;
+                return;
             }
 
             ByteStreams.skipFully(is, 20);
@@ -470,81 +483,44 @@ public class MultiPicScrollObject {
             mPcWidth = bb.getInt();
             mPcHeight = bb.getInt();
 
-            mTextureHeight = mTextureWidth = QuadGenerator.findClosestPOT(mPcWidth, mPcHeight);
+            if (DBG)
+                Log.i(TAG, "mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight);
 
-            mMaxColsPerTexContain = mTextureWidth / mPcWidth;
-            if (mMaxColsPerTexContain == 0) {
+            int shortestEdgeLength = QuadGenerator.findClosestPOT(mPcWidth, mPcHeight);
+            int shortestDimFromPc = Math.min(mPcWidth, mPcHeight);
+            int maxBlocksInTheShortestDim = shortestEdgeLength / shortestDimFromPc * shortestDimFromPc;
+            int aTextCanContainsArea = maxBlocksInTheShortestDim * shortestEdgeLength;
+            if (aTextCanContainsArea < mPcWidth * mPcHeight) {
                 if (DBG)
-                    Log.d(TAG, "drawCanvasToTexture. [pc width is more than 4096, abort.");
-                return;
+                    Log.d(TAG, "aTextCanContainsArea < mPcWidth * mPcHeight");
+                shortestEdgeLength = shortestEdgeLength * 2;
+            }
+            if (shortestEdgeLength > 4096) {
+                shortestEdgeLength = 4096;
+                Log.e(TAG, "Bad multi pics area makes the texture length greater than 4096, fall back to 4096. mPcWidt=" + mPcWidth
+                        + ", mPcHeight=" + mPcHeight);
             }
 
-            int heightConsumedPerTex = mMaxColsPerTexContain * mTextureHeight;
-            // final int heightRemaining = mPcHeight % heightPerTex;
-            mTexCount = ceilingBlocks(mPcHeight, heightConsumedPerTex);
-
-            // Now the pic count is ready.
-            genTexs();
+            mTextureWidth = mTextureHeight = shortestEdgeLength;
+            if (DBG)
+                Log.d(TAG, " mTextureWidth= " + mTextureWidth);
 
             if (DBG)
-                Log.i(TAG, "onCreate. [mBitmapWidth=" + mPcWidth + ", mBitmapHeight=" + mPcHeight + ", mHeight=" + mHeight
-                        + ", mPicCount="
-                        + mTexCount);
+                Log.d(TAG, " shortestDimFromPc= " + shortestDimFromPc + ", mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight);
 
-            // we skipped 20 read 8 = 28.
-            ByteStreams.skipFully(is, 1024 - 28);
+            if (shortestDimFromPc == mPcWidth) {
+                mIsTallPCPic = true;
+            } else {
+                mIsFatPCPic = true;
+            }
+            if (DBG)
+                Log.d(TAG, " mIsTallPCPic= " + mIsTallPCPic + ", mIsFatPCPic= " + mIsFatPCPic);
 
-            // byte[] converted = new byte[mWidth * mHeight * 4];
-            for (int i = 0; i < mTexCount; i++) {
-                String keyImgId = mScrollpicinfo.filePath.MD5 + i;
-                // Image already exist, offset to next image.
-                if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
-                    if (DBG)
-                        Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxColsPerTexContain=" + mMaxColsPerTexContain);
-                    // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
-                    // Do not skip the last texture in a full texture size, as it could overflow the file.
-                    // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
-                    if (i == mTexCount - 1) {
-                        if (DBG)
-                            Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
-                        continue;
-                    }
-                    ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxColsPerTexContain * 4);
-                    continue;
-                }
-
-                // Always square.
-                byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
-
-                int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
-                int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxColsPerTexContain;
-                for (int j = 0; j < columns; j++) {
-                    // last column in last texture => (lastTex && j == columns - 1)
-                    int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
-                    // int targetStrip = MAX_TEXTURE_WIDTH_HEIGHT;
-                    // int targetOffset = j * mPcWidth;
-                    // int readSrcWidth = Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT);
-                    // // last column in last texture => (lastTex && j == columns - 1)
-                    // int readSrcHeight = ((lastTex && j == columns - 1) ? ((mLastTexReadHeight - 1) % MAX_TEXTURE_WIDTH_HEIGHT + 1) :
-                    // MAX_TEXTURE_WIDTH_HEIGHT);
-                    readBlock(is, content, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth),
-                            readSrcHeight, mPcWidth);
-                }
-
-                GraphUtils.convertRGBFromPC(content);
-
-                // Now put these nice RGBA pixels into a Bitmap object
-
-                Bitmap bm = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
-                // bm.setPremultiplied(false);
-                bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
-                AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
-
-                if (PNG_DBG) {
-                    new File("/mnt/sdcard/mul").mkdir();
-                    QuadGenerator.toPng(bm, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
-                }
-
+            if (mIsTallPCPic) {
+                if (handleTallPicMulpic(is)) return;
+            } else {
+                //TODO: Handle Fat pc multipic.
+                if (handleFatPicMulpic(is)) return;
             }
 
         } catch (FileNotFoundException e) {
@@ -560,10 +536,15 @@ public class MultiPicScrollObject {
             }
         }
 
+
+    }
+
+    //tall pic quadSize
+    private void generateTallPCMulpicQuads() {
         // setImageBitmap(resultBm);
         final int quadSize = ceilingBlocks(mPcHeight, mTextureHeight);
         if (DBG)
-            Log.d(TAG, "drawCanvasToTexture. [quadSize=" + quadSize);
+            Log.d(TAG, "generateTallPCMulpicQuads. [quadSize=" + quadSize);
         mQuadSegs = new QuadSegment[quadSize];
         for (int i = 0; i < quadSize; i++) {
             // The last quad.
@@ -578,7 +559,167 @@ public class MultiPicScrollObject {
             int quadHeight = (i == quadSize - 1) ? lastColumnHeight() : mTextureHeight;
             mQuadSegs[i] = new QuadSegment(top, 0, mPcWidth, quadHeight, 0, (i % mMaxColsPerTexContain) * mPcWidth);
         }
+    }
 
+    //fat pic quadSize
+    private void generateFatPCMulpicQuads() {
+        // setImageBitmap(resultBm);
+        final int quadSize = ceilingBlocks(mPcWidth, mTextureWidth);
+        if (DBG)
+            Log.d(TAG, "generateFatPCMulpicQuads. [quadSize=" + quadSize + ", [mMaxColsPerTexContain= " + mMaxColsPerTexContain);
+        mQuadSegs = new QuadSegment[quadSize];
+        for (int i = 0; i < quadSize; i++) {
+
+            int left = i * mTextureWidth;
+            int quadWidth = (i == quadSize - 1) ? lastColumnWidth() : mTextureWidth;
+            mQuadSegs[i] = new QuadSegment(0, left, quadWidth, mPcHeight, (i % mMaxColsPerTexContain) * mPcHeight, 0);
+        }
+    }
+
+    private boolean handleTallPicMulpic(InputStream is) throws IOException {
+        mMaxColsPerTexContain = mTextureWidth / mPcWidth;
+
+        int heightConsumedPerTex = mMaxColsPerTexContain * mTextureHeight;
+        // final int heightRemaining = mPcHeight % heightPerTex;
+        mTexCount = ceilingBlocks(mPcHeight, heightConsumedPerTex);
+
+        // Now the pic count is ready.
+        genTexs();
+
+        if (DBG)
+            Log.i(TAG, "onCreate. [mBitmapWidth=" + mPcWidth + ", mBitmapHeight=" + mPcHeight + ", mHeight=" + mHeight
+                    + ", mPicCount="
+                    + mTexCount);
+
+        // we skipped 20 read 8 = 28.
+        ByteStreams.skipFully(is, 1024 - 28);
+
+        // byte[] converted = new byte[mWidth * mHeight * 4];
+        for (int i = 0; i < mTexCount; i++) {
+            String keyImgId = mScrollpicinfo.filePath.MD5 + i;
+            // Image already exist, offset to next image.
+            if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
+                if (DBG)
+                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxColsPerTexContain=" + mMaxColsPerTexContain);
+                // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
+                // Do not skip the last texture in a full texture size, as it could overflow the file.
+                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                if (i == mTexCount - 1) {
+                    if (DBG)
+                        Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
+                    continue;
+                }
+                ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxColsPerTexContain * 4);
+                continue;
+            }
+
+            // Always square.
+            byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
+
+            int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
+            int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxColsPerTexContain;
+            for (int j = 0; j < columns; j++) {
+                // last column in last texture => (lastTex && j == columns - 1)
+                int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
+                // int targetStrip = MAX_TEXTURE_WIDTH_HEIGHT;
+                // int targetOffset = j * mPcWidth;
+                // int readSrcWidth = Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT);
+                // // last column in last texture => (lastTex && j == columns - 1)
+                // int readSrcHeight = ((lastTex && j == columns - 1) ? ((mLastTexReadHeight - 1) % MAX_TEXTURE_WIDTH_HEIGHT + 1) :
+                // MAX_TEXTURE_WIDTH_HEIGHT);
+
+                // mTextWidth: 目标Texture宽度。
+                // j * mPcWidth :
+                readTallBlock(is, content, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth), readSrcHeight, mPcWidth);
+            }
+
+            GraphUtils.convertRGBFromPC(content);
+
+            // Now put these nice RGBA pixels into a Bitmap object
+
+            Bitmap bm = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
+            // bm.setPremultiplied(false);
+            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
+            AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
+
+            if (PNG_DBG) {
+                new File("/mnt/sdcard/mul").mkdir();
+                QuadGenerator.toPng(bm, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
+            }
+
+        }
+        return false;
+    }
+
+    private boolean handleFatPicMulpic(InputStream is) throws IOException {
+        mMaxColsPerTexContain = mTextureHeight / mPcHeight;
+
+        int widthConsumedPerTex = mMaxColsPerTexContain * mTextureWidth;
+
+        mTexCount = ceilingBlocks(mPcWidth, widthConsumedPerTex);
+
+        // Now the pic count is ready.
+        genTexs();
+
+        if (DBG)
+            Log.i(TAG, "onCreate. [mBitmapWidth=" + mPcWidth + ", mBitmapHeight=" + mPcHeight + ", mHeight=" + mHeight
+                    + ", mPicCount="
+                    + mTexCount);
+
+        // we skipped 20 read 8 = 28.
+        ByteStreams.skipFully(is, 1024 - 28);
+
+        // byte[] converted = new byte[mWidth * mHeight * 4];
+        for (int i = 0; i < mTexCount; i++) {
+//            String keyImgId = "" + mScrollpicinfo.filePath.filepath + mScrollpicinfo.filePath.MD5 + i;//
+            String keyImgId = mScrollpicinfo.filePath.MD5 + i;
+            // Image already exist, offset to next image.
+            if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
+                if (DBG)
+                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxColsPerTexContain=" + mMaxColsPerTexContain);
+                // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
+                // Do not skip the last texture in a full texture size, as it could overflow the file.
+                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                if (i == mTexCount - 1) {
+                    if (DBG)
+                        Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
+                    continue;
+                }
+                ByteStreams.skipFully(is, mPcHeight * mTextureWidth * mMaxColsPerTexContain * 4);
+                continue;
+            }
+
+            // Always square.
+            byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
+
+            int readRows = ceilingBlocks(mPcWidth, mTextureWidth);
+
+            int lastReadWidth = mPcWidth - (readRows - 1) * mTextureWidth;
+            if (DBG)
+                Log.d(TAG, "fat. readRows= " + readRows + ", lastReadWidth= " + lastReadWidth + ", mpcHeight= " + mPcHeight);
+
+            for (int j = 0; j < mPcHeight; j++) {
+
+                //InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows, int lastReadWidth
+                readFatBlock(is, content, mPcHeight * mTextureWidth, j * mTextureWidth, mTextureWidth, readRows, lastReadWidth);
+            }
+
+            GraphUtils.convertRGBFromPC(content);
+
+            // Now put these nice RGBA pixels into a Bitmap object
+
+            Bitmap bm = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
+            // bm.setPremultiplied(false);
+            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
+            AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
+
+            if (PNG_DBG) {
+                new File("/mnt/sdcard/mul").mkdir();
+                QuadGenerator.toPng(bm, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
+            }
+
+        }
+        return false;
     }
 
     public void initUpdateTex() {
@@ -594,6 +735,12 @@ public class MultiPicScrollObject {
         return ((mPcHeight - 1) % mTextureHeight) + 1;
     }
 
+    public int lastColumnWidth() {
+        return ((mPcWidth - 1) % mTextureWidth) + 1;
+    }
+
+
+
     /**
      * @param size
      * @param blockSize
@@ -606,18 +753,34 @@ public class MultiPicScrollObject {
         return blocks;
     }
 
-    // readBlock(is, content, MAX_TEXTURE_WIDTH_HEIGHT, j * mPcWidth, Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT),
-    // readSrcHeight, mPcWidth);
-    private void readBlock(InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readSrcHeight,
-            int srcWidth) throws IOException {
+    //read fat multiline pic(width > height)
+    private void readFatBlock(InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows,
+                               int lastReadWidth) throws IOException {
+        for (int j = 0; j < readRows; j++) {
+            if (DBG)
+                Log.d(TAG, "readFatBlock. j= " + j + ", readRows= " + readRows);
+
+            if (j == readRows - 1 ){
+                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, lastReadWidth * 1 * 4);
+            } else {
+                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+            }
+        }
+    }
+
+    //read tall multiline pic(height > width)
+    private void readTallBlock(InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readSrcHeight,
+                               int srcWidth) throws IOException {
         for (int j = 0; j < readSrcHeight; j++) {
+            if (DBG)
+                Log.d(TAG, "readTallBlock. j= " + j + ", readSrcHeight= " + readSrcHeight);
+
             // The picture is bigger than my width.
             // The maximum width the texture could contain is myWidth, so read myWidth, and skip the remaining pixels in the line.
-            if (srcWidth > readSrcWidth) {
+            if (srcWidth > readSrcWidth) {// fat pic
                 // 4 stands for RGBA.
                 ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
                 ByteStreams.skipFully(is, (srcWidth - readSrcWidth) * 4);
-
 
 
             } else { // srcWidth == readSrcWidth, always read srcWidtgh >= readSrcWidth.
@@ -685,7 +848,7 @@ public class MultiPicScrollObject {
 
         for (int i = 0; i < mQuadSegs.length; i++) {
             mQuadTCB.put(mQuadSegs[i].getCoords(mTextureWidth, mTextureHeight)); // Add the
-                                                                                                      // coordinates
+            // coordinates
             // to the FloatBuffer
         }
 
@@ -709,7 +872,7 @@ public class MultiPicScrollObject {
                     + mVertexcount
                     + ", indicesbuffer=" + indicesbuffer.capacity());
 
-        final int[] buffers = { 0, 0, 0 };
+        final int[] buffers = {0, 0, 0};
         GLES20.glGenBuffers(3, buffers, 0);
         final int vertexBufferId = buffers[0];
         final int textureBufferId = buffers[1];
@@ -730,8 +893,7 @@ public class MultiPicScrollObject {
             GLES20.glBindBuffer(target, 0);
     }
 
-    private int loadShader(int type, String shaderCode)
-    {
+    private int loadShader(int type, String shaderCode) {
         // Create a vertex shader type (GLES20.GL_VERTEX_SHADER)
         // or a fragment shader type (GLES20.GL_FRAGMENT_SHADER)
         int shader = GLES20.glCreateShader(type);
@@ -814,12 +976,12 @@ public class MultiPicScrollObject {
 
                     // + "gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy/1024.0);\n"
                     // + "gl_FragColor = texture2D(u_s2dTexture, mult);\n"
-                    
-                    
+
+
 //                    + " vec4 mult=(2.0*v_v4TexCoord + 1.0)/(2.0*1024.0);\n"
 //                    + " gl_FragColor = texture2D(u_s2dTexture, mult.xy); \n"
-                    
-                                        + " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy); \n"
+
+                    + " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy); \n"
 //                    + " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.y, 0.2, 0.2, 0.0); \n"
 
                     // Vec4 RGBA. Transparent the extra pixel which is larger than the texture width/height.
@@ -859,10 +1021,10 @@ public class MultiPicScrollObject {
     public void setPixelPerFrame(float speedByFrame) {
         // moving left.
 //        mPixelPerFrame = -speedByFrame;
-        if(speedByFrame >= 1.0f) {
+        if (speedByFrame >= 1.0f) {
             mPixelPerFrame = Math.round(speedByFrame);
             mIsGreaterThanAPixelPerFrame = true;
-        }else {
+        } else {
             mPixelPerFrame = speedByFrame;
             mIsGreaterThanAPixelPerFrame = false;
         }
