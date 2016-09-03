@@ -138,7 +138,6 @@ public class MultiPicScrollObject {
     }
 
 
-
     public void resetPos() {
         Matrix.setIdentityM(mMMatrix, 0);
 
@@ -392,10 +391,10 @@ public class MultiPicScrollObject {
             // drawQuad(mCurQuadIndex);
             // } else {
             // TODO: check the correctness of the following mTextureHeight variable. (mTextureWidth?)
+            if (DBG)
+                Log.d(TAG, "render. [mCurQuadIndex=" + mCurQuadIndex + ", offset= " + offset);
             if (offset >= mTextureHeight * (mCurQuadIndex + 1) && mCurQuadIndex <= (mQuadSegs.length - 1)) {
                 mCurQuadIndex++; // NOTE: mCurQuadIndex could be mQuadSegs.length
-                if (DBG)
-                    Log.d(TAG, "render. [mCurQuadIndex=" + mCurQuadIndex);
 
                 if (isAnotherTex(mCurQuadIndex) && mQuadSegs.length != mCurQuadIndex) {
                     if (DBG)
@@ -409,11 +408,23 @@ public class MultiPicScrollObject {
 
             if (mCurQuadIndex - 1 >= 0 && offset >= mTextureHeight * mCurQuadIndex
                     && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex) { // Always draw the prev quad.
+                if (DBG)
+                    Log.d(TAG, "mCurQuadIndex - 1 >= 0 && offset >= mTextureHeight * mCurQuadIndex" +
+                            "                    && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex = true");
                 drawQuad(mCurQuadIndex - 1);
             }
 
             if (mCurQuadIndex <= mQuadSegs.length - 1) {
-                drawQuad(mCurQuadIndex);
+                if (DBG)
+                    Log.d(TAG, "mCurQuadIndex <= mQuadSegs.length - 1 = true, mIsFatPCPic= " + mIsFatPCPic);
+                if (mIsFatPCPic) {
+                    for (int i = 0; i < mQuadSegs.length; i++) {
+                        if (DBG)
+                            Log.d(TAG, "draw fat quad. i= " + i);
+                        drawQuad(i);
+                    }
+                } else
+                    drawQuad(mCurQuadIndex);
             }
 
         }
@@ -425,6 +436,9 @@ public class MultiPicScrollObject {
          */
         private void drawQuad(int quadIndex) {
             int texIndex = quadIndex / mMaxColsPerTexContain;
+            if (DBG)
+                Log.d(TAG, "drawQuad.quadIndex= " + quadIndex + ", texIndex= " + texIndex);
+
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texIndex % MAX_ACTIVE_TEX]);
             if (DBG)
                 TextRenderer.checkGLError("glBindTexture");
@@ -571,7 +585,9 @@ public class MultiPicScrollObject {
         for (int i = 0; i < quadSize; i++) {
 
             int left = i * mTextureWidth;
-            int quadWidth = (i == quadSize - 1) ? lastColumnWidth() : mTextureWidth;
+            int quadWidth = (i == quadSize - 1) ? lastRowWidth() : mTextureWidth;
+            if (DBG)
+                Log.d(TAG, "left= " + left + ", quadWidth= " + quadWidth + ", (i % mMaxColsPerTexContain) * mPcHeight= " + (i % mMaxColsPerTexContain) * mPcHeight);
             mQuadSegs[i] = new QuadSegment(0, left, quadWidth, mPcHeight, (i % mMaxColsPerTexContain) * mPcHeight, 0);
         }
     }
@@ -694,12 +710,13 @@ public class MultiPicScrollObject {
 
             int readRows = ceilingBlocks(mPcWidth, mTextureWidth);
 
-            int lastReadWidth = mPcWidth - (readRows - 1) * mTextureWidth;
+            int lastReadWidth = lastRowWidth();
             if (DBG)
                 Log.d(TAG, "fat. readRows= " + readRows + ", lastReadWidth= " + lastReadWidth + ", mpcHeight= " + mPcHeight);
 
             for (int j = 0; j < mPcHeight; j++) {
-
+                if (DBG)
+                    Log.d(TAG, "j= " + j);
                 //InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows, int lastReadWidth
                 readFatBlock(is, content, mPcHeight * mTextureWidth, j * mTextureWidth, mTextureWidth, readRows, lastReadWidth);
             }
@@ -735,10 +752,9 @@ public class MultiPicScrollObject {
         return ((mPcHeight - 1) % mTextureHeight) + 1;
     }
 
-    public int lastColumnWidth() {
+    public int lastRowWidth() {
         return ((mPcWidth - 1) % mTextureWidth) + 1;
     }
-
 
 
     /**
@@ -755,14 +771,18 @@ public class MultiPicScrollObject {
 
     //read fat multiline pic(width > height)
     private void readFatBlock(InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows,
-                               int lastReadWidth) throws IOException {
+                              int lastReadWidth) throws IOException {
         for (int j = 0; j < readRows; j++) {
             if (DBG)
                 Log.d(TAG, "readFatBlock. j= " + j + ", readRows= " + readRows);
 
-            if (j == readRows - 1 ){
-                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, lastReadWidth * 1 * 4);
+            if (j == readRows - 1) {
+                if (DBG)
+                    Log.d(TAG, "read last row.");
+                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * (j) * 4, lastReadWidth * 1 * 4);
             } else {
+                if (DBG)
+                    Log.d(TAG, "read previous rows.");
                 ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
             }
         }
@@ -820,7 +840,8 @@ public class MultiPicScrollObject {
         }
 
         int quadsSize = mQuadSegs.length;
-
+        if (DBG)
+            Log.d(TAG, "quadsSize : " + quadsSize);
         // Initialize vertex Buffer for triangle
         final ByteBuffer vbb = ByteBuffer.allocateDirect(
                 // (# of coordinate values * 4 bytes per float)
