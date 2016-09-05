@@ -19,7 +19,7 @@ public class FailedProgramChecker {
     public static final String BAD_VSNS = "color.BadVSNS";
     public static final String BADVSN_TOTAL = "color.badvsn_total";
     private static final String TAG = "FailedProgramChecker";
-    private static final boolean DBG = true;
+    private static final boolean  DBG = false;
     public static final String ACTION_VSN_CHECKER = "com.color.player.ACTION_VSN_CHECKER";
     private final Context mContext;
 //
