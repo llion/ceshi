@@ -19,7 +19,7 @@ public class FailedProgramChecker {
     public static final String BAD_VSNS = "color.BadVSNS";
     public static final String BADVSN_TOTAL = "color.badvsn_total";
     private static final String TAG = "FailedProgramChecker";
-    private static final boolean DBG = false;
+    private static final boolean  DBG = false;
     public static final String ACTION_VSN_CHECKER = "com.color.player.ACTION_VSN_CHECKER";
     private final Context mContext;
 //
@@ -48,7 +48,7 @@ public class FailedProgramChecker {
         final Intent origIntent = context.registerReceiver(null, new IntentFilter(ACTION_VSN_CHECKER));
 
         Intent intent = new Intent(ACTION_VSN_CHECKER);
-        intent.putExtra(TRYING_VSN, vsn.toString());
+        intent.putExtra(TRYING_VSN, vsn.toString() + vsn.lastModified());
         intent.putExtra(TRYING_TIME, SystemClock.uptimeMillis());
 
         // SAVE badVSNs array.
@@ -89,6 +89,8 @@ public class FailedProgramChecker {
         if (DBG) Log.d(TAG, "check");
 
         if (uptimeMillis - lastUp < 1200L) {
+            //C
+            Log.e(TAG, "", new Exception("Home has restarted without the device rebooting."));
             final String tryingVsn = origIntent.getStringExtra(TRYING_VSN);
             ArrayList<String> badVSNs = origIntent.getStringArrayListExtra(BAD_VSNS);
 
@@ -119,11 +121,11 @@ public class FailedProgramChecker {
 
                     for (String vsn : intent.getStringArrayListExtra(BAD_VSNS))
                         Log.d(TAG, "[ BAD VSN ]=" + vsn);
-                    }
                 }
             }
-
         }
+
+    }
 
 
     public boolean okToPlay(File vsn) {
@@ -143,7 +145,9 @@ public class FailedProgramChecker {
             return true;
         }
 
-        String normal = vsn.toString();
+        String normal = vsn.toString() + vsn.lastModified();
+        if (DBG)
+            Log.d(TAG, "normalized = " + normal + "");
 
         for (String badvsn : badVSNs) {
             if (DBG)

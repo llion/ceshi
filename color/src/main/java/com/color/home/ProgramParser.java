@@ -249,6 +249,26 @@ public class ProgramParser {
 
     }
 
+    public static class ItemRect {
+        public String x;
+        public String y;
+        public String width;
+        public String height;
+
+        public ItemRect(String x, String y, String width, String height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        public String toString() {
+            return "ItemRect [x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + "]";
+        }
+
+    }
+
     public static class Item implements ResourceCollectable {
         private Texts mTexts;
         public String id;
@@ -347,6 +367,7 @@ public class ProgramParser {
         public MinuteScale minuteScale;
         public String invertClr;
         public ProgramParser mPp;
+        public ItemRect itemRect;
 
         public Item(String id, String name, String type, String version, String backcolor, String alhpa, String duration,
                     String beglaring, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo,
@@ -363,7 +384,7 @@ public class ProgramParser {
                     String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud,
                     String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport,
                     String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock,
-                    AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
+                    AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp, ItemRect itemRect) {
 
             super();
             this.mPp = pp;
@@ -463,6 +484,7 @@ public class ProgramParser {
             this.minuteScale = minuteScale;
             this.scrollpicinfo = scrollpicinfo;
             this.invertClr = invertClr;
+            this.itemRect = itemRect;
 
         }
 
@@ -554,10 +576,10 @@ public class ProgramParser {
         private final boolean isSeekable;
 
         public VideoItem(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, String beToEndTime, String style, String isMultiLine, String prefix, String endDateTime, String showFormat, LogFont logfont, String text, String textColor, String isShowDayCount, String dayCountColor, String isShowHourCount, String hourCountColor,
-                         String isShowMinuteCount, String minuteCountColor, String isShowSecondCount, String secondCountColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp) {
+                         String isShowMinuteCount, String minuteCountColor, String isShowSecondCount, String secondCountColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp, ItemRect itemRect) {
             super(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, beToEndTime, style,
                     isMultiLine, prefix, endDateTime, showFormat, logfont, text, textColor, isShowDayCount, dayCountColor, isShowHourCount, hourCountColor,
-                    isShowMinuteCount, minuteCountColor, isShowSecondCount, secondCountColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, pp);
+                    isShowMinuteCount, minuteCountColor, isShowSecondCount, secondCountColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, pp, itemRect);
 
             isSeekable = checkSeekable();
         }
@@ -1281,6 +1303,7 @@ public class ProgramParser {
         HhourScale hhourScale = null;
         MinuteScale minuteScale = null;
         String invertClr = null;
+        ItemRect itemRect = null;
 
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -1484,6 +1507,8 @@ public class ProgramParser {
                 hhourScale = readHhourScale(parser);
             } else if (tagName.equalsIgnoreCase("MinuteScale")) {
                 minuteScale = readMinuteScale(parser);
+            } else if (tagName.equalsIgnoreCase("Rect")) {
+                itemRect = readItemRect(parser);
             } else {
                 if (DBG)
                     Log.w(TAG, "readItem. [Skipping tag=" + tagName);
@@ -1501,7 +1526,7 @@ public class ProgramParser {
                     isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex,
                     coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId,
                     language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale,
-                    scrollpicinfo, invertClr, this);
+                    scrollpicinfo, invertClr, this, itemRect);
         } else {
             return new Item(id, name, type, version, backcolor, alhpa, duration, beglaring, effect, ineffect, outeffect, multipicinfo, beToEndTime, style,
                     isMultiLine, prefix, endDateTime, showFormat, logfont, text, textColor, isShowDayCount, dayCountColor, isShowHourCount, hourCountColor,
@@ -1511,7 +1536,7 @@ public class ProgramParser {
                     isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex,
                     coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId,
                     language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale,
-                    scrollpicinfo, invertClr, this);
+                    scrollpicinfo, invertClr, this, itemRect);
         }
 
     }
@@ -1794,6 +1819,41 @@ public class ProgramParser {
         if (DBG)
             Log.d(TAG, "readDisplayRect. [width=" + width + ", height=" + height);
         return new DisplayRect(x, y, width, height, borderwidth, bordercolor);
+    }
+
+    private ItemRect readItemRect(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "Rect");
+
+        String x = null;
+        String y = null;
+        String width = null;
+        String height = null;
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String tagName = parser.getName();
+            if (DBG)
+                Log.i(TAG, "readItemRect. [tagName=" + tagName);
+
+            if (tagName.equalsIgnoreCase("X")) {
+                x = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Y")) {
+                y = readText(parser);
+            } else if (tagName.equalsIgnoreCase("Width")) {
+                width = readWidth(parser);
+            } else if (tagName.equalsIgnoreCase("Height")) {
+                height = readHeight(parser);
+            } else {
+                Log.w(TAG, "readItemRect. [Skipping tag=" + tagName);
+                skip(parser);
+            }
+        }
+
+        if (DBG)
+            Log.d(TAG, "readItemRect. [width=" + width + ", height=" + height);
+        return new ItemRect(x, y, width, height);
     }
 
     private FileSource readFileSource(XmlPullParser parser) throws XmlPullParserException, IOException {

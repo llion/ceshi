@@ -107,7 +107,18 @@ public class ItemTimer extends TextView implements ItemData, OnPlayFinishObserve
         mPlayTime = 0;
 
         setTextColor(GraphUtils.parseColor(item.textColor));
-        setBackgroundColor(GraphUtils.parseColor(item.backcolor));
+
+        int backColor;
+        if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor)) {
+            if ("0xFF010000".equals(item.backcolor)) {
+                backColor = GraphUtils.parseColor("0xFF000000");
+            } else {
+                backColor = GraphUtils.parseColor(item.backcolor);
+            }
+        } else {
+            backColor = GraphUtils.parseColor("0x00000000");
+        }
+        setBackgroundColor(backColor);
         getPaint().setAntiAlias(false);
 //        setTextScaleX(1.2f);
         LogFont logFont = item.logfont;
@@ -259,7 +270,7 @@ public class ItemTimer extends TextView implements ItemData, OnPlayFinishObserve
                 mSpannable.append("\n");
 
             try {
-                mDay = String.format("%03d", mTimeCount < 0 ? 0 : mTimeCount);
+                mDay = String.format("%d", mTimeCount < 0 ? 0 : mTimeCount);
             } catch (Exception e) {
                 e.printStackTrace();
             }

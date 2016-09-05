@@ -2,7 +2,10 @@
 <resources>
 
     <string name="day">天</string>
-    <string name="hour">时</string>
-    <string name="minute">分</string>
+    <string name="hour">小时</string>
+    <string name="minute">分钟</string>
     <string name="second">秒</string>
+    <string name="failedToCopy">拷贝失败 </string>
+    <string name="noEnoughSpace">磁盘空间不足！</string>
+    <string name="syncCompletes">U盘同步完成</string>
 </resources>

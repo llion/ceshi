@@ -2,5 +2,6 @@
 <resources>
 
     <string name="app_name">ColorTestTest</string>
-
+    <string name="failedToCopy">The copy operation failed on </string>
+    <string name="noEnoughSpace">Insufficient disk space!</string>
 </resources>

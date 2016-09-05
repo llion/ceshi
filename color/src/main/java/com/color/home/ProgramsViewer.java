@@ -30,7 +30,7 @@ import java.util.Set;
 
 public class ProgramsViewer{
     private final static String TAG = "ProgramsViewer";
-    private static final boolean DBG = true;
+    private static final boolean  DBG = false;
 
     ProgramView mProgramView;
     public List<Program> mPrograms;
@@ -73,8 +73,6 @@ public class ProgramsViewer{
         protected List<Program> doInBackground(File... params) {
             mVsnFile = params[0];
 
-
-
             InputStream in = null;
             try {
 
@@ -103,12 +101,23 @@ public class ProgramsViewer{
 
                     File resFile = new File(mVsnFile.getAbsoluteFile().getParent(), resPath);
 
+                    if(resFile.toString().endsWith("mulpic") ) {
+                        if (!isGoodMulpic(resFile)) {
+                            throw new Exception("Invalid asset : (" + resPath + ")");
+                        }
+
+                        continue;
+                    }
+
                     if(!validateFile(resFile))
-                        throw new Exception("ResFile does not exist. : (" + resFile + ")");
+                        throw new Exception("asset does not exist. : (" + resFile + ")");
 
                     String md5Tag = SyncService.getMd5Tag(resPath);
                     if(DBG)
                         Log.d(TAG, "Program parse , md5Tag : " + md5Tag);
+
+                    // File name contains MD5.
+                    // We're not checking against the MD5 here.
                     if(!TextUtils.isEmpty(md5Tag)){
                         long resSize;
                         try {
@@ -128,7 +137,7 @@ public class ProgramsViewer{
                         }
 
                         if (resSize != resFile.length())
-                            throw new Exception("Illegal resource file : (" + resPath + ")");
+                            throw new Exception("Illegal asset file : (" + resPath + ")");
 
                     }
                 }
@@ -152,6 +161,25 @@ public class ProgramsViewer{
                 }
             }
             return null;
+        }
+
+        private boolean isGoodMulpic(File resFile) {
+            if (resFile.exists() && resFile.length() > 0L) {
+                if (DBG)
+                    Log.d(TAG, "resFile is OK with file = " + resFile);
+
+                return true;
+            }
+
+            File zippedMultipic = new File(resFile.toString() + ".zip");
+            if (zippedMultipic.exists() && zippedMultipic.length() > 0L) {
+                if (DBG)
+                    Log.d(TAG, "resFile multipic is OK with zipped file = " + zippedMultipic);
+
+                return true;
+            }
+
+            return false;
         }
 
         private boolean validateFile(File file) {

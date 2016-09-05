@@ -17,6 +17,7 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 
@@ -543,7 +544,34 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         setupAppearingTransition(getLayoutTransition(), duration);
 
-        addView(view);
+        if (view instanceof ItemWebView) {
+            if (DBG)
+                Log.d(TAG, "itemRect= " + item.itemRect);
+            if (item.itemRect != null) {
+                int left = 0;
+                int top = 0;
+                try {
+                    left = -Integer.parseInt(item.itemRect.x);
+                    top = -Integer.parseInt(item.itemRect.y);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+                if (DBG)
+                    Log.d(TAG, "leftMargin= " + left + ", topMargin= " + top);
+
+                if (left == 0 && top == 0){
+                    addView(view);
+                } else {
+                    LayoutParams params = new LayoutParams(getRegionWidth() - left, getRegionHeight() - top);
+                    params.leftMargin = left;
+                    params.topMargin = top;
+                    addView(view, params);
+                }
+
+            } else
+                addView(view);
+        } else
+            addView(view);
 
         // Must remove old view after adding view. Otherwise, the remove old view
         // is inconsistent between animation ended and this one.
