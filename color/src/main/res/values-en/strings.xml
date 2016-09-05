@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="day">day</string>
+    <string name="hour">hour</string>
+    <string name="minute">minute</string>
+    <string name="second">second</string>
+    <string name="failedToCopy">Copy failed on </string>
+    <string name="noEnoughSpace">No available space in internal storage!</string>
+    <string name="syncCompletes">Usb-sync completed.</string>
+</resources>
