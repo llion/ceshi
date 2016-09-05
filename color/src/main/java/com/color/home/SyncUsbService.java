@@ -322,13 +322,13 @@ public class SyncUsbService extends IntentService {
                     if(availableSize > sizeNeeded){
                         copyResult = copyFileOrDirToSynced(absolutePath);
                         if (copyResult != 0) {
-                            throw new IOException("Failed to copy " + acopy + ".");
+                            throw new IOException(getResources().getString(R.string.failedToCopy) + acopy);
 //                            break;
                         }
                     }else{
                         Log.e(TAG, "No enough space in sdcard.", new IOException("CopyingException"));
                         //TODO show alert in floating window
-                        throw new IOException("Failed to copy " + acopy + ", No enough space in sdcard.");
+                        throw new IOException(getResources().getString(R.string.noEnoughSpace));
 //                        break;
                     }
                 }
@@ -346,13 +346,13 @@ public class SyncUsbService extends IntentService {
                     if(availableSize > sizeNeeded){
                         copyResult = copyFileOrDirToSynced(usbAbsolutePath);
                         if (copyResult != 0) {
-                            throw new IOException("Failed to copy " + overwrite + ".");
+                            throw new IOException(getResources().getString(R.string.failedToCopy) + overwrite);
 //                            break;
                         }
                     }else{
                         Log.e(TAG, "No enough space in sdcard.", new IOException("CopyingException"));
                         //TODO show alert in floating window
-                        throw new IOException("Failed to copy " + overwrite + ", No enough space in sdcard.");
+                        throw new IOException(getResources().getString(R.string.noEnoughSpace));
 //                        break;
                     }
                 }

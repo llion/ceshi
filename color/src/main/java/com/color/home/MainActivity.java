@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,20 +15,17 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.color.home.keyboard.KeyBoardNav;
 import com.color.home.program.sync.FailedProgramChecker;
 import com.color.home.program.sync.SyncService;
-import com.color.widgets.floating.FloatingLayout;
 
 import java.io.File;
 
@@ -55,7 +53,6 @@ public class MainActivity extends Activity {
     private MainReceiver mReceiver;
     private ScreenStatusReceiver mScreenStatusReceiver;
     private CopyProgress mCp;
-    private FloatingLayout mSyncInfolayout;
     private KeyBoardNav mKb;
 
     private class MainReceiver extends BroadcastReceiver {
@@ -73,17 +70,14 @@ public class MainActivity extends Activity {
                 if(DBG_RESULT)
                     Log.d(TAG, "result of usb synced : " + result);
                 if (result) {
-                    AppController.getInstance().toast(getApplicationContext(), "USB-SYNCED", Toast.LENGTH_LONG);
+                    AppController.getInstance().toast(getApplicationContext(),
+                            getResources().getString(R.string.syncCompletes), Toast.LENGTH_LONG);
                 } else {
-                    AppController.getInstance().toast(getApplicationContext(), "FAILED USB-SYNC", Toast.LENGTH_LONG);
                     String reason = intent.getExtras().getString(Constants.EXTRA_REASON_FOR_SYNC_FAILURE, "");
                     if(!TextUtils.isEmpty(reason)){
-                        displayUsbSyncInfo(reason);
+                        AppController.getInstance().toast(getApplicationContext(), reason, Toast.LENGTH_LONG, Color.RED);
                     }
                 }
-            } else if (Intent.ACTION_MEDIA_REMOVED.equals(action) && intent.getData().toString().endsWith("0")){
-                if(mSyncInfolayout != null)
-                    mSyncInfolayout.hideLayout();
             }
         }
 
@@ -186,7 +180,6 @@ public class MainActivity extends Activity {
 
         registerUsbSyncEvents();
         mCp = new CopyProgress(this);
-        mSyncInfolayout = new FloatingLayout(getApplicationContext());
 
         sendBroadcast(new Intent(Constants.ACTION_COLOR_HOME_STARTED));
 
@@ -218,16 +211,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void displayUsbSyncInfo(String reason) {
-        if (DBG) {
-            Log.d(TAG, "displayUsbSyncInfo");
-        }
-
-        mSyncInfolayout.addView(LayoutInflater.from(this).inflate(R.layout.layout_usb_sync_info, null));
-        TextView showUpdateStatusTextView = (TextView) mSyncInfolayout.findViewById(R.id.usbSyncInfoTextView);
-        showUpdateStatusTextView.setText(reason);
-        mSyncInfolayout.showLayout();
-    }
 
     private void registerUsbSyncEvents() {
         IntentFilter intentFilter = new IntentFilter(Constants.ACTION_USB_SYNC_START);
@@ -315,6 +298,7 @@ public class MainActivity extends Activity {
 //                if(DBG)
 //                    Log.d(TAG, "after startProgram onNewIntent: isPause=" + isPaused);
 //                isPaused = false;
+//                Integer.parseInt(".");
             }
 
         }
@@ -379,12 +363,12 @@ public class MainActivity extends Activity {
         SyncService.startService(getApplicationContext(), Uri.parse("content://com.color.home/play/"), Constants.ACTION_PROGRAM_STARTED);
     }
 
-    private void startProgram(File vsn) {
+    private void startProgram(File vsn){
         if (DBG)
             Log.i(TAG, "startProgram. programVsnFile=" + vsn);
 
         // Mark in the SystemProperties the time and the vsn file we are trying to playback.
-        // If later the Home is restart, and the interval is quite short,
+        // If later the Home restart, and the interval is quite short,
         // Maybe we could not playback this program.
         new FailedProgramChecker(this, vsn); // Mark
 

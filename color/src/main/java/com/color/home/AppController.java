@@ -1,7 +1,6 @@
 package com.color.home;
 
 import android.app.Application;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,13 +9,11 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.LruCache;
 import android.view.Gravity;
@@ -30,17 +27,15 @@ import com.color.home.program.sync.PairedProgramFile;
 import com.color.home.program.sync.PollingUtils;
 import com.color.home.program.sync.Strategy;
 import com.color.home.program.sync.SyncService;
-import com.color.home.provider.ColorContract;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 
 public class AppController extends Application {
 
     private final static String TAG = "AppController";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     public static String sCharset = "GBK";
 
     /**
@@ -76,8 +71,8 @@ public class AppController extends Application {
     // int in its constructor.
     static final int sMaxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
     static {
-    if (DBG)
-        Log.d(TAG, "sMaxMemory=. [" + sMaxMemory);
+        if (DBG)
+            Log.d(TAG, "sMaxMemory=. [" + sMaxMemory);
     }
     // Use 1/3th of the available memory for this memory cache.
     // static final int sCacheSize = 500;
@@ -170,7 +165,7 @@ public class AppController extends Application {
 
     public void markProgram(String path, String fileName) {
         PairedProgramFile file = new PairedProgramFile(path, fileName);
-        
+
         Intent intent = new Intent(Constants.ACTION_CURRENT_PROG_INDEX);
         intent.putExtra(Constants.EXTRA_INDEX, 999);
         intent.putExtra(Constants.EXTRA_PATH, file.getPath());
@@ -181,7 +176,7 @@ public class AppController extends Application {
         edit.putString(Constants.EXTRA_PATH, file.getPath());
         edit.putString(Constants.EXTRA_FILE_NAME, file.getFilename());
         edit.apply();
-        
+
 //        ContentValues values = new ContentValues();
 //        values.put(ColorContract.COLUMN_PROGRAM_SOURCE, "updated path");
 //        values.put(ColorContract.COLUMN_PROGRAM_SOURCE, Constants.absFolderToSourceType(pathNorm));
@@ -191,7 +186,7 @@ public class AppController extends Application {
 //                .update(Uri.withAppendedPath(ColorContract.PROGRAM_CONTENT_URI, "playing"), values, null, null);
 //        if (DBG)
 //            Log.i(TAG, "markProgram. [PROGRAM_CONTENT_URI update count=" + update);
-        
+
     }
 
     public static String normPathNameInternalSdToSdcard(String pathNorm) {
@@ -222,6 +217,7 @@ public class AppController extends Application {
             Log.d(TAG, "onCreate. [sMaxMemory=" + sMaxMemory);
         // initialize the singleton
         sInstance = this;
+//        initToastGroup();
 
         toast(this, BuildConfig.VERSION_NAME + "(" + BuildConfig.VERSION_CODE + ")", Toast.LENGTH_SHORT);
 
@@ -341,7 +337,7 @@ public class AppController extends Application {
     public void onTerminate() {
         if (DBG)
             Log.d(TAG, "onTerminate. [");
-        
+
         if (com.color.home.Constants.HTTP_SERVER_SUPPORT) {
             PollingUtils.stopPollingService(this, SyncService.class, Constants.ACTION_REFRESH);
         }
@@ -367,7 +363,7 @@ public class AppController extends Application {
             toastMe(context, text, duration);
         } else {
             sHandler.post(new Runnable() {
-                
+
                 @Override
                 public void run() {
                     toastMe(context, text, duration);
@@ -376,7 +372,20 @@ public class AppController extends Application {
         }
     }
 
-    private void toastMe(Context context, String text, int duration) {
+    public void toast(final Context context, final String text, final int duration, final int textColor) {
+        if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
+            toastMe(context, text, duration, textColor);
+        } else {
+            sHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    toastMe(context, text, duration, textColor);
+                }
+            });
+        }
+    }
+
+    private void toastMe(Context context, String text, final int duration) {
         Toast cheatSheet = new Toast(context);
         TextView textView = new TextView(context);
         textView.setBackgroundColor(Color.BLACK);
@@ -388,6 +397,102 @@ public class AppController extends Application {
         cheatSheet.setGravity(Gravity.TOP | Gravity.LEFT, 0, 0);
         cheatSheet.show();
     }
-    
+
+    private void toastMe(Context context, String text, final int duration, final int textColor) {
+        Toast cheatSheet = new Toast(context);
+        TextView textView = new TextView(context);
+        textView.setBackgroundColor(Color.BLACK);
+        textView.setText(text);
+        textView.setTextSize(16);
+        textView.setTextColor(textColor);
+        cheatSheet.setView(textView);
+        cheatSheet.setDuration(duration);
+        cheatSheet.setGravity(Gravity.TOP | Gravity.LEFT, 0, 0);
+        cheatSheet.show();
+    }
+
+
+
+//    LinearLayout mToastGroup;
+//    private void toastMe(Context context, String text, int duration) {
+//        duration = duration == Toast.LENGTH_LONG ? 3500 : 2000;
+//        if(DBG)
+//            Log.d(TAG, "toast text : " + text + ", duration : " + duration );
+//        ToastTextView toastTextView = new ToastTextView(context, duration);
+//        toastTextView.setBackgroundColor(Color.BLACK);
+//        toastTextView.setText(text);
+//        toastTextView.setTextSize(16);
+//        toastTextView.setTextColor(Color.WHITE);
+//
+//        mToastGroup.addView(toastTextView);
+//
+//    }
+//
+//    private void toastMe(Context context, String text, int duration, final int textColor) {
+//        duration = duration == Toast.LENGTH_LONG ? 3500 : 2000;
+//        if(DBG)
+//            Log.d(TAG, "toast text : " + text + ", duration : " + duration + ", textColor : " + textColor);
+//        ToastTextView toastTextView = new ToastTextView(context, duration);
+//        toastTextView.setBackgroundColor(Color.BLACK);
+//        toastTextView.setText(text);
+//        toastTextView.setTextSize(16);
+//        toastTextView.setTextColor(textColor);
+//
+//        mToastGroup.addView(toastTextView);
+//    }
+
+//    private void initToastGroup() {
+//        WindowManager.LayoutParams lp =
+//                new WindowManager.LayoutParams();
+//
+//        lp.type = WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY;
+//        lp.format = PixelFormat.TRANSPARENT;
+//
+//        lp.gravity = Gravity.LEFT | Gravity.TOP;
+//        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+//        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+//        lp.x = 0;
+//        lp.y = 0;
+//
+//        lp.flags = (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+//
+//        mToastGroup = new LinearLayout(getApplicationContext());
+//        setupTransition(mToastGroup);
+////        mToastGroup.setLayoutParams(lp);
+////        mToastGroup.setVisibility(View.VISIBLE);
+////        mToastGroup.setGravity(Gravity.TOP | Gravity.START);
+//        mToastGroup.setOrientation(LinearLayout.VERTICAL);
+//
+//        if(DBG)
+//            Log.d(TAG, "is Toast Group shown : " + mToastGroup.isShown() +
+//                    ", layout visibility : " + mToastGroup.getVisibility());
+//
+//        WindowManager wm =
+//                (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+//        if (wm == null) {
+//            return;
+//        }
+//
+//        wm.addView(mToastGroup, lp);
+//    }
+//
+//    private void setupTransition(ViewGroup viewGroup){
+//        final LayoutTransition transition = new LayoutTransition();
+//        if(DBG)
+//            Log.d(TAG, "APPEARING " + transition.isTransitionTypeEnabled(LayoutTransition.APPEARING)
+//                     + ", DISAPPEARING " + transition.isTransitionTypeEnabled(LayoutTransition.DISAPPEARING)
+//                     + ", CHANGE_APPEARING " + transition.isTransitionTypeEnabled(LayoutTransition.CHANGE_APPEARING)
+//                     + ", CHANGE_DISAPPEARING " + transition.isTransitionTypeEnabled(LayoutTransition.CHANGE_DISAPPEARING)
+//            );
+//        transition.enableTransitionType(LayoutTransition.APPEARING);
+//        transition.enableTransitionType(LayoutTransition.DISAPPEARING);
+//        transition.enableTransitionType(LayoutTransition.CHANGE_APPEARING);
+//        transition.enableTransitionType(LayoutTransition.CHANGE_DISAPPEARING);
+//        viewGroup.setLayoutTransition(transition);
+//        transition.setAnimator(LayoutTransition.APPEARING, transition.getAnimator(LayoutTransition.APPEARING));
+//        transition.setAnimator(LayoutTransition.DISAPPEARING, transition.getAnimator(LayoutTransition.DISAPPEARING));
+//        transition.setAnimator(LayoutTransition.CHANGE_APPEARING, transition.getAnimator(LayoutTransition.CHANGE_APPEARING));
+//        transition.setAnimator(LayoutTransition.CHANGE_DISAPPEARING, transition.getAnimator(LayoutTransition.CHANGE_DISAPPEARING));
+//    }
 
 }
