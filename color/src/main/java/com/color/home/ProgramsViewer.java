@@ -30,7 +30,7 @@ import java.util.Set;
 
 public class ProgramsViewer{
     private final static String TAG = "ProgramsViewer";
-    private static final boolean DBG = true;
+    private static final boolean  DBG = false;
 
     ProgramView mProgramView;
     public List<Program> mPrograms;

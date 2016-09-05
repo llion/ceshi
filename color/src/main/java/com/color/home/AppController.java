@@ -35,7 +35,7 @@ import java.util.Locale;
 public class AppController extends Application {
 
     private final static String TAG = "AppController";
-    private static final boolean DBG = true;
+    private static final boolean  DBG = false;
     public static String sCharset = "GBK";
 
     /**
