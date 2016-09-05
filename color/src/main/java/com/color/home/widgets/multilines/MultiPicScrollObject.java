@@ -43,6 +43,7 @@ public class MultiPicScrollObject {
     private final static String TAG = "MultiPicScrollObject";
     private static final boolean DBG = false;
     private static final boolean PNG_DBG = false;
+    private static final boolean RENDER_DBG = false;
     private static final boolean MATRIX_DBG = false;
     // private static final String MNT_SDCARD_PNGS = "/mnt/sdcard/pngs";
     private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
@@ -67,6 +68,8 @@ public class MultiPicScrollObject {
     private int mTexCount;
     private boolean mIsTallPCPic;
     private boolean mIsFatPCPic;
+    private int mRealSegmentsPerTex;
+    private boolean isTallPCPicSurplus;// is pcheight surplus than heightConsumedPerTex
 
     // Constructor initialize all necessary members
     public MultiPicScrollObject(Context context, ScrollPicInfo scrollpicinfo) {
@@ -327,18 +330,27 @@ public class MultiPicScrollObject {
 
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
 
-        if (modelMat[13] > mHeight + mPcHeight) {
-            if (DBG)
-                Log.d(TAG, "render. [modelMat[13]=" + modelMat[13]);
-            resetPos();
-            mSr.resetPage();
-            // if repeat count == 0, infinite loop.
-            if (mRepeatCount != 0) {
-                if (++mCurrentRepeats >= mRepeatCount) {
-                    notifyFinish();
-                }
-            }
+//        if (modelMat[13] > mHeight + mPcHeight){
+//            if (DBG)
+//                Log.d(TAG, "render. [modelMat[13]=" + modelMat[13]);
+//            resetPos();
+//            mSr.resetPage();
+//            // if repeat count == 0, infinite loop.
+//            if (mRepeatCount != 0) {
+//                if (++mCurrentRepeats >= mRepeatCount) {
+//                    notifyFinish();
+//                }
+//            }
+//        }
+
+        if (mIsTallPCPic && isTallPCPicSurplus) {// fat multipic and tallPCPic is surplus
+            if (modelMat[13] > mHeight + mTextureHeight)
+                reset();
+        } else { // fat multipic || (tall multipic && !isTallPCPicSurplus)
+            if (modelMat[13] > mHeight + mPcHeight)
+                reset();
         }
+
         GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, modelMat, 0);
         // GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         // if (DBG)
@@ -349,6 +361,18 @@ public class MultiPicScrollObject {
 
         // if (mPicCount )
 
+    }
+
+    private void reset() {
+
+        resetPos();
+        mSr.resetPage();
+        // if repeat count == 0, infinite loop.
+        if (mRepeatCount != 0) {
+            if (++mCurrentRepeats >= mRepeatCount) {
+                notifyFinish();
+            }
+        }
     }
 
     private class SegRender {
@@ -391,40 +415,50 @@ public class MultiPicScrollObject {
             // drawQuad(mCurQuadIndex);
             // } else {
             // TODO: check the correctness of the following mTextureHeight variable. (mTextureWidth?)
-            if (DBG)
+            if (RENDER_DBG)
                 Log.d(TAG, "render. [mCurQuadIndex=" + mCurQuadIndex + ", offset= " + offset);
-            if (offset >= mTextureHeight * (mCurQuadIndex + 1) && mCurQuadIndex <= (mQuadSegs.length - 1)) {
-                mCurQuadIndex++; // NOTE: mCurQuadIndex could be mQuadSegs.length
 
-                if (isAnotherTex(mCurQuadIndex) && mQuadSegs.length != mCurQuadIndex) {
-                    if (DBG)
-                        Log.d(TAG, "render. [isAnotherTex.");
-                    int texIndex = mCurQuadIndex / mMaxColsPerTexContain;
-                    if (texIndex >= MAX_ACTIVE_TEX) { // Prepare the next tex. NOTE: The 0 .. MAX_ACTIVE_TEX-1 were pre-set.
-                        MultiPicScrollObject.this.updateTexIndexToTexId(texIndex, texIndex % MAX_ACTIVE_TEX); // 0 for page = 2
-                    }
+            if (mIsTallPCPic) {
+                if (RENDER_DBG)
+                    Log.d(TAG, "draw tall quad.");
+
+                if (offset >= mTextureHeight * (mCurQuadIndex + 1) && mCurQuadIndex <= (mQuadSegs.length - 1)) {
+                    if (RENDER_DBG)
+                        Log.d(TAG, "next quad");
+
+                    mCurQuadIndex++; // NOTE: mCurQuadIndex could be mQuadSegs.length
+
+//                    if (isAnotherTex(mCurQuadIndex) && mQuadSegs.length != mCurQuadIndex) {
+//                        if (RENDER_DBG)
+//                            Log.d(TAG, "render. [isAnotherTex.");
+//
+//                        int texIndex = mCurQuadIndex / mMaxSegmentsPerTexContain;
+//                        if (texIndex >= MAX_ACTIVE_TEX) { // Prepare the next tex. NOTE: The 0 .. MAX_ACTIVE_TEX-1 were pre-set.
+//                            MultiPicScrollObject.this.updateTexIndexToTexId(texIndex, texIndex % MAX_ACTIVE_TEX); // 0 for page = 2
+//                        }
+//                    }
                 }
-            }
 
-            if (mCurQuadIndex - 1 >= 0 && offset >= mTextureHeight * mCurQuadIndex
-                    && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex) { // Always draw the prev quad.
-                if (DBG)
-                    Log.d(TAG, "mCurQuadIndex - 1 >= 0 && offset >= mTextureHeight * mCurQuadIndex" +
-                            "                    && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex = true");
-                drawQuad(mCurQuadIndex - 1);
-            }
+                if (mCurQuadIndex - 1 >= 0 && offset >= mTextureHeight * mCurQuadIndex
+                        && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex) { // Always draw the prev quad.
+                    if (RENDER_DBG)
+                        Log.d(TAG, "draw the prev quad");
+                    drawQuad(mCurQuadIndex - 1);
+                }
 
-            if (mCurQuadIndex <= mQuadSegs.length - 1) {
-                if (DBG)
-                    Log.d(TAG, "mCurQuadIndex <= mQuadSegs.length - 1 = true, mIsFatPCPic= " + mIsFatPCPic);
-                if (mIsFatPCPic) {
-                    for (int i = 0; i < mQuadSegs.length; i++) {
-                        if (DBG)
-                            Log.d(TAG, "draw fat quad. i= " + i);
-                        drawQuad(i);
-                    }
-                } else
+                if (mCurQuadIndex <= mQuadSegs.length - 1) {
                     drawQuad(mCurQuadIndex);
+                }
+
+            } else { // fat multipic
+                if (RENDER_DBG)
+                    Log.d(TAG, "draw fat quad.");
+
+                for (int i = 0; i < mQuadSegs.length; i++) {
+                    if (RENDER_DBG)
+                        Log.d(TAG, "draw fat quad. i= " + i);
+                    drawQuad(i);
+                }
             }
 
         }
@@ -435,8 +469,8 @@ public class MultiPicScrollObject {
          * @param quadIndex
          */
         private void drawQuad(int quadIndex) {
-            int texIndex = quadIndex / mMaxColsPerTexContain;
-            if (DBG)
+            int texIndex = quadIndex / mMaxSegmentsPerTexContain;
+            if (RENDER_DBG)
                 Log.d(TAG, "drawQuad.quadIndex= " + quadIndex + ", texIndex= " + texIndex);
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texIndex % MAX_ACTIVE_TEX]);
@@ -451,7 +485,7 @@ public class MultiPicScrollObject {
         }
 
         public boolean isAnotherTex(int quadIndex) {
-            return quadIndex % mMaxColsPerTexContain == 0;
+            return quadIndex % mMaxSegmentsPerTexContain == 0;
         }
 
     }
@@ -556,7 +590,9 @@ public class MultiPicScrollObject {
     //tall pic quadSize
     private void generateTallPCMulpicQuads() {
         // setImageBitmap(resultBm);
-        final int quadSize = ceilingBlocks(mPcHeight, mTextureHeight);
+//        final int quadSize = ceilingBlocks(mPcHeight, mTextureHeight);
+        final int quadSize = mRealSegmentsPerTex;
+
         if (DBG)
             Log.d(TAG, "generateTallPCMulpicQuads. [quadSize=" + quadSize);
         mQuadSegs = new QuadSegment[quadSize];
@@ -571,7 +607,7 @@ public class MultiPicScrollObject {
 
             int top = -i * mTextureHeight;
             int quadHeight = (i == quadSize - 1) ? lastColumnHeight() : mTextureHeight;
-            mQuadSegs[i] = new QuadSegment(top, 0, mPcWidth, quadHeight, 0, (i % mMaxColsPerTexContain) * mPcWidth);
+            mQuadSegs[i] = new QuadSegment(top, 0, mPcWidth, quadHeight, 0, (i % mRealSegmentsPerTex) * mPcWidth);
         }
     }
 
@@ -580,24 +616,26 @@ public class MultiPicScrollObject {
         // setImageBitmap(resultBm);
         final int quadSize = ceilingBlocks(mPcWidth, mTextureWidth);
         if (DBG)
-            Log.d(TAG, "generateFatPCMulpicQuads. [quadSize=" + quadSize + ", [mMaxColsPerTexContain= " + mMaxColsPerTexContain);
+            Log.d(TAG, "generateFatPCMulpicQuads. [quadSize=" + quadSize + ", [mMaxSegmentsPerTexContain= " + mMaxSegmentsPerTexContain);
         mQuadSegs = new QuadSegment[quadSize];
         for (int i = 0; i < quadSize; i++) {
 
             int left = i * mTextureWidth;
             int quadWidth = (i == quadSize - 1) ? lastRowWidth() : mTextureWidth;
             if (DBG)
-                Log.d(TAG, "left= " + left + ", quadWidth= " + quadWidth + ", (i % mMaxColsPerTexContain) * mPcHeight= " + (i % mMaxColsPerTexContain) * mPcHeight);
-            mQuadSegs[i] = new QuadSegment(0, left, quadWidth, mPcHeight, (i % mMaxColsPerTexContain) * mPcHeight, 0);
+                Log.d(TAG, "left= " + left + ", quadWidth= " + quadWidth + ", (i % mMaxSegmentsPerTexContain) * mPcHeight= " + (i % mMaxSegmentsPerTexContain) * mPcHeight);
+            mQuadSegs[i] = new QuadSegment(0, left, quadWidth, mPcHeight, (i % mMaxSegmentsPerTexContain) * mPcHeight, 0);
         }
     }
 
     private boolean handleTallPicMulpic(InputStream is) throws IOException {
-        mMaxColsPerTexContain = mTextureWidth / mPcWidth;
+        mMaxSegmentsPerTexContain = mTextureWidth / mPcWidth;
 
-        int heightConsumedPerTex = mMaxColsPerTexContain * mTextureHeight;
+        int heightConsumedPerTex = mMaxSegmentsPerTexContain * mTextureHeight;
         // final int heightRemaining = mPcHeight % heightPerTex;
-        mTexCount = ceilingBlocks(mPcHeight, heightConsumedPerTex);
+//        mTexCount = ceilingBlocks(mPcHeight, heightConsumedPerTex);
+        mTexCount = 1;
+        setRealSegmentsPerTex(heightConsumedPerTex);
 
         // Now the pic count is ready.
         genTexs();
@@ -616,27 +654,40 @@ public class MultiPicScrollObject {
             // Image already exist, offset to next image.
             if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
                 if (DBG)
-                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxColsPerTexContain=" + mMaxColsPerTexContain);
+                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxSegmentsPerTexContain=" + mMaxSegmentsPerTexContain);
                 // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
                 // Do not skip the last texture in a full texture size, as it could overflow the file.
-                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxSegmentsPerTexContain * 4);
                 if (i == mTexCount - 1) {
                     if (DBG)
                         Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
                     continue;
                 }
-                ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxColsPerTexContain * 4);
-                continue;
+//                ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxSegmentsPerTexContain * 4);
+//                continue;
             }
 
             // Always square.
             byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
 
-            int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
-            int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxColsPerTexContain;
-            for (int j = 0; j < columns; j++) {
+//            int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
+//            int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxSegmentsPerTexContain;
+
+            if (DBG)
+                Log.d(TAG, "mPcHeight= " + mPcHeight + ", heightConsumedPerTex= " + heightConsumedPerTex + ", mRealSegmentsPerTex= " + mRealSegmentsPerTex);
+            for (int j = 0; j < mRealSegmentsPerTex; j++) {
                 // last column in last texture => (lastTex && j == columns - 1)
-                int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
+//                int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
+                int readSrcHeight;
+                if (mPcHeight >= heightConsumedPerTex) {
+                    readSrcHeight = mTextureHeight;
+
+                } else {
+                    if (j == mRealSegmentsPerTex - 1)
+                        readSrcHeight = lastColumnHeight();
+                    else
+                        readSrcHeight = mTextureHeight;
+                }
                 // int targetStrip = MAX_TEXTURE_WIDTH_HEIGHT;
                 // int targetOffset = j * mPcWidth;
                 // int readSrcWidth = Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT);
@@ -667,13 +718,14 @@ public class MultiPicScrollObject {
         return false;
     }
 
+
     private boolean handleFatPicMulpic(InputStream is) throws IOException {
-        mMaxColsPerTexContain = mTextureHeight / mPcHeight;
+        mMaxSegmentsPerTexContain = mTextureHeight / mPcHeight;
 
-        int widthConsumedPerTex = mMaxColsPerTexContain * mTextureWidth;
+        int widthConsumedPerTex = mMaxSegmentsPerTexContain * mTextureWidth;
 
-        mTexCount = ceilingBlocks(mPcWidth, widthConsumedPerTex);
-
+//        mTexCount = ceilingBlocks(mPcWidth, widthConsumedPerTex);
+        mTexCount = 1;
         // Now the pic count is ready.
         genTexs();
 
@@ -692,17 +744,17 @@ public class MultiPicScrollObject {
             // Image already exist, offset to next image.
             if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
                 if (DBG)
-                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxColsPerTexContain=" + mMaxColsPerTexContain);
+                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxSegmentsPerTexContain=" + mMaxSegmentsPerTexContain);
                 // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
                 // Do not skip the last texture in a full texture size, as it could overflow the file.
-                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxColsPerTexContain * 4);
+                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxSegmentsPerTexContain * 4);
                 if (i == mTexCount - 1) {
                     if (DBG)
                         Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
                     continue;
                 }
-                ByteStreams.skipFully(is, mPcHeight * mTextureWidth * mMaxColsPerTexContain * 4);
-                continue;
+//                ByteStreams.skipFully(is, mPcHeight * mTextureWidth * mMaxSegmentsPerTexContain * 4);
+//                continue;
             }
 
             // Always square.
@@ -1030,7 +1082,7 @@ public class MultiPicScrollObject {
     protected int mLineHeight;
     protected int mVertexcount;
     protected HashCode mTextBitmapHash;
-    private int mMaxColsPerTexContain;
+    private int mMaxSegmentsPerTexContain;
 
     public void setDimension(int width, int height) {
         mWidth = width;
@@ -1062,6 +1114,28 @@ public class MultiPicScrollObject {
     public void setTextItemBitmapHash(HashCode textBitmapHash) {
         mTextBitmapHash = textBitmapHash;
         // TODO Auto-generated method stub
+
+    }
+
+    private void setRealSegmentsPerTex(int maxHeightPerTex) {
+
+//        if (mIsTallPCPic){
+
+        // tall multipic
+        if (mPcHeight > maxHeightPerTex) {
+            mRealSegmentsPerTex = mMaxSegmentsPerTexContain;
+            isTallPCPicSurplus = true;
+        } else {
+            mRealSegmentsPerTex = ceilingBlocks(mPcHeight, mTextureHeight);
+            isTallPCPicSurplus = false;
+        }
+
+//        } else {  // fat multipic
+//            if (mPcWidth > maxHeightPerTex)
+//                mRealSegmentsPerTex = mMaxSegmentsPerTexContain;
+//            else
+//                mRealSegmentsPerTex = ceilingBlocks(mPcWidth, mTextureWidth);
+//        }
 
     }
 
