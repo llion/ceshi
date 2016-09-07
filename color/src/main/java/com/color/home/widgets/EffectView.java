@@ -139,6 +139,14 @@ public class EffectView extends ImageView{
             this.effectStyle = EffectStyle.CENTER_AROUND_CROSS_STYLE;
         else if (animationType == 48) //四周向中间--十字
             this.effectStyle = EffectStyle.AROUND_CENTER_CROSS_STYLE;
+        else if (animationType == 20) //上移
+            this.effectStyle = EffectStyle.UP_TRANSLATE_STYLE;
+        else if (animationType == 21) //下移
+            this.effectStyle = EffectStyle.DOWN_TRANSLATE_STYLE;
+        else if (animationType == 22) //左移
+            this.effectStyle = EffectStyle.LEFT_TRANSLATE_STYLE;
+        else if (animationType == 23) //右移
+            this.effectStyle = EffectStyle.RIGHT_TRANSLATE_STYLE;
 
 
     }
