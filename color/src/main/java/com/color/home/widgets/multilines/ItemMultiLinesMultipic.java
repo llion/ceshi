@@ -1,6 +1,5 @@
 package com.color.home.widgets.multilines;
 
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -53,10 +52,10 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
 
     private long duration = 500L;
     private int ineffectType = 0;
-    private boolean isFirst = true;// the first time display picture, the view already has ineffect animation
-    private Region region;
+    private boolean isFirstComing = true;// the first time display picture, the view already has ineffect animation
     private boolean isTranslate = false;
     private Bitmap newBitmap = null;
+    private Bitmap oldBitmap = null;
 
 
     public ItemMultiLinesMultipic(Context context, AttributeSet attrs, int defStyle) {
@@ -75,15 +74,8 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         mListener = regionView;
         this.mItem = item;
         this.mRegionView = regionView;
-        this.region = region;
 
-        if (item.ineffect != null) {
-            try {
-                ineffectType = Integer.parseInt(item.ineffect.Type);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        ineffectType = mRegionView.getmRealAnimationType();
 
         if (ineffectType <= 23 && ineffectType >= 20)
             isTranslate = true;//上下左右平移
@@ -121,7 +113,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
 
     private void setPageText() {
         if (DBG)
-            Log.d(TAG, "setPageText. isTranslate= " + isTranslate + ", isFirst= " + isFirst);
+            Log.d(TAG, "setPageText. isTranslate= " + isTranslate + ", isFirstComing= " + isFirstComing);
         final String keyImgId = mMultipicinfo.filePath.MD5 + mPageIndex;
 
         MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
@@ -137,15 +129,12 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
                 if (DBG)
                     Log.d(TAG, "mPageIndex= " + mPageIndex);
 
-//                if (isFirst) { // the effect was already setted in RegionView
-//                    setImageBitmap(resultBm);
-//                }
-//                else
-                if (!isFirst || ineffectType > 0 && ineffectType < 49) {//set effect of page turnning
-                    if (isTranslate)
-                        newBitmap = resultBm;
+                if (isTranslate)
+                    newBitmap = resultBm;
+
+                if (!isFirstComing && (ineffectType > 1 && ineffectType < 49)) //set effect of page turnning
                     appearAnimation();
-                }
+
                 setImageBitmap(resultBm);
             }
 
@@ -185,16 +174,13 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
             if (DBG)
                 Log.d(TAG, "onPostExecute, result= " + result);
 
-            if (isFirst) { // the effect was already setted in RegionView
-                setImageBitmap(result);
-            }
-            else if (ineffectType > 0 && ineffectType < 49) {//set effect of page turnning
-                if (isTranslate)
-                    newBitmap = result;
-                appearAnimation();
-                setImageBitmap(result);
-            }
+            if (isTranslate)
+                newBitmap = result;
 
+            if (!isFirstComing && (ineffectType > 1 && ineffectType < 49)) //set effect of page turnning
+                appearAnimation();
+
+            setImageBitmap(result);
         }
     }
 
@@ -295,15 +281,15 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
 //        }
 //    }
 
-    private int getRegionHeight(Region region) {
-        return Integer.parseInt(region.rect.height);
-    }
-
-    private int getRegionWidth(Region region) {
-        if (DBG)
-            Log.i(TAG, "getRegionWidth. region=" + region);
-        return Integer.parseInt(region.rect.width);
-    }
+//    private int getRegionHeight(Region region) {
+//        return Integer.parseInt(region.rect.height);
+//    }
+//
+//    private int getRegionWidth(Region region) {
+//        if (DBG)
+//            Log.i(TAG, "getRegionWidth. region=" + region);
+//        return Integer.parseInt(region.rect.width);
+//    }
 
     @Override
     protected void onDetachedFromWindow() {
@@ -357,7 +343,14 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
     public void nextPage() {
         if (DBG)
             Log.d(TAG, "nextPage.mPageIndex= " + mPageIndex);
+
         mPageIndex++;
+
+        if (isTranslate) {
+            //old bitmap
+            oldBitmap = newBitmap;
+        }
+
         if (mPageIndex >= mPicCount) {
             mPageIndex = 0;
             // On multiline finished play once, tell region view.
@@ -367,8 +360,8 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
 //
 //            if (DBG)
 //                Log.i(TAG, "run. next page. mPageIndex=" + mPageIndex);
-        if (isFirst)
-            isFirst = false;
+        if (isFirstComing)
+            isFirstComing = false;
         setPageText();
 
 //        }
@@ -450,24 +443,27 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
             Log.d(TAG, " onDraw(Canvas canvas), effect2= " + effect2 + ", switchingPercent= " + switchingPercent);
         }
         if (DBG)
-            Log.d(TAG, "onDraw. isTranslate= " + isTranslate + ", isFirst= " + isFirst + ", thread= " + Thread.currentThread());
+            Log.d(TAG, "onDraw. isTranslate= " + isTranslate + ", isFirstComing= " + isFirstComing + ", thread= " + Thread.currentThread());
 
-        if (isFirst || !isTranslate) {
+
+        if (isTranslate && !isFirstComing)
+            drawBitmap(switchingPercent, canvas);
+
+        else {
             if (effect2)
-                effectStyle.beforeDraw(canvas, switchingPercent);//限制新图出来的形状
+                effectStyle.beforeDraw(canvas, switchingPercent);
             super.onDraw(canvas);//画图
             if (effect2)
-                effectStyle.onDraw(this, canvas);//处理图
-
-        } else if (isTranslate){//上下左右平移
-                drawBitmap(switchingPercent, canvas);
+                effectStyle.onDraw(this, canvas);
         }
 
 
     }
 
     private void drawBitmap(float switchingPercent, Canvas canvas) {
+
         try {
+
             int cWidth = canvas.getWidth();
             int cHeight = canvas.getHeight();
             Rect oldsrc = null, olddst = null, newsrc = null, newdst = null;
@@ -481,7 +477,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
                 newsrc = new Rect(0, 0, cWidth, (int) (switchingPercent * cHeight));
                 newdst = new Rect(0, (int) ((1 - switchingPercent) * cHeight), cWidth, cHeight);
 
-//                canvas.drawBitmap(OldBitmap(), 0, -switchingPercent * cHeight, null);
+//                canvas.drawBitmap(getOldBitmap(), 0, -switchingPercent * cHeight, null);
 //                canvas.drawBitmap(newBitmap(), 0, (1 - switchingPercent) * cHeight, null);
 
 
@@ -494,11 +490,11 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
                 newdst = new Rect(0, 0, cWidth, (int) (switchingPercent * cHeight));
 
             } else if (ineffectType == 22) {//左移
-                 oldsrc = new Rect((int) (switchingPercent * cWidth), 0, cWidth, cHeight);
-                 olddst = new Rect(0, 0, (int) ((1 - switchingPercent) * cWidth), cHeight);
+                oldsrc = new Rect((int) (switchingPercent * cWidth), 0, cWidth, cHeight);
+                olddst = new Rect(0, 0, (int) ((1 - switchingPercent) * cWidth), cHeight);
 
-                 newsrc = new Rect( 0, 0, (int) (switchingPercent * cWidth), cHeight);
-                 newdst = new Rect((int) ((1 - switchingPercent) * cWidth), 0, cWidth, cHeight);
+                newsrc = new Rect(0, 0, (int) (switchingPercent * cWidth), cHeight);
+                newdst = new Rect((int) ((1 - switchingPercent) * cWidth), 0, cWidth, cHeight);
 
             } else if (ineffectType == 23) {//右移
                 oldsrc = new Rect(0, 0, (int) ((1 - switchingPercent) * cWidth), cHeight);
@@ -508,35 +504,14 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
                 newdst = new Rect(0, 0, (int) (switchingPercent * cWidth), cHeight);
             }
 
-            canvas.drawBitmap(newBitmap(), newsrc, newdst, null);
-            canvas.drawBitmap(OldBitmap(), oldsrc, olddst, null);
-
+            if (newBitmap != null)
+                canvas.drawBitmap(newBitmap, newsrc, newdst, null);
+            if (oldBitmap != null)
+                canvas.drawBitmap(oldBitmap, oldsrc, olddst, null);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private Bitmap newBitmap() {
-        if (DBG)
-            Log.d(TAG, "newBitmap: " + newBitmap);
-        return newBitmap;
-    }
-
-    private Bitmap OldBitmap() {
-        int index = mPageIndex - 1;
-        if (index < 0)
-            index = mPicCount - 1;
-        String keyImgId = mMultipicinfo.filePath.MD5 + index;
-        if (DBG)
-            Log.d(TAG, " OldBitmap(). mPageIndex= " + mPageIndex + ", index= " + index + ", keyImgId= " + keyImgId);
-
-        MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
-        if (DBG)
-            Log.d(TAG, " OldBitmap(). cache= " + bitmapFromMemCache);
-        if (DBG)
-            Log.d(TAG, "oldBitmap: " + bitmapFromMemCache.getBitmap());
-        return bitmapFromMemCache.getBitmap();
     }
 
     public void appearAnimation() {
@@ -552,19 +527,5 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         }
 
     }
-
-//    public void disappearAnimation() {
-//        ValueAnimator animator = ObjectAnimator.ofFloat(null, "translationY", 0f, -getRegionHeight(region));//
-//
-//        if (DBG) {
-//            Log.d(TAG, "animator= " + animator);
-//        }
-//        if (animator != null) {
-//            animator.setTarget(this);
-//            animator.setDuration(duration);
-//            animator.start();
-//        }
-//
-//    }
 
 }
