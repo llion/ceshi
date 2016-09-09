@@ -10,16 +10,20 @@
 
 package com.color.home.widgets.multilines;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.opengl.ETC1;
+import android.opengl.ETC1Util;
+import android.opengl.GLES10;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.os.Process;
 import android.util.Log;
 
 import com.color.home.AppController;
-import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
@@ -33,10 +37,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MultiPicScrollObject {
     // private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
@@ -52,6 +59,7 @@ public class MultiPicScrollObject {
      */
     // private static final int MAX_ACTIVE_TEX = 64;
     private static final int MAX_ACTIVE_TEX = 4;
+    private static final boolean READ_DBG = false;
     protected int mPcWidth;
     /**
      * Full bitmap. e.g., 38498.
@@ -66,10 +74,15 @@ public class MultiPicScrollObject {
      * We split the whole big bitmap into how many pieces.
      */
     private int mTexCount;
-    private boolean mIsTallPCPic;
-    private boolean mIsFatPCPic;
+    private boolean mIsTallPCPic = false;
+    private boolean mIsFatPCPic = false;
     private int mRealSegmentsPerTex;
     private boolean isTallPCPicSurplus;// is pcheight surplus than heightConsumedPerTex
+
+
+//    ETC1Util.ETC1Texture etc1Texture = null;
+    Bitmap mBitmap;
+    public static final Pattern PATTERN = Pattern.compile("([a-zA-Z]+):\\s*(\\d+)");
 
     // Constructor initialize all necessary members
     public MultiPicScrollObject(Context context, ScrollPicInfo scrollpicinfo) {
@@ -82,62 +95,66 @@ public class MultiPicScrollObject {
     }
 
     void update() {
-        if (DBG)
-            Log.d(TAG, "update.");
+        synchronized (MultiPicScrollObject.class) {
+            if (DBG)
+                Log.d(TAG, "update.");
         /* [Update Text Size] */
 
-        // 3. Generate texture with the new evaluated font size
-        drawCanvasToTexture();
+            // 3. Generate texture with the new evaluated font size
+            if(!drawCanvasToTexture())
+                return;
 
-        if (mIsTallPCPic) {
-            generateTallPCMulpicQuads();
-        } else {
-            // TODO: Handle Fat PC multipic.
-            generateFatPCMulpicQuads();
-        }
+            if (mIsTallPCPic) {
+                generateTallPCMulpicQuads();
+            } else if (mIsFatPCPic) {
+                // TODO: Handle Fat PC multipic.
+                generateFatPCMulpicQuads();
+            }
 
-        initUpdateTex();
+            initUpdateTex();
 
-        if (DBG)
-            android.util.Log.i("INFO", "bmpSize[" + mPcWidth + ", " + mPcHeight + "]");
-
-        initShapes();
-
-        setupMVP();
-
-        if (mTexIds == null) {
             if (DBG)
-                Log.d(TAG, "update. [No content as mTexIds is null.");
-            return;
+                android.util.Log.i("INFO", "bmpSize[" + mPcWidth + ", " + mPcHeight + "]");
+
+            initShapes();
+
+            setupMVP();
+
+            if (mTexIds == null) {
+                if (DBG)
+                    Log.d(TAG, "update. [No content as mTexIds is null.");
+                return;
+            }
+
+            mSr = new SegRender(mHeight);
+
+            resetPos();
+            GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
+            GLES20.glEnableVertexAttribArray(maPositionHandle);
+
+            // mT += 0.1f;
+            // if (mT > 1.0f) {
+            // mT = 0.0f;
+            // }
+            //
+            // quadCB.put(1, mT);
+            // quadCB.put(7, mT);
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
+            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+
+            // Draw the triangle
+            GLES20.glDisable(GLES20.GL_CULL_FACE);
+            GLES20.glEnable(GLES20.GL_BLEND);
+            GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+            // isUpdateNeeded = false;
         }
 
-        mSr = new SegRender(mHeight);
-
-        resetPos();
-        GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-        GLES20.glEnableVertexAttribArray(maPositionHandle);
-
-        // mT += 0.1f;
-        // if (mT > 1.0f) {
-        // mT = 0.0f;
-        // }
-        //
-        // quadCB.put(1, mT);
-        // quadCB.put(7, mT);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-        GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
-
-        // Draw the triangle
-        GLES20.glDisable(GLES20.GL_CULL_FACE);
-        GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-
-        // isUpdateNeeded = false;
     }
 
 
@@ -422,7 +439,7 @@ public class MultiPicScrollObject {
                 if (RENDER_DBG)
                     Log.d(TAG, "draw tall quad.");
 
-                if (offset >= mTextureHeight * (mCurQuadIndex + 1) && mCurQuadIndex <= (mQuadSegs.length - 1)) {
+                if (offset >= mTextureHeight * (mCurQuadIndex + 1) && mCurQuadIndex < (mQuadSegs.length - 1)) {
                     if (RENDER_DBG)
                         Log.d(TAG, "next quad");
 
@@ -446,11 +463,11 @@ public class MultiPicScrollObject {
                     drawQuad(mCurQuadIndex - 1);
                 }
 
-                if (mCurQuadIndex <= mQuadSegs.length - 1) {
-                    drawQuad(mCurQuadIndex);
-                }
+                if (RENDER_DBG)
+                    Log.d(TAG, "mQuadSegs.length= " + mQuadSegs.length + ", mCurQuadIndex= " + mCurQuadIndex);
+                drawQuad(mCurQuadIndex);
 
-            } else { // fat multipic
+            } else if (mIsFatPCPic) { // fat multipic
                 if (RENDER_DBG)
                     Log.d(TAG, "draw fat quad.");
 
@@ -503,7 +520,7 @@ public class MultiPicScrollObject {
     private int mTextureHeight = MAX_TEXTURE_WIDTH_HEIGHT;
 
     /* [Draw Canvas To Texture] */
-    private void drawCanvasToTexture() {
+    private boolean drawCanvasToTexture() {
 
         StreamResolver streamResolver = null;
         try {
@@ -516,7 +533,7 @@ public class MultiPicScrollObject {
             InputStream is = streamResolver.getReadFromIs();
             if (is == null) {
                 Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
-                return;
+                return false;
             }
 
             ByteStreams.skipFully(is, 20);
@@ -535,14 +552,18 @@ public class MultiPicScrollObject {
                 Log.i(TAG, "mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight);
 
             int shortestEdgeLength = QuadGenerator.findClosestPOT(mPcWidth, mPcHeight);
-            int shortestDimFromPc = Math.min(mPcWidth, mPcHeight);
-            int maxBlocksInTheShortestDim = shortestEdgeLength / shortestDimFromPc * shortestDimFromPc;
-            int aTextCanContainsArea = maxBlocksInTheShortestDim * shortestEdgeLength;
-            if (aTextCanContainsArea < mPcWidth * mPcHeight) {
-                if (DBG)
-                    Log.d(TAG, "aTextCanContainsArea < mPcWidth * mPcHeight");
-                shortestEdgeLength = shortestEdgeLength * 2;
-            }
+            if (DBG)
+                Log.i(TAG, "shortestEdgeLength= " + shortestEdgeLength);
+
+//               int maxBlocksInTheShortestDim = shortestEdgeLength / shortestDimFromPc * shortestDimFromPc;
+//            int aTextCanContainsArea = maxBlocksInTheShortestDim * shortestEdgeLength;
+
+//            if (aTextCanContainsArea < mPcWidth * mPcHeight) {
+//                if (DBG)
+//                    Log.d(TAG, "aTextCanContainsArea < mPcWidth * mPcHeight");
+//                shortestEdgeLength = shortestEdgeLength * 2;
+//            }
+
             if (shortestEdgeLength > 4096) {
                 shortestEdgeLength = 4096;
                 Log.e(TAG, "Bad multi pics area makes the texture length greater than 4096, fall back to 4096. mPcWidt=" + mPcWidth
@@ -553,6 +574,11 @@ public class MultiPicScrollObject {
             if (DBG)
                 Log.d(TAG, " mTextureWidth= " + mTextureWidth);
 
+            //judge the MemFree is enough or not
+            if (!isMemoryEnough())
+                return false;
+
+            int shortestDimFromPc = Math.min(mPcWidth, mPcHeight);
             if (DBG)
                 Log.d(TAG, " shortestDimFromPc= " + shortestDimFromPc + ", mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight);
 
@@ -565,26 +591,26 @@ public class MultiPicScrollObject {
                 Log.d(TAG, " mIsTallPCPic= " + mIsTallPCPic + ", mIsFatPCPic= " + mIsFatPCPic);
 
             if (mIsTallPCPic) {
-                if (handleTallPicMulpic(is)) return;
-            } else {
+                handleTallPicMulpic(is);
+            } else if (mIsFatPCPic) {
                 //TODO: Handle Fat pc multipic.
-                if (handleFatPicMulpic(is)) return;
+                handleFatPicMulpic(is);
             }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             // Do nothing here.
-            return;
+            return false;
         } catch (IOException e) {
             e.printStackTrace();
-            return;
+            return false;
         } finally {
             if (streamResolver != null) {
                 streamResolver.close();
             }
         }
 
-
+        return true;
     }
 
     //tall pic quadSize
@@ -628,7 +654,7 @@ public class MultiPicScrollObject {
         }
     }
 
-    private boolean handleTallPicMulpic(InputStream is) throws IOException {
+    private void handleTallPicMulpic(InputStream is) throws IOException {
         mMaxSegmentsPerTexContain = mTextureWidth / mPcWidth;
 
         int heightConsumedPerTex = mMaxSegmentsPerTexContain * mTextureHeight;
@@ -650,25 +676,29 @@ public class MultiPicScrollObject {
 
         // byte[] converted = new byte[mWidth * mHeight * 4];
         for (int i = 0; i < mTexCount; i++) {
-            String keyImgId = mScrollpicinfo.filePath.MD5 + i;
-            // Image already exist, offset to next image.
-            if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
-                if (DBG)
-                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxSegmentsPerTexContain=" + mMaxSegmentsPerTexContain);
-                // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
-                // Do not skip the last texture in a full texture size, as it could overflow the file.
-                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxSegmentsPerTexContain * 4);
-                if (i == mTexCount - 1) {
-                    if (DBG)
-                        Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
-                    continue;
-                }
-//                ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxSegmentsPerTexContain * 4);
-//                continue;
-            }
+//            String keyImgId = mScrollpicinfo.filePath.MD5 + i;
+//            if (DBG)
+//                Log.d(TAG, "handleTallPicMulpic. keyImgId= " + keyImgId);
+//            // Image already exist, offset to next image.
+//            if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
+//                if (DBG)
+//                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxSegmentsPerTexContain=" + mMaxSegmentsPerTexContain);
+//                // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
+//                // Do not skip the last texture in a full texture size, as it could overflow the file.
+//                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxSegmentsPerTexContain * 4);
+//                if (i == mTexCount - 1) {
+//                    if (DBG)
+//                        Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
+//                    continue;
+//                }
+////                ByteStreams.skipFully(is, mPcWidth * mTextureHeight * mMaxSegmentsPerTexContain * 4);
+////                continue;
+//            }
 
             // Always square.
-            byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
+            byte[] content = new byte[mPcWidth * 4];
+
+            mBitmap = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
 
 //            int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
 //            int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxSegmentsPerTexContain;
@@ -697,29 +727,39 @@ public class MultiPicScrollObject {
 
                 // mTextWidth: 目标Texture宽度。
                 // j * mPcWidth :
-                readTallBlock(is, content, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth), readSrcHeight, mPcWidth);
+                readTallBlock(is, content, mBitmap, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth), readSrcHeight, mPcWidth);
             }
 
-            GraphUtils.convertRGBFromPC(content);
+//            GraphUtils.convertRGBFromPC(content);
 
             // Now put these nice RGBA pixels into a Bitmap object
 
-            Bitmap bm = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
+
             // bm.setPremultiplied(false);
-            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
-            AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
+//            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
+//            AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
+
+            //TODO:test texture compress (ETC)
+//            Buffer buffer = ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4).order(ByteOrder.nativeOrder());
+//            buffer.position(0);
+//            try {
+//                etc1Texture = ETC1Util.compressTexture(bbEtc, mTextureWidth, mTextureHeight, 3, 3 * mTextureWidth);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+
 
             if (PNG_DBG) {
+                String keyImgId = mScrollpicinfo.filePath.MD5 + i;
                 new File("/mnt/sdcard/mul").mkdir();
-                QuadGenerator.toPng(bm, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
+                QuadGenerator.toPng(mBitmap, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
             }
 
         }
-        return false;
     }
 
 
-    private boolean handleFatPicMulpic(InputStream is) throws IOException {
+    private void handleFatPicMulpic(InputStream is) throws IOException {
         mMaxSegmentsPerTexContain = mTextureHeight / mPcHeight;
 
         int widthConsumedPerTex = mMaxSegmentsPerTexContain * mTextureWidth;
@@ -740,25 +780,29 @@ public class MultiPicScrollObject {
         // byte[] converted = new byte[mWidth * mHeight * 4];
         for (int i = 0; i < mTexCount; i++) {
 //            String keyImgId = "" + mScrollpicinfo.filePath.filepath + mScrollpicinfo.filePath.MD5 + i;//
-            String keyImgId = mScrollpicinfo.filePath.MD5 + i;
-            // Image already exist, offset to next image.
-            if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
-                if (DBG)
-                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxSegmentsPerTexContain=" + mMaxSegmentsPerTexContain);
-                // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
-                // Do not skip the last texture in a full texture size, as it could overflow the file.
-                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxSegmentsPerTexContain * 4);
-                if (i == mTexCount - 1) {
-                    if (DBG)
-                        Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
-                    continue;
-                }
-//                ByteStreams.skipFully(is, mPcHeight * mTextureWidth * mMaxSegmentsPerTexContain * 4);
-//                continue;
-            }
+//            String keyImgId = mScrollpicinfo.filePath.MD5 + i;
+//            if (DBG)
+//                Log.d(TAG, "handleFatPicMulpic. keyImgId= " + keyImgId);
+//            // Image already exist, offset to next image.
+//            if (AppController.getInstance().getBitmapFromMemCache(keyImgId) != null) {
+//                if (DBG)
+//                    Log.d(TAG, "drawCanvasToTexture. [getBitmapFromMemCache exist for =" + keyImgId + ", mMaxSegmentsPerTexContain=" + mMaxSegmentsPerTexContain);
+//                // MAX_TEXTURE_WIDTH_HEIGHT is inaccurate, but OK for the lastest item.
+//                // Do not skip the last texture in a full texture size, as it could overflow the file.
+//                // ByteStreams.skipFully(is, mPcWidth * MAX_TEXTURE_WIDTH_HEIGHT * mMaxSegmentsPerTexContain * 4);
+//                if (i == mTexCount - 1) {
+//                    if (DBG)
+//                        Log.d(TAG, "drawCanvasToTexture. [do not skip full size in the file the last texture, as it overflows.");
+//                    continue;
+//                }
+////                ByteStreams.skipFully(is, mPcHeight * mTextureWidth * mMaxSegmentsPerTexContain * 4);
+////                continue;
+//            }
 
-            // Always square.
-            byte[] content = new byte[mTextureWidth * mTextureHeight * 4];
+
+            byte[] content = new byte[Math.min(mPcWidth, mTextureWidth) * 4];
+
+            mBitmap = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
 
             int readRows = ceilingBlocks(mPcWidth, mTextureWidth);
 
@@ -767,28 +811,28 @@ public class MultiPicScrollObject {
                 Log.d(TAG, "fat. readRows= " + readRows + ", lastReadWidth= " + lastReadWidth + ", mpcHeight= " + mPcHeight);
 
             for (int j = 0; j < mPcHeight; j++) {
-                if (DBG)
+                if (RENDER_DBG)
                     Log.d(TAG, "j= " + j);
                 //InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows, int lastReadWidth
-                readFatBlock(is, content, mPcHeight * mTextureWidth, j * mTextureWidth, mTextureWidth, readRows, lastReadWidth);
+                readFatBlock(is, content, mBitmap, mPcHeight * mTextureWidth, j, mTextureWidth, readRows, lastReadWidth);
             }
 
-            GraphUtils.convertRGBFromPC(content);
+//            GraphUtils.convertRGBFromPC(content);
 
             // Now put these nice RGBA pixels into a Bitmap object
 
-            Bitmap bm = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
-            // bm.setPremultiplied(false);
-            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
-            AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
+//            Bitmap bm = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
+//            // bm.setPremultiplied(false);
+//            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTextureWidth * mTextureHeight * 4));
+//            AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
 
             if (PNG_DBG) {
+                String keyImgId = mScrollpicinfo.filePath.MD5 + i;
                 new File("/mnt/sdcard/mul").mkdir();
-                QuadGenerator.toPng(bm, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
+                QuadGenerator.toPng(mBitmap, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
             }
 
         }
-        return false;
     }
 
     public void initUpdateTex() {
@@ -822,29 +866,38 @@ public class MultiPicScrollObject {
     }
 
     //read fat multiline pic(width > height)
-    private void readFatBlock(InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows,
+    private void readFatBlock(InputStream is, byte[] content, Bitmap bm, int targetStrip, int targetOffset, int readSrcWidth, int readRows,
                               int lastReadWidth) throws IOException {
         for (int j = 0; j < readRows; j++) {
-            if (DBG)
+            if (READ_DBG)
                 Log.d(TAG, "readFatBlock. j= " + j + ", readRows= " + readRows);
 
             if (j == readRows - 1) {
-                if (DBG)
+                if (READ_DBG)
                     Log.d(TAG, "read last row.");
-                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * (j) * 4, lastReadWidth * 1 * 4);
+//                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * (j) * 4, lastReadWidth * 1 * 4);
+                ByteStreams.readFully(is, content, 0, lastReadWidth * 1 * 4);
+
+                GraphUtils.convertRGBFromPC(content);
+                bm.setPixels(byteArray2intArray(content), 0, mTextureWidth, 0, targetOffset + j * mPcHeight, lastReadWidth, 1);
             } else {
-                if (DBG)
+                if (READ_DBG)
                     Log.d(TAG, "read previous rows.");
-                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+//                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+                ByteStreams.readFully(is, content, 0, readSrcWidth * 1 * 4);
+
+//                GraphUtils.convertRGBFromPC(content);
+                bm.setPixels(byteArray2intArray(content), 0, mTextureWidth, 0, targetOffset + j * mPcHeight, readSrcWidth, 1);
+
             }
         }
     }
 
     //read tall multiline pic(height > width)
-    private void readTallBlock(InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readSrcHeight,
+    private void readTallBlock(InputStream is, byte[] content, Bitmap bm, int targetStrip, int targetOffset, int readSrcWidth, int readSrcHeight,
                                int srcWidth) throws IOException {
         for (int j = 0; j < readSrcHeight; j++) {
-            if (DBG)
+            if (READ_DBG)
                 Log.d(TAG, "readTallBlock. j= " + j + ", readSrcHeight= " + readSrcHeight);
 
             // The picture is bigger than my width.
@@ -857,10 +910,20 @@ public class MultiPicScrollObject {
 
             } else { // srcWidth == readSrcWidth, always read srcWidtgh >= readSrcWidth.
                 // targetOffset * 4 should also *4.
-                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+//                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * j * 4, readSrcWidth * 1 * 4);
+
+                ByteStreams.readFully(is, content, 0, readSrcWidth * 1 * 4);
+//                GraphUtils.convertRGBFromPC(content);
+
+//                ByteBuffer bb = ByteBuffer.allocateDirect(4);
+//                IntBuffer ib = bb.asIntBuffer();
+//                ib.t
+
+                bm.setPixels(byteArray2intArray(content), 0, mTextureWidth, targetOffset, j, readSrcWidth, 1);
             }
         }
     }
+
 
     private boolean isLastTex(int i) {
         return i == mTexCount - 1;
@@ -875,11 +938,33 @@ public class MultiPicScrollObject {
     }
 
     private void updateImage(int picIndex) {
-        String keyImgId = mScrollpicinfo.filePath.MD5 + picIndex;
-        MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
-        if (bitmapFromMemCache != null)
-            // Assigns the OpenGL texture with the Bitmap
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmapFromMemCache.getBitmap(), 0);
+//        String keyImgId = mScrollpicinfo.filePath.MD5 + picIndex;
+//        MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
+//        if (bitmapFromMemCache != null)
+//            // Assigns the OpenGL texture with the Bitmap
+//            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmapFromMemCache.getBitmap(), 0);
+
+//        if (DBG)
+//            Log.d(TAG, "isETC1Supported= " + ETC1Util.isETC1Supported() + ", etc1Texture= " + etc1Texture);
+//        if (ETC1Util.isETC1Supported() && etc1Texture != null) {
+//            //GLES10.GL_TEXTURE_2D, 0, 0, GLES10.GL_RGB, GLES10.GL_UNSIGNED_SHORT_5_6_5, etc1Texture
+//            GLES20.glCompressedTexImage2D(GLES10.GL_TEXTURE_2D, 0, ETC1.ETC1_RGB8_OES, etc1Texture.getWidth(), etc1Texture.getHeight(),
+//                    0, etc1Texture.getData().remaining(), etc1Texture.getData());
+//        } else {
+//        if (bitmapFromMemCache != null)
+////             Assigns the OpenGL texture with the Bitmap
+//            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmapFromMemCache.getBitmap(), 0);
+        if (mBitmap != null) {
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mBitmap, 0);
+            mBitmap.recycle();
+            mBitmap = null;
+
+            System.gc();
+//                System.gc();
+        }
+
+//        }
+
     }
 
     /* [Draw Canvas To Texture] */
@@ -1031,7 +1116,7 @@ public class MultiPicScrollObject {
                     " gl_Position = uMVPMatrix * uMMatrix * vPosition; \n" +
 
                     "}  \n";
-
+    //
     private final String fragmentShaderCode =
             "precision highp float;  \n"
                     + "uniform sampler2D u_s2dTexture; \n"
@@ -1039,36 +1124,36 @@ public class MultiPicScrollObject {
                     // "uniform vec2 uTexScale; \n"
                     + "varying vec4 v_v4TexCoord; \n"
                     + "void main(){              \n"
-
-                    // + "vec2 mult=vec2((2.0*v_v4TexCoord.x + 1.0)/(2.0*2048.0), (2.0*v_v4TexCoord.y + 1.0)/(2.0*4096.0));\n"
-                    // + "vec2 mult=vec2((2.0 * v_v4TexCoord.x + 1.0)/(2.0*1024.0), (2.0 * v_v4TexCoord.y + 1.0) / (2.0 * 1024.0));\n"
-                    // + "vec2 mult=vec2((2.0 * v_v4TexCoord.x + 1.0)/(2.0*1024.0), (2.0 * v_v4TexCoord.y + 1.0) / (2.0 * 1024.0));\n"
-                    // GOOD + "vec2 mult=vec2((v_v4TexCoord.x/1024.0), (v_v4TexCoord.y /1024.0));\n"
-
-                    // + "vec2 mult=vec2((v_v4TexCoord.x)/2048.0, (v_v4TexCoord.y)/4096.0);\n"
-
-                    // + "gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy/1024.0);\n"
-                    // + "gl_FragColor = texture2D(u_s2dTexture, mult);\n"
-
-
-//                    + " vec4 mult=(2.0*v_v4TexCoord + 1.0)/(2.0*1024.0);\n"
-//                    + " gl_FragColor = texture2D(u_s2dTexture, mult.xy); \n"
-
+//
+//                    // + "vec2 mult=vec2((2.0*v_v4TexCoord.x + 1.0)/(2.0*2048.0), (2.0*v_v4TexCoord.y + 1.0)/(2.0*4096.0));\n"
+//                    // + "vec2 mult=vec2((2.0 * v_v4TexCoord.x + 1.0)/(2.0*1024.0), (2.0 * v_v4TexCoord.y + 1.0) / (2.0 * 1024.0));\n"
+//                    // + "vec2 mult=vec2((2.0 * v_v4TexCoord.x + 1.0)/(2.0*1024.0), (2.0 * v_v4TexCoord.y + 1.0) / (2.0 * 1024.0));\n"
+//                    // GOOD + "vec2 mult=vec2((v_v4TexCoord.x/1024.0), (v_v4TexCoord.y /1024.0));\n"
+//
+//                    // + "vec2 mult=vec2((v_v4TexCoord.x)/2048.0, (v_v4TexCoord.y)/4096.0);\n"
+//
+//                    // + "gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy/1024.0);\n"
+//                    // + "gl_FragColor = texture2D(u_s2dTexture, mult);\n"
+//
+//
+////                    + " vec4 mult=(2.0*v_v4TexCoord + 1.0)/(2.0*1024.0);\n"
+////                    + " gl_FragColor = texture2D(u_s2dTexture, mult.xy); \n"
+//
                     + " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy); \n"
-//                    + " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.y, 0.2, 0.2, 0.0); \n"
-
-                    // Vec4 RGBA. Transparent the extra pixel which is larger than the texture width/height.
-                    // + "if (v_v4TexCoord.x > 200.0/2048.0) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); } \n"
-
-                    // " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.y, 0.2, 0.2, 1.0); \n"
-
-                    // " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.x, 0.0, 0.0, 1.0); \n"
-                    // // " gl_FragColor = vec4(0.0, 0.2, 1.0, 1.0); \n" +
-
-                    // "vec2 mult=vec2((2.0*v_v4TexCoord.x - 1.0)/(2.0*uTexScale.x), (2.0*v_v4TexCoord.y - 1.0)/(2.0*uTexScale.y)); \n"
-                    // +
-                    // "gl_FragColor = texture2D(u_s2dTexture, mult.xy); \n"
-                    // "gl_FragColor = texture2D(u_s2dTexture, mult.xy) + vec4((2.0*v_v4TexCoord.x - 1.0)/(2.0*uTexScale.x), 0.0, 0.0, 1.0); \n"
+////                    + " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.y, 0.2, 0.2, 0.0); \n"
+//
+//                    // Vec4 RGBA. Transparent the extra pixel which is larger than the texture width/height.
+//                    // + "if (v_v4TexCoord.x > 200.0/2048.0) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); } \n"
+//
+//                    // " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.y, 0.2, 0.2, 1.0); \n"
+//
+//                    // " gl_FragColor = texture2D(u_s2dTexture, v_v4TexCoord.xy) + vec4(v_v4TexCoord.x, 0.0, 0.0, 1.0); \n"
+//                    // // " gl_FragColor = vec4(0.0, 0.2, 1.0, 1.0); \n" +
+//
+//                    // "vec2 mult=vec2((2.0*v_v4TexCoord.x - 1.0)/(2.0*uTexScale.x), (2.0*v_v4TexCoord.y - 1.0)/(2.0*uTexScale.y)); \n"
+//                    // +
+//                    // "gl_FragColor = texture2D(u_s2dTexture, mult.xy); \n"
+//                    // "gl_FragColor = texture2D(u_s2dTexture, mult.xy) + vec4((2.0*v_v4TexCoord.x - 1.0)/(2.0*uTexScale.x), 0.0, 0.0, 1.0); \n"
                     +
 
                     "}                         \n";
@@ -1138,5 +1223,138 @@ public class MultiPicScrollObject {
 //        }
 
     }
+
+
+    private int[] byteArray2intArray(byte[] content) {
+
+        int[] arys = new int[content.length / 4];
+        for (int i = 0; i < arys.length; i++) {
+            arys[i] = (content[i * 4] & 0xFF)
+                    | (content[i * 4 + 1] & 0xFF) << 8
+                    | (content[i * 4 + 2] & 0xFF) << 16
+                    | (content[i * 4 + 3] & 0xFF) << 24;
+        }
+        return arys;
+    }
+
+    //memory free is enough or not
+    private boolean isMemoryEnough() {
+
+        long memNeed = (mTextureWidth * mTextureWidth * 4) / 1048576L + 10;//MB
+        if (DBG)
+            Log.d(TAG, "isMemoryEnough. memNeed= " + memNeed);
+
+        long memFree = getFreeMem();
+
+        if (isMemFreeEnough(memFree, memNeed))
+            return true;
+
+        if (DBG)
+            Log.d(TAG, "memFree < needMem. memFree= " + memFree + ", needMem= " + memNeed);
+        System.gc();
+        try {
+            Thread.sleep(3000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        memFree = getFreeMem();
+        if (isMemFreeEnough(memFree, memNeed))
+            return true;
+
+        //memfree <= memneed
+        if (DBG)
+            Log.d(TAG, "memfree is not enough, abort.");
+        return false;
+
+    }
+
+    //compare memFree & memNeed
+    private boolean isMemFreeEnough(long memFree, long memNeed) {
+        if (memFree == 0L) {
+            Log.e(TAG, "Bad mem info.");
+            return false;
+        }
+
+        if (memFree > memNeed) {
+            return true;
+        }
+
+        //memfree <= memneed
+        return false;
+    }
+
+    private long getFreeMem() {
+        long memFree = 0L;
+        RandomAccessFile reader = null;
+        try {
+            reader = new RandomAccessFile("/proc/meminfo", "r");
+            if (reader == null) {
+                Log.e(TAG, "Cannot open meminfo. Abort.");
+
+                return memFree;
+            }
+            String line;
+            while ((line = reader.readLine()) != null) {
+                Matcher m = PATTERN.matcher(line);
+                if (m.find()) {
+
+                    if (DBG)
+                        Log.d(TAG, " name= " + m.group(1) + ", size= " + Long.parseLong(m.group(2)));
+
+                    if ("MemFree".equalsIgnoreCase(m.group(1))) {
+                        memFree = Long.parseLong(m.group(2)) / 1024L;//MB
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null)
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
+
+        return memFree;
+    }
+
+    private void testAndroidMemoryInfo(long memNeed) {
+        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(info);
+
+        // availMem = MemFree + Cached in /proc/meminfo.
+        long availMem = info.availMem >> 10;
+
+        long freeMem = info.availMem / 1048576L;
+
+        Log.i(TAG, "系统剩余内存:" + (info.availMem >> 10) + "k" + ", availMem/1048576L= " + info.availMem / 1048576L + "M");
+        Log.i(TAG, "系统是否处于低内存运行：" + info.lowMemory + ", total mem= " + info.totalMem + ",  Process.getFreeMemory()= " + Process.getFreeMemory());
+        Log.i(TAG, "当系统剩余内存低于" + (info.threshold >> 10) + "k" + "时就看成低内存运行");
+        Log.d(TAG, "needMem= " + memNeed + ",freeMem(MemFree + Cached)= " + freeMem);
+    }
+
+    //ETC
+//    public void load() {
+//        ETC1Util.loadTexture(GLES10.GL_TEXTURE_2D, 0, 0,
+//                GLES10.GL_RGB, GLES10.GL_UNSIGNED_SHORT_5_6_5, etc1Texture);
+//    }
+
+//    public void convertContent(byte[] content) {
+//        byte[] content2 = new byte[mPcWidth * 3];
+//        int offset = 1, n = 0;
+//        for (int i = 0; i < content2.length; i++) {
+//            content2[i] = content[i + offset];
+//            n++;
+//            if (n == 3) {
+//                n = 0;
+//                offset++;
+//            }
+//        }
+//    }
 
 }

@@ -121,12 +121,23 @@ public class QuadGenerator {
                 Log.d(TAG, "getClosePOT. [i=" + i + ", dim=" + dim + ", dim*dim=" + dim * dim + ", width*height="
                         + width * height);
             if (dim * dim >= width * height) {
-                if ((width / dim + ((width % dim) == 0 ? 0 : 1)) * height > dim) {
-                    // Find next, as the height*(wrap back times) exceed the dim height.
-                    if (DBG)
-                        Log.w(TAG, "getClosePOT. [wraps exceed the height, dim not enough.");
-                    continue;
+                if (width > height) {
+                    if ((width / dim + ((width % dim) == 0 ? 0 : 1)) * height > dim) {
+                        // Find next, as the height*(wrap back times) exceed the dim height.
+                        if (DBG)
+                            Log.w(TAG, "getClosePOT. [wraps exceed the height, dim not enough.");
+                        continue;
+                    }
+                } else {//height <= width
+                    if ((height / dim + (height % dim == 0 ? 0 : 1)) * width > dim) {
+                        // Find next, as the height*(wrap back times) exceed the dim height.
+                        if (DBG)
+                            Log.w(TAG, "getClosePOT. [wraps exceed the width, dim not enough.");
+                        continue;
+                    }
                 }
+                if (DBG)
+                    Log.d(TAG, "width= " + width + ", height= " + height + ", dim= " + dim);
                 return dim;
             }
         }
