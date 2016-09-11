@@ -14,18 +14,13 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.opengl.ETC1;
-import android.opengl.ETC1Util;
-import android.opengl.GLES10;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Process;
 import android.util.Log;
 
-import com.color.home.AppController;
 import com.color.home.ProgramParser.ScrollPicInfo;
-import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
@@ -60,6 +55,8 @@ public class MultiPicScrollObject {
     // private static final int MAX_ACTIVE_TEX = 64;
     private static final int MAX_ACTIVE_TEX = 4;
     private static final boolean READ_DBG = false;
+    private static final boolean LAST_COLUM_DBG = true;
+
     protected int mPcWidth;
     /**
      * Full bitmap. e.g., 38498.
@@ -873,12 +870,12 @@ public class MultiPicScrollObject {
                 Log.d(TAG, "readFatBlock. j= " + j + ", readRows= " + readRows);
 
             if (j == readRows - 1) {
-                if (READ_DBG)
+                if (LAST_COLUM_DBG)
                     Log.d(TAG, "read last row.");
 //                ByteStreams.readFully(is, content, targetOffset * 4 + targetStrip * (j) * 4, lastReadWidth * 1 * 4);
                 ByteStreams.readFully(is, content, 0, lastReadWidth * 1 * 4);
 
-                GraphUtils.convertRGBFromPC(content);
+//                GraphUtils.convertRGBFromPC(content);
                 bm.setPixels(byteArray2intArray(content), 0, mTextureWidth, 0, targetOffset + j * mPcHeight, lastReadWidth, 1);
             } else {
                 if (READ_DBG)
