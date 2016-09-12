@@ -55,7 +55,7 @@ public class ProgramParser {
         public String charSet;
 
         public DigitalClock(String type, String flags, String name, String isStrikeOut, String weight, String ftSize, String ftColor, String bItalic,
-                 String bUnderline, String bBold, String charSet) {
+                            String bUnderline, String bBold, String charSet) {
             this.type = type;
             this.flags = flags;
             this.name = name;
@@ -145,8 +145,8 @@ public class ProgramParser {
         public String lfFaceName;
 
         public LogFont(String lfHeight, String lfWidth, String lfEscapement, String lfOrientation, String lfWeight, String lfItalic,
-                String lfUnderline, String lfStrikeOut, String lfCharSet, String lfOutPrecision, String lfQuality, String lfPitchAndFamily,
-                String lfFaceName) {
+                       String lfUnderline, String lfStrikeOut, String lfCharSet, String lfOutPrecision, String lfQuality, String lfPitchAndFamily,
+                       String lfFaceName) {
             super();
             this.lfHeight = lfHeight;
             this.lfWidth = lfWidth;
@@ -178,8 +178,8 @@ public class ProgramParser {
                     .append(lfPitchAndFamily).append(lfFaceName);
             if (DBG)
                 Log.d(TAG, "lfHeight = " + lfHeight + ", lfWidth = " + lfWidth + ", lfEscapement = " + lfEscapement + ", lfOrientation = " + lfOrientation
-                 + ", lfWeight = " + lfWeight + ", lfItalic = " + lfItalic + ", lfUnderline = " + lfUnderline + ", lfStrikeOut = " + lfStrikeOut
-                 + ", lfCharSet = " + lfCharSet + ", lfOutPrecision = " + lfOutPrecision + ", lfQuality = " + lfQuality + ", lfPitchAndFamily = " + lfPitchAndFamily + ", lfFaceName = " + lfFaceName);
+                        + ", lfWeight = " + lfWeight + ", lfItalic = " + lfItalic + ", lfUnderline = " + lfUnderline + ", lfStrikeOut = " + lfStrikeOut
+                        + ", lfCharSet = " + lfCharSet + ", lfOutPrecision = " + lfOutPrecision + ", lfQuality = " + lfQuality + ", lfPitchAndFamily = " + lfPitchAndFamily + ", lfFaceName = " + lfFaceName);
             return sb.toString();
         }
 
@@ -756,7 +756,7 @@ public class ProgramParser {
         public List<Region> regions;
 
         public Page(String id, String name, String visible, String appointduration, String looptype, Integer bgColor, Information info,
-                BgFile bgfile, List<BgAudio> bgaudios, List<Region> regions) {
+                    BgFile bgfile, List<BgAudio> bgaudios, List<Region> regions) {
             this.id = id;
             this.name = name;
             this.visible = visible;
@@ -843,7 +843,7 @@ public class ProgramParser {
         public String lastmodifytime;
 
         public Information(String width, String height, String duration, String description, String creator, String createtime,
-                String lastmodifytime) {
+                           String lastmodifytime) {
             this.width = width;
             this.height = height;
             this.duration = duration;
@@ -1354,7 +1354,7 @@ public class ProgramParser {
             } else if (tagName.equalsIgnoreCase("LogFont")) {
                 logfont = readLogFont(parser);
             } else if (tagName.equalsIgnoreCase("Text")) {
-                text = readText(parser);
+                text = readItemText(parser);
             } else if (tagName.equalsIgnoreCase("TextColor")) {
                 textColor = readText(parser);
             } else if (tagName.equalsIgnoreCase("IsShowDayCount")) {
@@ -2021,6 +2021,15 @@ public class ProgramParser {
         String name = readText(parser);
         parser.require(XmlPullParser.END_TAG, ns, "Name");
         return name;
+    }
+
+    private String readItemText(XmlPullParser parser) throws IOException, XmlPullParserException {
+        String result = "";
+        if (parser.next() == XmlPullParser.TEXT) {
+            result = parser.getText();
+            parser.nextTag();
+        }
+        return result;
     }
 
     private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
