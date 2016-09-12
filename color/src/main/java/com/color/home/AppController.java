@@ -76,7 +76,7 @@ public class AppController extends Application {
     }
     // Use 1/3th of the available memory for this memory cache.
     // static final int sCacheSize = 500;
-    static final int sCacheSize = sMaxMemory / 3;
+    static final int sCacheSize = sMaxMemory / 5;
 
     LruCache<String, MyBitmap> sMemoryCache = new LruCache<String, MyBitmap>(sCacheSize) {
         @Override
