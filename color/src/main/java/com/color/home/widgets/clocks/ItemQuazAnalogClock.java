@@ -45,6 +45,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     private GradientDrawable mQuadTick;
     private GradientDrawable mDialOuter;
     private GradientDrawable mDial;
+    private int backgroundColor;
 
     private GradientDrawable mFiveTick;//时标
     private GradientDrawable mMinuteTick;//分标
@@ -131,6 +132,17 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         mHourScale = item.hhourScale;
         mMinuteScale = item.minuteScale;
         mClockFont = mAnologClock.clockFont;
+
+        //background color
+        if (!TextUtils.isEmpty(mItem.backcolor) && !"0xFF000000".equals(mItem.backcolor)) {
+            if ("0xFF010000".equals(mItem.backcolor)) {
+                backgroundColor = GraphUtils.parseColor("0xFF000000");
+            } else {
+                backgroundColor = GraphUtils.parseColor(item.backcolor);
+            }
+        } else {
+            backgroundColor = GraphUtils.parseColor("0x00000000");
+        }
 
         mDial = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
 //        mDialOuter = (GradientDrawable) r.getDrawable(R.drawable.round_frame);
@@ -517,7 +529,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         // }
         //
 
-        canvas.drawColor(GraphUtils.parseColor(mItem.backcolor));
+        canvas.drawColor(backgroundColor);
 
         //固定文字
         if (!TextUtils.isEmpty(mItem.text)){
