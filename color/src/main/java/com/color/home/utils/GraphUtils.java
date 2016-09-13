@@ -5,12 +5,19 @@ import android.graphics.Color;
 public class GraphUtils {
 
     public static int parseColor(String color) {
-        return Color.parseColor(color.replace("0x", "#"));
+        int resultColor = 0x0;
+        try {
+            resultColor = Color.parseColor(color.replace("0x", "#"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return resultColor;
     }
-    
+
     /**
      * Invert the color, but keep the alpha.
-     * 
+     *
      * @param color
      * @return
      */
