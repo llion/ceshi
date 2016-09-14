@@ -31,7 +31,7 @@ android {
     productFlavors {
         resolution_independent {
 
-            versionCode 1084
+            versionCode 1085
             versionName "1.26"
 
         }
