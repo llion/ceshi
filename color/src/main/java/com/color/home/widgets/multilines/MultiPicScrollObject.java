@@ -457,7 +457,15 @@ public class MultiPicScrollObject {
                         && offset <= mWindowHeight + mTextureHeight * mCurQuadIndex) { // Always draw the prev quad.
                     if (RENDER_DBG)
                         Log.d(TAG, "draw the prev quad");
-                    drawQuad(mCurQuadIndex - 1);
+
+                    if (offset <= mWindowHeight){
+                        for (int i = (int)offset / mTextureHeight; i >=1 ; i --)
+                            drawQuad(mCurQuadIndex - i);
+
+                    } else {
+                        for (int i = mCurQuadIndex - ((int)offset - mWindowHeight) / mTextureHeight; i >=1 ; i --)
+                            drawQuad(mCurQuadIndex - i);
+                    }
                 }
 
                 if (RENDER_DBG)
