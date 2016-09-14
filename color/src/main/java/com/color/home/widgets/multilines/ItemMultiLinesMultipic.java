@@ -442,7 +442,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         if (DBG_DRAW) {
             Log.d(TAG, " onDraw(Canvas canvas), effect2= " + effect2 + ", switchingPercent= " + switchingPercent);
         }
-        if (DBG)
+        if (DBG_DRAW)
             Log.d(TAG, "onDraw. isTranslate= " + isTranslate + ", isFirstComing= " + isFirstComing + ", thread= " + Thread.currentThread());
 
 
@@ -467,15 +467,15 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
             int cWidth = canvas.getWidth();
             int cHeight = canvas.getHeight();
             Rect oldsrc = null, olddst = null, newsrc = null, newdst = null;
-            if (DBG)
+            if (DBG_DRAW)
                 Log.d(TAG, "cWidth= " + cWidth + ", cHeight= " + cHeight);
 
             if (ineffectType == 20) {//上移
                 oldsrc = new Rect(0, (int) (switchingPercent * cHeight), cWidth, cHeight);
-                olddst = new Rect(0, 0, cWidth, (int) ((1 - switchingPercent) * cHeight));
+                olddst = new Rect(0, 0, cWidth, cHeight - (int)(switchingPercent * cHeight));
 
                 newsrc = new Rect(0, 0, cWidth, (int) (switchingPercent * cHeight));
-                newdst = new Rect(0, (int) ((1 - switchingPercent) * cHeight), cWidth, cHeight);
+                newdst = new Rect(0, cHeight - (int)(switchingPercent * cHeight), cWidth, cHeight);
 
 //                canvas.drawBitmap(getOldBitmap(), 0, -switchingPercent * cHeight, null);
 //                canvas.drawBitmap(newBitmap(), 0, (1 - switchingPercent) * cHeight, null);
@@ -483,26 +483,33 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
 
             } else if (ineffectType == 21) {//下移
 
-                oldsrc = new Rect(0, 0, cWidth, (int) ((1 - switchingPercent) * cHeight));
+                oldsrc = new Rect(0, 0, cWidth, cHeight - (int)(switchingPercent * cHeight));
                 olddst = new Rect(0, (int) (switchingPercent * cHeight), cWidth, cHeight);
 
-                newsrc = new Rect(0, (int) ((1 - switchingPercent) * cHeight), cWidth, cHeight);
+                newsrc = new Rect(0, cHeight - (int)(switchingPercent * cHeight), cWidth, cHeight);
                 newdst = new Rect(0, 0, cWidth, (int) (switchingPercent * cHeight));
 
             } else if (ineffectType == 22) {//左移
                 oldsrc = new Rect((int) (switchingPercent * cWidth), 0, cWidth, cHeight);
-                olddst = new Rect(0, 0, (int) ((1 - switchingPercent) * cWidth), cHeight);
+                olddst = new Rect(0, 0, cWidth - (int)(switchingPercent * cWidth), cHeight);
 
                 newsrc = new Rect(0, 0, (int) (switchingPercent * cWidth), cHeight);
-                newdst = new Rect((int) ((1 - switchingPercent) * cWidth), 0, cWidth, cHeight);
+                newdst = new Rect(cWidth - (int)(switchingPercent * cWidth), 0, cWidth, cHeight);
 
             } else if (ineffectType == 23) {//右移
-                oldsrc = new Rect(0, 0, (int) ((1 - switchingPercent) * cWidth), cHeight);
+                oldsrc = new Rect(0, 0, cWidth - (int)(switchingPercent * cWidth), cHeight);
                 olddst = new Rect((int) (switchingPercent * cWidth), 0, cWidth, cHeight);
 
-                newsrc = new Rect((int) ((1 - switchingPercent) * cWidth), 0, cWidth, cHeight);
+                newsrc = new Rect(cWidth - (int)(switchingPercent * cWidth), 0, cWidth, cHeight);
                 newdst = new Rect(0, 0, (int) (switchingPercent * cWidth), cHeight);
             }
+
+
+            if (DBG_DRAW)
+                Log.d(TAG, "newsrc." + newsrc + ", switchingPercent= " + switchingPercent);
+
+            if (DBG_DRAW)
+                Log.d(TAG, "newdst. " + newdst);
 
             if (newBitmap != null)
                 canvas.drawBitmap(newBitmap, newsrc, newdst, null);
