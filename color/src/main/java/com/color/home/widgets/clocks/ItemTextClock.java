@@ -37,6 +37,8 @@ import com.color.home.ProgramParser.DigitalClock;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.GraphUtils;
+import com.color.home.widgets.FinishObserver;
+import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
 import java.util.Calendar;
@@ -89,7 +91,7 @@ import java.util.TimeZone;
  * @attr ref android.R.styleable#TextClock_format24Hour
  * @attr ref android.R.styleable#TextClock_timeZone
  */
-public class ItemTextClock extends TextView {
+public class ItemTextClock extends TextView implements Runnable, FinishObserver {
     /**
      * The default formatting pattern in 12-hour mode. This pattern is used if {@link #setFormat12Hour(CharSequence)} is called with a null
      * pattern or if no pattern was specified when creating an instance of this class.
@@ -127,6 +129,9 @@ public class ItemTextClock extends TextView {
 
     private Calendar mTime;
     private String mTimeZone;
+
+    private OnPlayFinishedListener mListener;
+    private long mDuration = 0;
 
     // private final ContentObserver mFormatChangeObserver = new ContentObserver(new Handler()) {
     // @Override
@@ -700,6 +705,12 @@ public class ItemTextClock extends TextView {
             } else {
                 onTimeChanged();
             }
+
+            if (mDuration >= 0){
+                removeCallbacks(this);
+                postDelayed(this, mDuration);
+            }
+
         }
     }
 
@@ -710,7 +721,7 @@ public class ItemTextClock extends TextView {
         if (mAttached) {
             unregisterReceiver();
             // unregisterObserver();
-
+            removeCallbacks(this);
             getHandler().removeCallbacks(mTicker);
 
             mAttached = false;
@@ -752,6 +763,14 @@ public class ItemTextClock extends TextView {
     }
 
     public void setItem(RegionView regionView, Item item) {
+        mListener = regionView;
+
+        try {
+            mDuration = Long.parseLong(item.duration);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
         DigitalClock digitalClock = item.digitalClock;
         mFlag = Integer.parseInt(digitalClock.flags);
         if(DBG)
@@ -795,5 +814,22 @@ public class ItemTextClock extends TextView {
         setGravity(Gravity.CENTER);
         chooseFormat();
         onTimeChanged();
+    }
+
+
+    @Override
+    public void run() {
+        if (DBG)
+            Log.i(TAG, "run. Finish item play due to play length time up");
+        notifyPlayFinished();
+    }
+
+    @Override
+    public void notifyPlayFinished() {
+        if (mListener != null) {
+            if (DBG)
+                Log.i(TAG, "tellListener. Tell listener =" + mListener);
+            mListener.onPlayFinished(this);
+        }
     }
 }

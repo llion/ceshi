@@ -22,10 +22,12 @@ import android.view.View;
 import com.color.home.R;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
+import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.ItemData;
+import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
-public class ItemSmoothAnalogClock extends View implements ItemData {
+public class ItemSmoothAnalogClock extends View implements ItemData, Runnable, FinishObserver {
     private final static String TAG = "SmoothAnalogClock";
     private static final boolean DBG = false;
     private Time mCalendar;
@@ -47,6 +49,9 @@ public class ItemSmoothAnalogClock extends View implements ItemData {
     private Region mRegion;
     private RegionView mRegionView;
     private Item mItem;
+    private OnPlayFinishedListener mListener;
+
+    private long mDuration = 0;
     
     @Override
     public void setRegion(Region region) {
@@ -56,9 +61,16 @@ public class ItemSmoothAnalogClock extends View implements ItemData {
 
     @Override
     public void setItem(RegionView regionView, Item item) {
+        mListener = regionView;
         mRegionView = regionView;
         mItem = item;
         
+        try {
+            mDuration = Long.parseLong(mItem.duration);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
     }
     
     public ItemSmoothAnalogClock(Context context) {
@@ -103,6 +115,11 @@ public class ItemSmoothAnalogClock extends View implements ItemData {
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
 
             getContext().registerReceiver(mIntentReceiver, filter, null, mHandler);
+
+            if (mDuration >= 0){
+                removeCallbacks(this);
+                postDelayed(this, mDuration);
+            }
         }
 
         // NOTE: It's safe to do these after registering the receiver since the receiver always runs
@@ -121,6 +138,7 @@ public class ItemSmoothAnalogClock extends View implements ItemData {
         super.onDetachedFromWindow();
         if (mAttached) {
             counter.cancel();
+            removeCallbacks(this);
             getContext().unregisterReceiver(mIntentReceiver);
             mAttached = false;
         }
@@ -384,4 +402,21 @@ public class ItemSmoothAnalogClock extends View implements ItemData {
             invalidate();
         }
     };
+
+    @Override
+    public void notifyPlayFinished() {
+        if (mListener != null) {
+            if (DBG)
+                Log.i(TAG, "tellListener. Tell listener =" + mListener);
+            mListener.onPlayFinished(this);
+        }
+    }
+
+    @Override
+    public void run() {
+        if (DBG)
+            Log.i(TAG, "run. Finish item play due to play length time up");
+        notifyPlayFinished();
+    }
+
 }

@@ -32,10 +32,12 @@ import com.color.home.R;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.GraphUtils;
+import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.ItemData;
+import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
-public class ItemQuazAnalogClock extends View implements ItemData {
+public class ItemQuazAnalogClock extends View implements ItemData, Runnable, FinishObserver {
     private final static String TAG = "QuazAnalogClock";
     private static final boolean DBG = false;
     private Calendar mCalendar;
@@ -46,6 +48,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     private GradientDrawable mDialOuter;
     private GradientDrawable mDial;
     private int backgroundColor;
+    private long mDuration = 0;
 
     private GradientDrawable mFiveTick;//时标
     private GradientDrawable mMinuteTick;//分标
@@ -66,8 +69,8 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     private String mWeek;
     private boolean mChanged;
     private Region mRegion;
-    private RegionView mRegionView;
     private Item mItem;
+    private OnPlayFinishedListener mListener;
     private ProgramParser.AnologClock mAnologClock;
     private ProgramParser.HhourScale mHourScale;
     private ProgramParser.MinuteScale mMinuteScale;
@@ -110,7 +113,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
 
     @Override
     public void setItem(RegionView regionView, Item item) {
-        mRegionView = regionView;
+        mListener = regionView;
         mItem = item;
 //        mScaleType = Integer.parseInt(mItem.s)
     }
@@ -142,6 +145,13 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             }
         } else {
             backgroundColor = GraphUtils.parseColor("0x00000000");
+        }
+
+        //play duration
+        try {
+            mDuration = Long.parseLong(item.duration);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
         }
 
         mDial = (GradientDrawable) r.getDrawable(R.drawable.round_shape);
@@ -355,7 +365,14 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
 
             getContext().registerReceiver(mIntentReceiver, filter, null, mHandler);
+
+            if (mDuration >= 0){
+                removeCallbacks(this);
+                postDelayed(this, mDuration);
+            }
         }
+
+
 
         // NOTE: It's safe to do these after registering the receiver since the receiver always runs
         // in the main thread, therefore the receiver can't run before this method returns.
@@ -372,6 +389,7 @@ public class ItemQuazAnalogClock extends View implements ItemData {
         super.onDetachedFromWindow();
         if (mAttached) {
             counter.cancel();
+            removeCallbacks(this);
             getContext().unregisterReceiver(mIntentReceiver);
             mAttached = false;
         }
@@ -738,6 +756,8 @@ public class ItemQuazAnalogClock extends View implements ItemData {
     }
 
     MyCount counter = new MyCount(Integer.MAX_VALUE, 1000);
+
+
     public class MyCount extends CountDownTimer {
         public MyCount(long millisInFuture, long countDownInterval) {
             super(millisInFuture, countDownInterval);
@@ -805,5 +825,21 @@ public class ItemQuazAnalogClock extends View implements ItemData {
             invalidate();
         }
     };
+
+    @Override
+    public void notifyPlayFinished() {
+        if (mListener != null) {
+            if (DBG)
+                Log.i(TAG, "tellListener. Tell listener =" + mListener);
+            mListener.onPlayFinished(this);
+        }
+    }
+
+    @Override
+    public void run() {
+        if (DBG)
+            Log.i(TAG, "run. Finish item play due to play length time up");
+        notifyPlayFinished();
+    }
 
 }
