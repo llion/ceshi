@@ -8,16 +8,15 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
-import android.graphics.drawable.shapes.Shape;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 
@@ -52,7 +51,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private Region mRegion;
     private PageView mPageView;
 
-    private ShapeDrawable mDrawable;
+    private Drawable mDrawable;
     private ItemsAdapter mItemsAdapter;
 
     //
@@ -73,21 +72,48 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     private boolean mIsAttached;
 
-    private static class BorderShapeDrawable extends ShapeDrawable {
+    private static class BorderDrawable extends Drawable {
         private Paint mStrokePaint = new Paint();
+        private RectF rectf;
 
-        public BorderShapeDrawable(int width, int color) {
-            super(new RectShape());
+        public BorderDrawable(int width, int height, int borderWidth, int color) {
+
+            if (DBG)
+                Log.d(TAG, "borderWidth= " + borderWidth);
+
             mStrokePaint.setStyle(Paint.Style.STROKE);
-            mStrokePaint.setStrokeWidth(width);
+            mStrokePaint.setStrokeWidth(borderWidth);
             mStrokePaint.setColor(color);
+
+            rectf = new RectF(borderWidth / 2.0f, borderWidth / 2.0f, width - borderWidth / 2.0f, height - borderWidth / 2.0f);
+
         }
 
         @Override
-        protected void onDraw(Shape s, Canvas c, Paint p) {
-            // s.draw(c, p);
-            s.draw(c, mStrokePaint);
+        public void draw(Canvas canvas) {
+
+            if (DBG)
+                Log.d(TAG, "rectf= " + rectf
+                        + ", canvas= [" + canvas.getWidth() + ", " + canvas.getHeight());
+
+            canvas.drawRect(rectf, mStrokePaint);
         }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter cf) {
+
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+
     }
 
     public RegionView(Context context, AttributeSet attrs) {
@@ -123,8 +149,30 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (DBG)
             Log.i(TAG, "setRegion. pageView, region, transitioner=" + transitioner);
 
-        if (region.rect != null && !"0".equals(region.rect.borderwidth))
-            mDrawable = new BorderShapeDrawable(Integer.parseInt(region.rect.borderwidth), GraphUtils.parseColor(region.rect.bordercolor));
+        if (region.rect != null) {
+
+            int borderWidth = 0;
+            try {
+                borderWidth = Integer.parseInt(region.rect.borderwidth);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (borderWidth > 0) {
+
+                RegionView.this.setPadding(borderWidth, borderWidth, borderWidth, borderWidth);
+
+                int rectWidth = 0, rectHeight = 0;
+                try {
+                    rectWidth = Integer.parseInt(region.rect.width);
+                    rectHeight = Integer.parseInt(region.rect.height);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+                mDrawable = new BorderDrawable(rectWidth, rectHeight, borderWidth, GraphUtils.parseColor(region.rect.bordercolor));
+
+            }
+        }
 
         this.mPageView = pageView;
         this.mRegion = region;
@@ -559,7 +607,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 if (DBG)
                     Log.d(TAG, "leftMargin= " + left + ", topMargin= " + top);
 
-                if (left == 0 && top == 0){
+                if (left == 0 && top == 0) {
                     addView(view);
                 } else {
                     LayoutParams params = new LayoutParams(getRegionWidth() - left, getRegionHeight() - top);
