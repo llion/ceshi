@@ -91,15 +91,17 @@ public class SLPCTextObject {
     protected int mLineHeight;
     protected int mVertexcount;
     protected HashCode mTextBitmapHash;
-    
+
     protected int mPcWidth;
     private int mPcHeight;
-    
+
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
+
     private int getEvenPcHeight() {
         return mEvenPcHeight;
     }
+
     private int getEvenPcWidth() {
         return mEvenPcWidth;
     }
@@ -140,7 +142,7 @@ public class SLPCTextObject {
         // Only one mem cache bitmap currently.
         MyBitmap texFromMemCache = texFromMemCache();
         if (DBG)
-            Log.d(TAG,"texFromMemCache = " + texFromMemCache);
+            Log.d(TAG, "texFromMemCache = " + texFromMemCache);
         if (texFromMemCache == null)
             prepareTexture();
         else {
@@ -191,7 +193,7 @@ public class SLPCTextObject {
 
     private void setupMVP() {
         if (DBG)
-            Log.d(TAG, "setupMVP. [mWidth=" + mEvenedWidth 
+            Log.d(TAG, "setupMVP. [mWidth=" + mEvenedWidth
                     + ", mHeight=" + mEvenedHeight);
         final float halfWidth = mEvenedWidth / 2.0f;
         final float halfHeight = mEvenedHeight / 2.0f;
@@ -205,9 +207,9 @@ public class SLPCTextObject {
 
         Matrix.setIdentityM(mVMatrix, 0);
         // Move the view (content/coordination origin) up.
-        if(DBG)
+        if (DBG)
             Log.d(TAG, "getEvenPcHeight() =  " + getEvenPcHeight() + ", mPcHeight = " + mPcHeight);
-        Matrix.translateM(mVMatrix, 0, mEvenedWidth / 2.0f, getEvenPcHeight() / 2.0f , 0);
+        Matrix.translateM(mVMatrix, 0, mEvenedWidth / 2.0f, getEvenPcHeight() / 2.0f, 0);
         Matrix.multiplyMM(mMVPMatrix, 0, mMVPMatrix, 0, mVMatrix, 0);
 
         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
@@ -277,7 +279,7 @@ public class SLPCTextObject {
         StreamResolver streamResolver = null;
         final String absFilePath = ItemsAdapter.getAbsFilePathByFileSource(mScrollpicinfo.filePath);
         if (DBG)
-            Log.d(TAG,"absFilePath = " + absFilePath);
+            Log.d(TAG, "absFilePath = " + absFilePath);
         try {
             streamResolver = new StreamResolver(absFilePath).resolve();
             InputStream readFromIs = streamResolver.getReadFromIs();
@@ -289,13 +291,13 @@ public class SLPCTextObject {
             if (DBG) Log.d(TAG, "skip fully.");
             ByteStreams.skipFully(readFromIs, 20);
             ByteStreams.readFully(readFromIs, head, 0, 8);
-            
+
             // we skipped 20 read 8 = 28. Here is the content.
             ByteStreams.skipFully(readFromIs, 1024 - 28);
 
             ByteBuffer bb = ByteBuffer.wrap(head);
             bb.order(ByteOrder.LITTLE_ENDIAN); // if you want little-endian
-            
+
             if (DBG)
                 Log.i(TAG, "drawCanvasToTexture. [position=" + bb.position());
             setPcWidth(bb.getInt());
@@ -324,9 +326,10 @@ public class SLPCTextObject {
                         }
                     }
                 }
-            } else {
+            } else { // mPcWidth < getPcHeight()
                 if (DBG)
                     Log.d(TAG, "checkSinglePic. [mPcWidth < mPcHeight, only one line in my texture.");
+                 readHeight = Math.min(getPcHeight(), getTexDim());
                 for (int i = 0; i < readHeight; i++) {
                     ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4, mPcWidth * 1 * 4);
                 }
@@ -413,6 +416,7 @@ public class SLPCTextObject {
 
     private float pixelTemp = 0.0f;
     public boolean mIsGreaterThanAPixelPerFrame = false;
+
     public void render() {
 //        if(DBG)
 //            Log.d(TAG, "singleline render");
@@ -440,13 +444,13 @@ public class SLPCTextObject {
             Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         else {
             pixelTemp += mPixelPerFrame;
-            if(pixelTemp <= -1.0f) {
+            if (pixelTemp <= -1.0f) {
                 Matrix.translateM(mMMatrix, 0, -1.0f, 0.f, 0.f);
                 pixelTemp += 1;
             }
         }
 
-        if(DBG_MATRIX)
+        if (DBG_MATRIX)
             Log.d(TAG, "mMMatrix [12]  = " + mMMatrix[12]);
 
         if (mMMatrix[12] < -mEvenedWidth - mPcWidth) {
@@ -552,7 +556,7 @@ public class SLPCTextObject {
                     + mVertexcount
                     + ", indicesbuffer=" + indicesbuffer.capacity());
 
-        final int[] buffers = { 0, 0, 0 };
+        final int[] buffers = {0, 0, 0};
         GLES20.glGenBuffers(3, buffers, 0);
         final int vertexBufferId = buffers[0];
         final int textureBufferId = buffers[1];
@@ -568,6 +572,10 @@ public class SLPCTextObject {
         final int widthRemaining = mPcWidth % getTexDim();
         mQuadsCount = mPcWidth / getTexDim() + (widthRemaining == 0 ? 0 : 1);
         final int lastQuadWidth = (widthRemaining == 0 ? getTexDim() : widthRemaining);
+
+        if (DBG)
+            Log.d(TAG, "genTallQuadSegs. widthRemaining= " + widthRemaining
+                    + ", mQuadsCount= " + mQuadsCount + ", lastQuadWidth= " + lastQuadWidth);
 
         mQuadSegs = new QuadSegment[mQuadsCount];
         int top = 0;
@@ -597,8 +605,7 @@ public class SLPCTextObject {
             GLES20.glBindBuffer(target, 0);
     }
 
-    private int loadShader(int type, String shaderCode)
-    {
+    private int loadShader(int type, String shaderCode) {
         // Create a vertex shader type (GLES20.GL_VERTEX_SHADER)
         // or a fragment shader type (GLES20.GL_FRAGMENT_SHADER)
         int shader = GLES20.glCreateShader(type);
@@ -665,7 +672,7 @@ public class SLPCTextObject {
         if (DBG)
             Log.d(TAG, "setDimension. [width=" + width
                     + ", height=" + height);
-        
+
         mEvenedWidth = MovingTextUtils.evenIt(width);
         mEvenedHeight = MovingTextUtils.evenIt(height);
 //        mWidth = width;
@@ -684,10 +691,10 @@ public class SLPCTextObject {
     public void setPixelPerFrame(float speedByFrame) {
         // moving left.
 //        mPixelPerFrame = -speedByFrame;
-        if(speedByFrame >= 1.0f) {
+        if (speedByFrame >= 1.0f) {
             mPixelPerFrame = Math.round(-speedByFrame);
             mIsGreaterThanAPixelPerFrame = true;
-        }else {
+        } else {
             mPixelPerFrame = -speedByFrame;
             mIsGreaterThanAPixelPerFrame = false;
         }

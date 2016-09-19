@@ -65,17 +65,17 @@ public class TextObject extends SLPCTextObject {
         }
 
         String text = mText;
-        
+
         setupPaint();
 
         Rect boundsAllText = new Rect();
         mPaint.getTextBounds(text, 0, text.length(), boundsAllText);
         int topAllText = boundsAllText.top;
-        if(DBG)
+        if (DBG)
             Log.d(TAG, "bounds top: " + topAllText + " TextSize: " + mTextSize);
         mLineHeight = (int) mTextSize + 3;
         if (mLineHeight % 2 == 1) {
-            mLineHeight ++;
+            mLineHeight++;
         }
         if (DBG)
             Log.d(TAG, " mTextSize = " + mTextSize + ", mLineHeight = " + mLineHeight);
@@ -126,28 +126,56 @@ public class TextObject extends SLPCTextObject {
 
             QuadGenerator.toPng(savedBitmap, bitmapCacheFile);
         }
-        
+
+        if (DBG) {
+            new File("/mnt/sdcard/mul").mkdir();
+            QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" + mTextBitmapHash.toString() + "1.png"));
+        }
+
+        if (DBG)
+            Log.d(TAG, "savedBitmap.getWidth()=" + savedBitmap.getWidth()
+                    + ", savedBitmap.getHeight()=" + savedBitmap.getHeight());
+
 //        final Bitmap textureBm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
 //        int[] pixels = ByteBuffer.wrap(textureBm.mBuffer).asIntBuffer().array();
-        
+
 //        ByteBuffer bb = ByteBuffer.wrap(new byte[]{ 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3 });
 //        IntBuffer ib = bb.asIntBuffer();
 
         int[] intArray = new int[getTexDim() * getTexDim()];
-        
+
         if (DBG)
             Log.d(TAG, "prepareTexture. [mPcWidth=" + mPcWidth + ", getTexDim=" + getTexDim());
         // + 1 because, / removes the tail.
         // There could be an empty move, if the '%' is 0. So exclude the empty with the 'readSize' check.
-        for (int i = 0; i < mPcWidth / getTexDim() + 1; i++) {
-            int readWidth = Math.min(mPcWidth - i * getTexDim(), getTexDim());
-            int readHeight = getPcHeight();
 
-            if (readWidth != 0) {
-                savedBitmap.getPixels(intArray, getPcHeight() * getTexDim() * i, getTexDim(), i * getTexDim(), 0, readWidth, readHeight);
+        if (mPcWidth >= getPcHeight()) {
+            for (int i = 0; i < mPcWidth / getTexDim() + 1; i++) {
+                int readWidth = Math.min(mPcWidth - i * getTexDim(), getTexDim());
+                int readHeight = getPcHeight();
+
+                if (readWidth != 0) {
+                    savedBitmap.getPixels(intArray, getPcHeight() * getTexDim() * i, getTexDim(), i * getTexDim(), 0, readWidth, readHeight);
+                }
             }
+        } else { //mPcWidth < mPcHeight
+            if (DBG)
+                Log.d(TAG, "tall. mPcWidth : mPcHeight = " + mPcWidth + " : " + getPcHeight() + ", texDim= " + getTexDim());
+
+            int readWidth = mPcWidth;
+            int readHeight = Math.min(getPcHeight(), getTexDim());
+            if (DBG)
+                Log.d(TAG, "tall."
+                        + ", getTexDim()= " + getTexDim()
+                        + ", readWidth= " + readWidth
+                        + ", readHeight= " + readHeight);
+
+            if (readHeight > 0) {
+                savedBitmap.getPixels(intArray, 0, getTexDim(), 0, 0, readWidth, readHeight);
+            }
+
         }
-        
+
         Bitmap textureBm = Bitmap.createBitmap(intArray, getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
 
         if (DBG)
@@ -155,7 +183,7 @@ public class TextObject extends SLPCTextObject {
         if (textureBm != null) {
             AppController.getInstance().addBitmapToMemoryCache(getKeyImgId(0), new MyBitmap(textureBm, mPcWidth, getPcHeight()));
         }
-        
+
         if (DBG) {
             new File("/mnt/sdcard/mul").mkdir();
             QuadGenerator.toPng(textureBm, new File("/mnt/sdcard/mul/" + getKeyImgId(0)));
@@ -163,42 +191,42 @@ public class TextObject extends SLPCTextObject {
 
     }
 
-    private void ensureTargetDirRoom()  {
+    private void ensureTargetDirRoom() {
         File dataDir = new File("/data");
         long freeSize = dataDir.getUsableSpace() / 1024 / 1024;
-        if(DBG) {
+        if (DBG) {
             Log.d(TAG, "data dir size By java.io.File : " + freeSize + "M");
         }
 
-        if(freeSize != 0 && freeSize < 50){
+        if (freeSize != 0 && freeSize < 50) {
             clearDir(mContext.getCacheDir());
         }
     }
 
-    public static void clearDir(File dir){
-        if(dir.exists()){
-            for(File f : dir.listFiles()){
+    public static void clearDir(File dir) {
+        if (dir.exists()) {
+            for (File f : dir.listFiles()) {
 //                if(f.isDirectory())
 //                    clearDir(f);
 //                else {
-                    boolean delFlag = f.delete();
-                    if(DBG)
-                        Log.d(TAG, f.getName() + " del- " + delFlag);
-                    if(!delFlag){
-                        try {
-                            FileInputStream fi = new FileInputStream(f);
-                            fi.close();
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        f.delete();
+                boolean delFlag = f.delete();
+                if (DBG)
+                    Log.d(TAG, f.getName() + " del- " + delFlag);
+                if (!delFlag) {
+                    try {
+                        FileInputStream fi = new FileInputStream(f);
+                        fi.close();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
+                    f.delete();
+                }
 //                }
             }
         }
-        if(DBG) {
+        if (DBG) {
             File dataDir = new File("/data");
             float freeSize = dataDir.getUsableSpace() / 1024 / 1024;
             Log.d(TAG, "data dir available size after clearing : " + freeSize + "M");
@@ -245,7 +273,7 @@ public class TextObject extends SLPCTextObject {
 
         /**
          * Draw is invoked before initShape.
-         * 
+         *
          * @param bitmapCanvas
          * @param paint
          * @param topAllText
@@ -253,13 +281,13 @@ public class TextObject extends SLPCTextObject {
         public void draw(Canvas bitmapCanvas, Paint paint, int topAllText) {
 //            paint.setLinearText(true);
 
-            float baseline = (mEvenedHeight + mBounds.height() - 1.0f) / 2.0f - mBounds.bottom ;
+            float baseline = (mEvenedHeight + mBounds.height() - 1.0f) / 2.0f - mBounds.bottom;
 
             if (DBG)
                 Log.d(TAG, "draw. [paint antialias=" + paint.isAntiAlias()
                         + ", isLinear=" + paint.isLinearText() + ", topAllText = " + topAllText
                         + ",  bitmapCanvas.getHeight() = " + bitmapCanvas.getHeight() + ", mEvenedHeight =" + mEvenedHeight
-                        + ", mBounds.height() = " +  mBounds.height() +  ", mBounds.bottom = " + mBounds.bottom + ", baseline = " + baseline);
+                        + ", mBounds.height() = " + mBounds.height() + ", mBounds.bottom = " + mBounds.bottom + ", baseline = " + baseline);
 
             // Must align baseline.
             bitmapCanvas.save();

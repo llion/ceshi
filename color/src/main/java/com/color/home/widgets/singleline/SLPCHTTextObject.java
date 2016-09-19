@@ -352,6 +352,7 @@ public class SLPCHTTextObject {
                 } else {
                     if (DBG)
                         Log.d(TAG, "checkSinglePic. [mPcWidth < mPcHeight, only one line in my texture.");
+                    readHeight = Math.min(mPcHeight, mTexWidth);
                     for (int i = 0; i < readHeight; i++) {
                         ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4, mPcWidth * 1 * 4);
                     }
