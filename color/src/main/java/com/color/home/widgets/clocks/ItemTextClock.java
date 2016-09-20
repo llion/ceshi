@@ -42,6 +42,7 @@ import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -129,9 +130,18 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
 
     private Calendar mTime;
     private String mTimeZone;
+    private String mTzId;
+    private int mFlag;
 
     private OnPlayFinishedListener mListener;
+    private Item mItem;
     private long mDuration = 0;
+
+    //夏令时地区ZoneDescripID及对应的AvailableID
+    int[] mZoneDescripIds = new int[]{3, 4, 5, 6, 7, 10, 11, 13, 14, 17, 19, 20, 21, 22, 24, 25, 28, 29, 32, 34, 37, 38, 39, 40,
+            42, 43, 44, 45, 46, 49, 51, 52, 54, 57, 59, 60, 63, 72, 75, 77, 82, 85, 88, 90, 91, 93, 94, 96, 97, 100};
+    int[] availableIds = new int[]{0, 0, 0, 0, 9, 14, 0, 10, 0, 29, 8, 41, 3, 0, 26, 21, 34, 0, 1, 39, 19, 21, 24, 40,
+            14, 24, 13, 2, 14, 34, 18, 12, 20, 0, 0, 6, 4, 8, 6, 8, 1, 0, 5, 7, 2, 3, 8, 9, 4, 1};
 
     // private final ContentObserver mFormatChangeObserver = new ContentObserver(new Handler()) {
     // @Override
@@ -150,9 +160,16 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mTimeZone == null && Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())) {
-                final String timeZone = intent.getStringExtra("time-zone");
-                createTime(timeZone);
+//            if (mTimeZone == null && Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())) {
+//                final String timeZone = intent.getStringExtra("time-zone");
+//                createTime(timeZone);
+//            }
+            if (intent.getAction().equals(Intent.ACTION_TIMEZONE_CHANGED)) {
+
+               createTime();
+                if (DBG)
+                    Log.d(TAG, "mTime.getTimeZone().getID() = " + mTime.getTimeZone().getID());
+
             }
             onTimeChanged();
         }
@@ -169,7 +186,6 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
         }
     };
 
-    private int mFlag;
 
     /**
      * Creates a new clock using the default patterns for the current locale.
@@ -236,7 +252,7 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
         // }
         // }
 
-        createTime(mTimeZone);
+//        createTime(mTimeZone);
         // Wait until onAttachedToWindow() to handle the ticker
         chooseFormat(false);
     }
@@ -247,6 +263,11 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
         } else {
             mTime = Calendar.getInstance();
         }
+    }
+
+    private void createTime(){
+        mTime = new GregorianCalendar();
+        mTime.setTimeZone(TimeZone.getTimeZone(mTzId));
     }
 
     /**
@@ -396,7 +417,7 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
     public void setTimeZone(String timeZone) {
         mTimeZone = timeZone;
 
-        createTime(timeZone);
+//        createTime(timeZone);
         onTimeChanged();
     }
 
@@ -698,7 +719,8 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
             registerReceiver();
             // registerObserver();
 
-            createTime(mTimeZone);
+//            createTime(mTimeZone);
+            createTime();
 
             if (mHasSeconds) {
                 mTicker.run();
@@ -754,7 +776,11 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
 
     private void onTimeChanged() {
         mTime.setTimeInMillis(System.currentTimeMillis());
-        setText(DateFormat.format(mFormat, mTime));
+
+        if (TextUtils.isEmpty(mItem.text))
+            setText(DateFormat.format(mFormat, mTime));
+        else
+            setText(mItem.text + " " + DateFormat.format(mFormat, mTime));
 
     }
 
@@ -764,6 +790,7 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
 
     public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
+        mItem = item;
 
         try {
             mDuration = Long.parseLong(item.duration);
@@ -812,8 +839,75 @@ public class ItemTextClock extends TextView implements Runnable, FinishObserver 
         setTypeface(Typeface.create(fontFamily, typeface));
 
         setGravity(Gravity.CENTER);
+        setTimeZoneId();
         chooseFormat();
-        onTimeChanged();
+//        onTimeChanged();
+    }
+
+    private void setTimeZoneId() {
+
+        //时区
+        String tzStr = mItem.timezone;
+        if (!TextUtils.isEmpty(tzStr)){
+            int idx = tzStr.indexOf(".");
+            if (idx != -1){
+                if (idx < (tzStr.length() - 2)){
+                    int offset;
+                    float timezoneFloat = 0.f;
+                    tzStr = tzStr.substring(0, idx + 3);
+                    try {
+                        timezoneFloat = Float.parseFloat(tzStr);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    offset = (int) (timezoneFloat * 60 * 60 * 1000);
+                    if (DBG)
+                        Log.d(TAG,"timezoneFloat = " + timezoneFloat + ", offset = " + offset);
+
+                    String[] ids = TimeZone.getAvailableIDs(offset);
+                    if (ids.length != 0) {
+                        String descripId = mItem.zoneDescripId;
+                        if (!TextUtils.isEmpty(descripId) && descripId.length()>12) {
+                            descripId = descripId.substring(12, descripId.length());
+                            if (DBG)
+                                Log.d(TAG, "descripId = " + descripId);
+
+                            int j;
+                            int desId = 0;
+                            try {
+                                desId = Integer.parseInt(descripId);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            for (j = 0; j < mZoneDescripIds.length; j++){
+                                if (desId == mZoneDescripIds[j])
+                                    break;
+                            }
+
+                            if (j == mZoneDescripIds.length){//不使用夏令时
+                                for (int k = 0; k < ids.length; k++){
+                                    if (!TimeZone.getTimeZone(ids[k]).useDaylightTime()){
+                                        mTzId = ids[k];
+                                        break;
+                                    }
+                                }
+                            }else{//使用夏令时
+                                if (ids.length > availableIds[j])
+                                    mTzId = String.valueOf(ids[availableIds[j]]);
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        if (TextUtils.isEmpty(mTzId)) {
+            mTzId = TimeZone.getDefault().getID();
+        }
+
+        if (DBG)
+            Log.d(TAG, "mTzId = " + mTzId + ", tzStr = " + tzStr);
+
     }
 
 
