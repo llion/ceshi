@@ -47,6 +47,7 @@ public class MultiPicScrollObject {
     private static final boolean PNG_DBG = false;
     private static final boolean RENDER_DBG = false;
     private static final boolean MATRIX_DBG = false;
+    private static final boolean LAST_COLUM_DBG = false;
     // private static final String MNT_SDCARD_PNGS = "/mnt/sdcard/pngs";
     private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
     /**
@@ -55,7 +56,6 @@ public class MultiPicScrollObject {
     // private static final int MAX_ACTIVE_TEX = 64;
     private static final int MAX_ACTIVE_TEX = 4;
     private static final boolean READ_DBG = false;
-    private static final boolean LAST_COLUM_DBG = true;
 
     protected int mPcWidth;
     /**

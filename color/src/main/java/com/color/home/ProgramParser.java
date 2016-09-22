@@ -1354,7 +1354,7 @@ public class ProgramParser {
                 endDateTime = readText(parser);
             } else if (tagName.equalsIgnoreCase("ShowFormat")) {
                 showFormat = readText(parser);
-            }  else if (tagName.equalsIgnoreCase("SourceType")) {
+            } else if (tagName.equalsIgnoreCase("SourceType")) {
                 sourceType = readText(parser);
             } else if (tagName.equalsIgnoreCase("LogFont")) {
                 logfont = readLogFont(parser);
@@ -1386,9 +1386,10 @@ public class ProgramParser {
                 if (DBG)
                     Log.d(TAG, "type= " + type + ", sourceType= " + sourceType);
 
-                // only need temporary file when the item is multiline and content from input
-                if ( !("5".equals(type) && "2".equals(sourceType)) )
-                    filesource = readFileSource(parser);
+                // needn't read filesource when the item is multiline and content from input
+                if ("5".equals(type) && "2".equals(sourceType))
+                    skip(parser);
+                else filesource = readFileSource(parser);
 
             } else if (tagName.equalsIgnoreCase("ReserveAS")) {
                 reserveAS = readText(parser);
@@ -1886,8 +1887,12 @@ public class ProgramParser {
 
             if (tagName.equalsIgnoreCase("IsRelative")) {
                 isrelative = readText(parser);
+                if (DBG)
+                    Log.d(TAG, "isrelative= " + isrelative);
             } else if (tagName.equalsIgnoreCase("FilePath")) {
                 filepath = readText(parser);
+                if (DBG)
+                    Log.d(TAG, "filepath= " + filepath);
             } else if (tagName.equalsIgnoreCase("MD5")) {
                 MD5 = readText(parser);
             } else {
