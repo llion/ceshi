@@ -24,12 +24,19 @@ public enum EffectStyle {
                 return;
             }
             //float h = canvas.getHeight() / 10.f;
-            float h = EffectView.getShadesCellSize(canvas.getHeight());
-            int dh;
+            int h = EffectView.getShadesCellSize(canvas.getHeight());
+            int dh, count, remain;
             dh = (int) (h * (1 - thiz.switchingPercent));
-            for (int i = 0; i < 10; i++) {
-                canvas.drawRect(0, i * h, canvas.getWidth(), i * h + dh, CLEARING_PAINT);//原图显示部分变小
+            count = canvas.getHeight() / h;
+            remain = canvas.getHeight() % h;
+
+            for (int i = 0; i < count; i++) {
+                if (i == (count - 1) && remain > 0) {
+                    canvas.drawRect(0, i * h, canvas.getWidth(), i * h + dh + remain * (1 - thiz.switchingPercent), CLEARING_PAINT);
+                } else
+                    canvas.drawRect(0, i * h, canvas.getWidth(), i * h + dh, CLEARING_PAINT);//原图显示部分变小
             }
+
         }
 
         @Override
@@ -46,11 +53,17 @@ public enum EffectStyle {
                 return;
             }
             //float w = canvas.getWidth() / 10.f;
-            float w = EffectView.getShadesCellSize(canvas.getWidth());
-            int dw;
+            int w = EffectView.getShadesCellSize(canvas.getWidth());
+            int dw, count, remain;
             dw = (int) (w * (1 - thiz.switchingPercent));
-            for (int i = 0; i < 10; i++) {
-                canvas.drawRect((i + 1) * w - dw, 0, (i + 1) * w, canvas.getHeight(), CLEARING_PAINT);
+            count = canvas.getWidth() / w;
+            remain = canvas.getWidth() % w;
+
+            for (int i = 0; i < count; i++) {
+                if (i == (count - 1) && remain > 0) {
+                    canvas.drawRect(canvas.getWidth() - (dw + remain * (1 - thiz.switchingPercent)), 0, canvas.getWidth(), canvas.getHeight(), CLEARING_PAINT);
+                } else
+                    canvas.drawRect((i + 1) * w - dw, 0, (i + 1) * w, canvas.getHeight(), CLEARING_PAINT);
             }
         }
 
@@ -795,7 +808,8 @@ public enum EffectStyle {
                 canvas.clipRect(rect);
             }
         }
-    },LEFT_TRANSLATE_STYLE {//左移
+    }, LEFT_TRANSLATE_STYLE {//左移
+
         @Override
         protected void switchingPercentChanged(EffectView thiz) {
             if (thiz.switchingPercent >= 1.0f) {
@@ -812,10 +826,11 @@ public enum EffectStyle {
             int w = canvas.getWidth();
             int dw;
             dw = (int) (w * thiz.switchingPercent);
-           Rect rect = new Rect(0, 0, w - dw, h);
+            Rect rect = new Rect(0, 0, w - dw, h);
             canvas.drawRect(rect, CLEARING_PAINT);
         }
-    },RIGHT_TRANSLATE_STYLE {//右移
+    }, RIGHT_TRANSLATE_STYLE {//右移
+
         @Override
         protected void switchingPercentChanged(EffectView thiz) {
             if (thiz.switchingPercent >= 1.0f) {
@@ -835,7 +850,8 @@ public enum EffectStyle {
             Rect rect = new Rect(dw, 0, w, h);
             canvas.drawRect(rect, CLEARING_PAINT);
         }
-    },UP_TRANSLATE_STYLE {//上移
+    }, UP_TRANSLATE_STYLE {//上移
+
         @Override
         protected void switchingPercentChanged(EffectView thiz) {
             if (thiz.switchingPercent >= 1.0f) {
@@ -855,7 +871,8 @@ public enum EffectStyle {
             Rect rect = new Rect(0, 0, w, h - dh);
             canvas.drawRect(rect, CLEARING_PAINT);
         }
-    },DOWN_TRANSLATE_STYLE {//下移
+    }, DOWN_TRANSLATE_STYLE {//下移
+
         @Override
         protected void switchingPercentChanged(EffectView thiz) {
             if (thiz.switchingPercent >= 1.0f) {
