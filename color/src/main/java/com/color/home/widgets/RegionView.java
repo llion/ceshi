@@ -147,7 +147,8 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         transitioner.disableTransitionType(LayoutTransition.DISAPPEARING);
 
         if (DBG)
-            Log.i(TAG, "setRegion. pageView, region, transitioner=" + transitioner);
+            Log.i(TAG, "setRegion. pageView, region, transitioner=" + transitioner + ", this= " + this
+                    + ", parent= " + this.getParent());
 
         if (region.rect != null) {
 
@@ -203,7 +204,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         mIsAttached = false;
 
         if (DBG)
-            Log.d(TAG, "onDetachedFromWindow. [");
+            Log.d(TAG, "onDetachedFromWindow. [ this= " + this + ", getChildAt(0)= " + getChildAt(0) + ", parent= " + this.getParent());
 //        removeCallbacks(this);
     }
 
@@ -346,12 +347,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     public void onPlayFinished(final View view) {
         if (DBG)
             Log.i(TAG, "OnPlayFinished. view = " + view + ", getDisplayedChild()=" + getDisplayedChild()
-                    + ", getAdapter().getCount()=" + getAdapter().getCount());
+                    + ", getAdapter().getCount()=" + getAdapter().getCount() + ", this= " + this + ", parent= " + this.getParent());
 
         post(new Runnable() {
 
             @Override
             public void run() {
+                if (DBG)
+                    Log.d(TAG, "view= " + view + ", this= " + this );
                 if (DBG)
                     Log.i(TAG, "run , " + "view instanceof ItemVideoView=" + (view instanceof ItemVideoView) + ", Thread=" + Thread.currentThread() + ", this=" + this);
 
@@ -762,13 +765,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     @Override
     public void notifyOnAllPlayed() {
         if (DBG)
-            Log.i(TAG, "notifyOnAllPlayed. this=" + this);
+            Log.i(TAG, "notifyOnAllPlayed. this=" + this + ", mPageViewisShown= " + mPageView.isShown() + ", this.isShown= " + this.isShown());
 
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw new IllegalAccessError("Not from UI thread, cannot remove view.");
         }
 
-        mPageView.onAllPlayed(this);
+        if (this.isShown())
+            mPageView.onAllPlayed(this);
     }
 
     /**

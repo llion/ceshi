@@ -299,11 +299,14 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 
     @Override
     public void notifyPlayFinished() {
+
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
+
     }
     private Runnable mRefresh = new Runnable() {
         @Override

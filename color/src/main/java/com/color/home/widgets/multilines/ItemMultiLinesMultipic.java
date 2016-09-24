@@ -333,10 +333,12 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
     }
 
     private void tellListener() {
+
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 

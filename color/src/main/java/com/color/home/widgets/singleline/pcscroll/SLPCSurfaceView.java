@@ -126,7 +126,7 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
 
         boolean removeCallbacks = removeCallbacks(this);
         if (DBG)
-            Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
+            Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks + ", this= " + this);
 
         // if (mAnim != null) {
         // if (DBG)
@@ -141,12 +141,14 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
      */
     @Override
     public void notifyPlayFinished() {
-        mRenderer.finish();
+//        mRenderer.finish();
 
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
+            mRenderer.finish();
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 

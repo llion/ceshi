@@ -161,12 +161,15 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
 
     @Override
     public void notifyPlayFinished() {
-        mRenderer.finish();
+//        mRenderer.finish();
+
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
 
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
+            mRenderer.finish();
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 

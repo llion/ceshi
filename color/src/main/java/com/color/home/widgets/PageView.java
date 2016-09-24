@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -136,7 +137,7 @@ public class PageView extends AbsoluteLayout {
 
     private void setupRegions() {
         if (DBG)
-            Log.i(TAG, "setupRegions. ");
+            Log.i(TAG, "setupRegions. this= " + this);
 
         List<Region> regions = mPage.regions;
         if (regions == null || regions.size() == 0) {
@@ -236,6 +237,9 @@ public class PageView extends AbsoluteLayout {
     protected void onDetachedFromWindow() {
         // TODO Auto-generated method stub
         super.onDetachedFromWindow();
+        if (DBG)
+            Log.i(TAG, "onDetachedFromWindow. this= " + this);
+
         if (mBitmap != null) {
             mBitmap.recycle();
             mBitmap = null;
@@ -265,6 +269,12 @@ public class PageView extends AbsoluteLayout {
         if (DBG)
             Log.i(TAG, "onAllPlayed. regionView=" + regionView + ", isAllFinished=" + isAllFinished);
         if (isAllFinished) {
+            if (DBG) {
+                Set<RegionView> set = mPlayedMap.keySet();
+                for (RegionView regionView1 : set) {
+                    Log.i(TAG, "regionview= " + regionView1);
+                }
+            }
             // Flipping or not depends on the program view.
             mProgramView.onAllFinished(this);
         }

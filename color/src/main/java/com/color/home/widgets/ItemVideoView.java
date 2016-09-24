@@ -419,13 +419,15 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
     }
 
     private void tellListener() {
+
         if (DBG)
-            Log.i(TAG, "tellListener. , mListener=" + mListener);
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
+
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
+        
     }
 
     public void setRegion(Region mRegion) {

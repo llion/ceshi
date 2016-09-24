@@ -171,6 +171,9 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
 
         if (DBG)
             Log.d(TAG, "setDisplayedChild. [x" + getAdapter().getCount());
+        if (DBG)
+            for (int i = 0; i < getAdapter().getCount() ; i ++)
+                Log.d(TAG, "child= " + getChildAt(i));
 
         // loop.
         if (displayedChild >= getAdapter().getCount()) {
@@ -212,6 +215,11 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
      */
     @Override
     public void onAllFinished(PageView pageView) {
+        if (DBG)
+            Log.d(TAG, "onAllFinished. pageView = " + pageView + ", chileAt(0)= " + getChildAt(0));
+//        if (pageView != getChildAt(0))
+//            return;
+
         int flipInterval = getFlipInterval();
 
         if (DBG)

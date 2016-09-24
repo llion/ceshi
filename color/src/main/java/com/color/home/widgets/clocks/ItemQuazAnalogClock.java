@@ -366,6 +366,8 @@ public class ItemQuazAnalogClock extends View implements ItemData, Runnable, Fin
 
             getContext().registerReceiver(mIntentReceiver, filter, null, mHandler);
 
+            if (DBG)
+                Log.i(TAG, "onAttachedToWindow. , mDuration=" + mDuration);
             if (mDuration >= 0){
                 removeCallbacks(this);
                 postDelayed(this, mDuration);
