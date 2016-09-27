@@ -424,7 +424,7 @@ public class ItemsAdapter extends BaseAdapter {
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
              */
-                web.setItem(mRegionView, item);
+                web.setItem(mContext, mRegionView, item);
                 return web;
             } else {
                 return unknowView(item);

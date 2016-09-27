@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.http.SslError;
 import android.os.Message;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -29,6 +31,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
     private boolean mIsDetached = true;
     private Item mItem;
     private OnPlayFinishedListener mListener;
+    private Context mContext;
     private int mDuration = 5000;
 
     public ItemWebView(Context context, AttributeSet attrs, int defStyle, Map<String, Object> javaScriptInterfaces, boolean privateBrowsing) {
@@ -51,7 +54,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         // TODO Auto-generated constructor stub
     }
 
-    public void setItem(RegionView regionView, Item item) {
+    public void setItem(Context context, RegionView regionView, Item item) {
+        mContext = context;
         mListener = regionView;
         this.mItem = item;
 
@@ -64,15 +68,40 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         }
 
 
-        if(DBG)
+        if (DBG)
             Log.d(TAG, "WebView item duration : " + mDuration);
 
-        //url has no protocol
-        if(!item.url.contains("http://") && !item.url.contains("https://"))
-            item.url = "http://" + item.url;
-        loadUrl(item.url);
+        String url = item.url;
         if (DBG)
-            Log.i(TAG, "setItem. url=" + item.url);
+            Log.i(TAG, "setItem. url=" + url);
+
+        if (!TextUtils.isEmpty(url)) {
+
+            //replace "$(account)" to username
+            if (url.contains("$(account)")) {
+                String usernameString = Settings.Global.getString(context.getContentResolver(), "user.name");
+                if (DBG)
+                    Log.i(TAG, "setItem. usernameString=" + usernameString);
+                if (!TextUtils.isEmpty(usernameString))
+                    url = url.replace("$(account)", usernameString);
+            }
+
+            //url has no protocol
+            if (!url.contains("http://") && !url.contains("https://"))
+                url = "http://" + url;
+
+            if (DBG)
+                Log.i(TAG, "setItem. load. url=" + url);
+            loadUrl(url);
+        }
+
+
+//        //url has no protocol
+//        if(!item.url.contains("http://") && !item.url.contains("https://"))
+//            item.url = "http://" + item.url;
+//        loadUrl(item.url);
+//        if (DBG)
+//            Log.i(TAG, "setItem. url=" + item.url);
 
 
         WebSettings webSettings = this.getSettings();
@@ -91,7 +120,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 //                    Log.d(TAG, "Progress=" + newProgress + " ,view=" + view);
 //            }
 //        });
-        
+
     }
 
     private class MyWebViewClient extends WebViewClient {
@@ -109,10 +138,10 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             // return true;
             if (DBG)
                 Log.i(TAG, "shouldOverrideUrlLoading. url=" + url);
-            
+
 //            view.loadUrl(url);
 //            return true;
-            
+
             return false;
         }
 
@@ -163,15 +192,12 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             // TODO Auto-generated method stub
             if (DBG)
                 Log.i(TAG, "onReceivedError:--- errorCode:" + errorCode
-                + ", failingUrl=" + failingUrl
-                + ", errorCode" + errorCode + ", description= " + description
-                );
+                        + ", failingUrl=" + failingUrl + ", errorCode" + errorCode + ", description= " + description);
 
-            if (errorCode == -2 && ! mIsDetached){
+            if (errorCode == -2 && !mIsDetached) {
                 if (DBG)
-                    Log.d(TAG, "Error code is -2, schedule another refresh retry after 5 secs." +
-                            " for url=" + failingUrl
-                    + ", view=" +view);
+                    Log.d(TAG, "Error code is -2, schedule another refresh retry after 5 secs."
+                            + " for url=" + failingUrl + ", view=" + view);
 
                 removeCallbacks(mRefresh);
                 postDelayed(mRefresh, 30000L);
@@ -244,8 +270,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
                 Log.i(TAG, "onReceivedLoginRequest. view, realm, account, args");
             super.onReceivedLoginRequest(view, realm, account, args);
         }
-        
-        
+
+
     }
 
 
@@ -270,8 +296,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             mIsDetached = false;
         }
 
-        if (DBG){
-            Log.i(TAG,"-----------onAttachedToWindow");
+        if (DBG) {
+            Log.i(TAG, "-----------onAttachedToWindow");
         }
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -308,11 +334,12 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         }
 
     }
+
     private Runnable mRefresh = new Runnable() {
         @Override
         public void run() {
-            if(DBG){
-                Log.d(TAG,"mRefresh:---itemWebView.reload()");
+            if (DBG) {
+                Log.d(TAG, "mRefresh:---itemWebView.reload()");
             }
             if (!mIsDetached) {
                 reload();
