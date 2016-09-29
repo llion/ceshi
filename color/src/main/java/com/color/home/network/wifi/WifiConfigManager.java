@@ -103,13 +103,17 @@ public final class WifiConfigManager extends AsyncTask<WifiParsedResult,Object,O
    * @param config the new network configuration
    */
   private static void updateNetwork(WifiManager wifiManager, WifiConfiguration config) {
-    Integer foundNetworkID = findNetworkInExistingConfig(wifiManager, config.SSID);
-    if (foundNetworkID != null) {
-      Log.i(TAG, "Removing old configuration for network " + config.SSID);
-      wifiManager.removeNetwork(foundNetworkID);
-      wifiManager.saveConfiguration();
-    }
+//    Integer foundNetworkID = findNetworkInExistingConfig(wifiManager, config.SSID);
+//    if (foundNetworkID != null) {
+//      Log.i(TAG, "Removing old configuration for network " + config.SSID);
+//      wifiManager.removeNetwork(foundNetworkID);
+//      wifiManager.saveConfiguration();
+//    }
+
+    removeNetworkExistingConfig(wifiManager);
+
     int networkId = wifiManager.addNetwork(config);
+    Log.i(TAG, "networkId=  " + networkId);
     if (networkId >= 0) {
       // Try to disable the current network and start a new one.
       if (wifiManager.enableNetwork(networkId, true)) {
@@ -183,6 +187,21 @@ public final class WifiConfigManager extends AsyncTask<WifiParsedResult,Object,O
       }
     }
     return null;
+  }
+
+  private static void removeNetworkExistingConfig(WifiManager wifiManager) {
+    Iterable<WifiConfiguration> existingConfigs = wifiManager.getConfiguredNetworks();
+
+    if (existingConfigs != null) {
+      for (WifiConfiguration existingConfig : existingConfigs) {
+        String existingSSID = existingConfig.SSID;
+        Log.i(TAG, "existingSSID= " + existingSSID);
+        if (existingSSID != null)
+          wifiManager.removeNetwork(existingConfig.networkId);
+      }
+      wifiManager.saveConfiguration();
+    }
+
   }
 
   private static String quoteNonHex(String value, int... allowedLengths) {
