@@ -701,39 +701,39 @@ public class MultiPicScrollObject {
 //            }
 
             // Always square.
-            byte[] content = new byte[mPcWidth * 4];
+//            byte[] content = new byte[mPcWidth * 4];
 
             mBitmap = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
 
-//            int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
-//            int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxSegmentsPerTexContain;
-
             if (DBG)
                 Log.d(TAG, "mPcHeight= " + mPcHeight + ", heightConsumedPerTex= " + heightConsumedPerTex + ", mRealSegmentsPerTex= " + mRealSegmentsPerTex);
-            for (int j = 0; j < mRealSegmentsPerTex; j++) {
-                // last column in last texture => (lastTex && j == columns - 1)
-//                int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
-                int readSrcHeight;
-                if (mPcHeight >= heightConsumedPerTex) {
-                    readSrcHeight = mTextureHeight;
-
-                } else {
-                    if (j == mRealSegmentsPerTex - 1)
-                        readSrcHeight = lastColumnHeight();
-                    else
-                        readSrcHeight = mTextureHeight;
-                }
-                // int targetStrip = MAX_TEXTURE_WIDTH_HEIGHT;
-                // int targetOffset = j * mPcWidth;
-                // int readSrcWidth = Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT);
-                // // last column in last texture => (lastTex && j == columns - 1)
-                // int readSrcHeight = ((lastTex && j == columns - 1) ? ((mLastTexReadHeight - 1) % MAX_TEXTURE_WIDTH_HEIGHT + 1) :
-                // MAX_TEXTURE_WIDTH_HEIGHT);
-
-                // mTextWidth: 目标Texture宽度。
-                // j * mPcWidth :
-                readTallBlock(is, content, mBitmap, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth), readSrcHeight, mPcWidth);
-            }
+            readTallTextPic(is, mBitmap, mPcWidth, mPcHeight, mTextureWidth);
+//            int lastTexReadHeight = ((mPcHeight - 1) % heightConsumedPerTex) + 1;
+//            int columns = isLastTex(i) ? ceilingBlocks(lastTexReadHeight, mTextureHeight) : mMaxSegmentsPerTexContain;
+//            for (int j = 0; j < mRealSegmentsPerTex; j++) {
+//                // last column in last texture => (lastTex && j == columns - 1)
+////                int readSrcHeight = ((isLastTex(i) && j == columns - 1) ? lastColumnHeight() : mTextureHeight);
+//                int readSrcHeight;
+//                if (mPcHeight >= heightConsumedPerTex) {
+//                    readSrcHeight = mTextureHeight;
+//
+//                } else {
+//                    if (j == mRealSegmentsPerTex - 1)
+//                        readSrcHeight = lastColumnHeight();
+//                    else
+//                        readSrcHeight = mTextureHeight;
+//                }
+//                // int targetStrip = MAX_TEXTURE_WIDTH_HEIGHT;
+//                // int targetOffset = j * mPcWidth;
+//                // int readSrcWidth = Math.min(mPcWidth, MAX_TEXTURE_WIDTH_HEIGHT);
+//                // // last column in last texture => (lastTex && j == columns - 1)
+//                // int readSrcHeight = ((lastTex && j == columns - 1) ? ((mLastTexReadHeight - 1) % MAX_TEXTURE_WIDTH_HEIGHT + 1) :
+//                // MAX_TEXTURE_WIDTH_HEIGHT);
+//
+//                // mTextWidth: 目标Texture宽度。
+//                // j * mPcWidth :
+//                readTallBlock(is, content, mBitmap, mTextureWidth, j * mPcWidth, Math.min(mPcWidth, mTextureWidth), readSrcHeight, mPcWidth);
+//            }
 
 //            GraphUtils.convertRGBFromPC(content);
 
@@ -804,23 +804,23 @@ public class MultiPicScrollObject {
 ////                continue;
 //            }
 
-
-            byte[] content = new byte[Math.min(mPcWidth, mTextureWidth) * 4];
-
             mBitmap = Bitmap.createBitmap(mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
+            readFatTextPic(is, mBitmap, mPcWidth, mPcHeight, mTextureWidth);
 
-            int readRows = ceilingBlocks(mPcWidth, mTextureWidth);
+//            byte[] content = new byte[Math.min(mPcWidth, mTextureWidth) * 4];
+//            int readRows = ceilingBlocks(mPcWidth, mTextureWidth);
+//
+//            int lastReadWidth = lastRowWidth();
+//            if (DBG)
+//                Log.d(TAG, "fat. readRows= " + readRows + ", lastReadWidth= " + lastReadWidth + ", mpcHeight= " + mPcHeight);
 
-            int lastReadWidth = lastRowWidth();
-            if (DBG)
-                Log.d(TAG, "fat. readRows= " + readRows + ", lastReadWidth= " + lastReadWidth + ", mpcHeight= " + mPcHeight);
 
-            for (int j = 0; j < mPcHeight; j++) {
-                if (RENDER_DBG)
-                    Log.d(TAG, "j= " + j);
-                //InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows, int lastReadWidth
-                readFatBlock(is, content, mBitmap, mPcHeight * mTextureWidth, j, mTextureWidth, readRows, lastReadWidth);
-            }
+//            for (int j = 0; j < mPcHeight; j++) {
+//                if (RENDER_DBG)
+//                    Log.d(TAG, "j= " + j);
+//                //InputStream is, byte[] content, int targetStrip, int targetOffset, int readSrcWidth, int readRows, int lastReadWidth
+//                readFatBlock(is, content, mBitmap, mPcHeight * mTextureWidth, j, mTextureWidth, readRows, lastReadWidth);
+//            }
 
 //            GraphUtils.convertRGBFromPC(content);
 
@@ -1230,7 +1230,55 @@ public class MultiPicScrollObject {
     }
 
 
-    private int[] byteArray2intArray(byte[] content) {
+    public static void readFatTextPic(InputStream is, Bitmap bm, int pcWidth, int pcHeight, int textureWidth) throws IOException{
+        byte[] content = new byte[Math.min(pcWidth, textureWidth) * 4];
+        int maxPicWidthPerTexture = textureWidth / pcHeight * textureWidth;
+        int readWidth = Math.min(maxPicWidthPerTexture, pcWidth);
+        int segMents = readWidth / textureWidth;
+        if (readWidth % textureWidth > 0)
+            segMents++;
+        if (DBG)
+            Log.d(TAG, "readFatTextPic. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", textureWidth= " + textureWidth
+                    + ", maxPicWidthPerTexture= " + maxPicWidthPerTexture + ", readWidth= " + readWidth + ", segMents= " + segMents);
+
+        for (int i = 0; i < pcHeight; i++) {
+            for (int j = 0; j < segMents; j++) {
+                int readSize = Math.min(readWidth - j * textureWidth, textureWidth);
+                if (READ_DBG)
+                    Log.d(TAG, "i= " + i + ", j= " + j + ", readSize= " + readSize);
+                if (readSize != 0) {
+                    ByteStreams.readFully(is, content, 0, readSize * 4);
+                    bm.setPixels(byteArray2intArray(content), 0, textureWidth, 0, i + j * pcHeight, readSize, 1);
+                }
+                //skip
+                if ((j == segMents - 1) && (readWidth < pcWidth))
+                    ByteStreams.skipFully(is,( pcWidth - readWidth) * 4);
+            }
+        }
+    }
+
+    public static void readTallTextPic(InputStream is, Bitmap bm, int pcWidth, int pcHeight, int textureWidth) throws IOException{
+        byte[] content = new byte[pcWidth * 4];
+        int maxPicHeightPerTexture = textureWidth / pcWidth * textureWidth;
+        int readHeight = Math.min(maxPicHeightPerTexture, pcHeight);
+        int segMents = readHeight / textureWidth;
+        if (readHeight % textureWidth > 0)
+            segMents++;
+        if (DBG)
+            Log.d(TAG, "readTallTextPic. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", textureWidth= " + textureWidth
+             + ", maxPicHeightPerTexture= " + maxPicHeightPerTexture + ", readHeight= " + readHeight + ", segMents= " + segMents);
+
+        for (int i = 0; i < segMents; i++) {
+            int readSize = Math.min(readHeight - i * textureWidth, textureWidth);
+            for (int j = 0; j <readSize ; j++) {
+                    ByteStreams.readFully(is, content, 0, pcWidth * 4);
+                    bm.setPixels(byteArray2intArray(content), 0, textureWidth, i * pcWidth, j, pcWidth, 1);
+
+            }
+        }
+    }
+
+    public static int[] byteArray2intArray(byte[] content) {
 
         int[] arys = new int[content.length / 4];
         for (int i = 0; i < arys.length; i++) {

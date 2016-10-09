@@ -37,6 +37,7 @@ import java.io.IOException;
 public class TextObject extends SLPCTextObject {
     private final static String TAG = "TextObject";
     private static final boolean DBG = false;
+    private static final boolean DBG_READ = false;
 
     private String mText = new String("Empty");
     private float mTextSize = 20;
@@ -92,45 +93,48 @@ public class TextObject extends SLPCTextObject {
 
         LineSegment aline = new LineSegment(text, mLineHeight, mPaint, mEvenedHeight);
 
-        File cacheDir = mContext.getCacheDir();
-        if (DBG)
-            Log.d(TAG, "drawCanvasToTexture. [hashCode=" + mTextBitmapHash.toString() + ", cacheDir=" + cacheDir);
+//        File cacheDir = mContext.getCacheDir();
+//        if (DBG)
+//            Log.d(TAG, "drawCanvasToTexture. [hashCode=" + mTextBitmapHash.toString() + ", cacheDir=" + cacheDir);
         // All the text item has this hash.
-        Bitmap savedBitmap = null;
-        File bitmapCacheFile = new File(cacheDir, getPngName());
-        if (bitmapCacheFile.exists()) {
-            if (DBG)
-                Log.d(TAG, "drawCanvasToTexture. [bitmapCacheFile exist=" + bitmapCacheFile);
-            BitmapFactory.Options bo = new BitmapFactory.Options();
-            bo.inPurgeable = true;
-            // bo.inTempStorage = true;
-            savedBitmap = BitmapFactory.decodeFile(bitmapCacheFile.toString(), bo);
-
-            mPcWidth = savedBitmap.getWidth();
-            setPcHeight(savedBitmap.getHeight());
-            if (DBG)
-                Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
-        } else {
-            // Ensure that there is always room for a new .png
-
-            ensureTargetDirRoom();
+//        Bitmap savedBitmap = null;
+//        File bitmapCacheFile = new File(cacheDir, getPngName());
+//        if (bitmapCacheFile.exists()) {
+//            if (DBG)
+//                Log.d(TAG, "drawCanvasToTexture. [bitmapCacheFile exist=" + bitmapCacheFile);
+//            BitmapFactory.Options bo = new BitmapFactory.Options();
+//            bo.inPurgeable = true;
+//            // bo.inTempStorage = true;
+//            savedBitmap = BitmapFactory.decodeFile(bitmapCacheFile.toString(), bo);
+//
+//            mPcWidth = savedBitmap.getWidth();
+//            setPcHeight(savedBitmap.getHeight());
+//            if (DBG)
+//                Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
+//        } else {
+//            // Ensure that there is always room for a new .png
+//
+//            ensureTargetDirRoom();
 
             // Prepare bitmap canvas.
             if (DBG)
                 Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
-            savedBitmap = Bitmap.createBitmap(mPcWidth, getPcHeight(), Bitmap.Config.ARGB_8888);
+            Bitmap savedBitmap = Bitmap.createBitmap(mPcWidth, getPcHeight(), Bitmap.Config.ARGB_8888);
             savedBitmap.eraseColor(Color.argb(0, 255, 255, 255));
             // Creates a new canvas that will draw into a bitmap instead of rendering into the screen
             Canvas bitmapCanvas = new Canvas(savedBitmap);
             aline.draw(bitmapCanvas, mPaint, topAllText);
-
-            QuadGenerator.toPng(savedBitmap, bitmapCacheFile);
-        }
-
         if (DBG) {
             new File("/mnt/sdcard/mul").mkdir();
-            QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" + mTextBitmapHash.toString() + "1.png"));
+            QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" +  "origin" + getKeyImgId(0) ));
         }
+//            QuadGenerator.toPng(savedBitmap, bitmapCacheFile);
+//        }
+//
+//        if (DBG) {
+//            new File("/mnt/sdcard/mul").mkdir();
+//            QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" + mTextBitmapHash.toString() + "1.png"));
+//        }
 
         if (DBG)
             Log.d(TAG, "savedBitmap.getWidth()=" + savedBitmap.getWidth()
@@ -142,41 +146,61 @@ public class TextObject extends SLPCTextObject {
 //        ByteBuffer bb = ByteBuffer.wrap(new byte[]{ 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3 });
 //        IntBuffer ib = bb.asIntBuffer();
 
-        int[] intArray = new int[getTexDim() * getTexDim()];
-
+//        int[] intArray = new int[getTexDim() * getTexDim()];
+        int[] content;
+        Bitmap textureBm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
         if (DBG)
             Log.d(TAG, "prepareTexture. [mPcWidth=" + mPcWidth + ", getTexDim=" + getTexDim());
         // + 1 because, / removes the tail.
         // There could be an empty move, if the '%' is 0. So exclude the empty with the 'readSize' check.
 
         if (mPcWidth >= getPcHeight()) {
-            for (int i = 0; i < mPcWidth / getTexDim() + 1; i++) {
-                int readWidth = Math.min(mPcWidth - i * getTexDim(), getTexDim());
-                int readHeight = getPcHeight();
+//            for (int i = 0; i < mPcWidth / getTexDim() + 1; i++) {
+//                int readWidth = Math.min(mPcWidth - i * getTexDim(), getTexDim());
+//                int readHeight = getPcHeight();
+//
+//                if (readWidth != 0) {
+//                    savedBitmap.getPixels(intArray, getPcHeight() * getTexDim() * i, getTexDim(), i * getTexDim(), 0, readWidth, readHeight);
+//                }
+//            }
 
-                if (readWidth != 0) {
-                    savedBitmap.getPixels(intArray, getPcHeight() * getTexDim() * i, getTexDim(), i * getTexDim(), 0, readWidth, readHeight);
+            int maxPicWidthPerTexture = getTexDim() / getPcHeight() * getTexDim();
+            int readWidth = Math.min(maxPicWidthPerTexture, mPcWidth);
+            int segMents = readWidth / getTexDim();
+            if (readWidth % getTexDim() > 0)
+                segMents++;
+            if (DBG)
+                Log.d(TAG, "maxPicWidthPerTexture= " + maxPicWidthPerTexture + ", readWidth= " + readWidth);
+            content = new int[Math.min(getTexDim(), mPcWidth)];
+            for (int i = 0; i < segMents; i++){
+                int readSize = Math.min(readWidth - i * getTexDim(), getTexDim());
+                for (int j = 0; j < getPcHeight(); j++){
+                    if (DBG_READ)
+                        Log.d(TAG, "i= " + i + "j= " + j + ", i * getPcHeight() + j= " + (i * getPcHeight() + j));
+                    savedBitmap.getPixels(content, 0, getTexDim(), i * getTexDim(), j, readSize, 1);
+                    textureBm.setPixels(content, 0, getTexDim(), 0, i * getPcHeight() + j, readSize, 1);
                 }
             }
         } else { //mPcWidth < mPcHeight
             if (DBG)
-                Log.d(TAG, "tall. mPcWidth : mPcHeight = " + mPcWidth + " : " + getPcHeight() + ", texDim= " + getTexDim());
+                Log.d(TAG, "tall. mPcHeight = " + mPcWidth + ", getPcHeight()= " + getPcHeight()
+                        + ", texDim= " + getTexDim() + ", getPcHeight() / getTexDim() + 1= " + (getPcHeight() / getTexDim() + 1));
 
-            int readWidth = mPcWidth;
-            int readHeight = Math.min(getPcHeight(), getTexDim());
-            if (DBG)
-                Log.d(TAG, "tall."
-                        + ", getTexDim()= " + getTexDim()
-                        + ", readWidth= " + readWidth
-                        + ", readHeight= " + readHeight);
-
-            if (readHeight > 0) {
-                savedBitmap.getPixels(intArray, 0, getTexDim(), 0, 0, readWidth, readHeight);
+//            int readWidth = mPcWidth;
+//            int readHeight = Math.min(getPcHeight(), getTexDim());
+//            savedBitmap.getPixels(intArray, 0, getTexDim(), 0, 0, readWidth, readHeight);
+            content = new int[mPcWidth];
+            for (int i = 0; i < getPcHeight() / getTexDim() + 1; i++) {
+                int readHeight = Math.min(getPcHeight() - i * getTexDim(), getTexDim());
+                    for (int j = 0; j <readHeight ; j++) {
+                        savedBitmap.getPixels(content, 0, getTexDim(), 0, i * getTexDim() + j, mPcWidth, 1);
+                        textureBm.setPixels(content, 0, getTexDim(), i * mPcWidth, j, mPcWidth, 1);
+                    }
             }
 
         }
 
-        Bitmap textureBm = Bitmap.createBitmap(intArray, getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
+//        Bitmap textureBm = Bitmap.createBitmap(intArray, getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
 
         if (DBG)
             Log.d(TAG, "textureBm.getWidth() = " + textureBm.getWidth() + ", textureBm.getHeight() = " + textureBm.getHeight());

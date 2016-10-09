@@ -1,0 +1,61 @@
+[1mdiff --git a/color/src/main/java/com/color/home/AppController.java b/color/src/main/java/com/color/home/AppController.java[m
+[1mindex a1ccbfc..1f78aec 100644[m
+[1m--- a/color/src/main/java/com/color/home/AppController.java[m
+[1m+++ b/color/src/main/java/com/color/home/AppController.java[m
+[36m@@ -35,7 +35,7 @@[m [mimport java.util.Locale;[m
+ public class AppController extends Application {[m
+ [m
+     private final static String TAG = "AppController";[m
+[31m-    private static final boolean  DBG = false;[m
+[32m+[m[32m    private static final boolean  DBG = true;[m[41m[m
+     public static String sCharset = "GBK";[m
+ [m
+     /**[m
+[36m@@ -91,13 +91,18 @@[m [mpublic class AppController extends Application {[m
+             // Donot recycle here, as a bitmap could be using it.[m
+             // if (oldValue != null)[m
+             // oldValue.recycle();[m
+[31m-[m
+             if (DBG)[m
+                 Log.d(TAG,[m
+[31m-                        "entryRemoved. [reqest GC, oldValue=" + oldValue + ", newValue=" + newValue + ", Thread=" + Thread.currentThread());[m
+[31m-            System.gc();[m
+[32m+[m[32m                        "entryRemoved. [request GC, evicted= " + evicted + ", oldValue=" + oldValue + ", newValue=" + newValue + ", Thread=" + Thread.currentThread());[m[41m[m
+ [m
+             super.entryRemoved(evicted, key, oldValue, newValue);[m
+[32m+[m[32m//            if (evicted && oldValue != null) {[m[41m[m
+[32m+[m[32m//                oldValue.mBitmap.recycle();[m[41m[m
+[32m+[m[32m//                oldValue.mBitmap = null;[m[41m[m
+[32m+[m[32m//                System.gc();[m[41m[m
+[32m+[m[32m//            }[m[41m[m
+[32m+[m[32m            System.gc();[m[41m[m
+[32m+[m[41m[m
+         }[m
+     };[m
+     /**[m
+[1mdiff --git a/color/src/main/java/com/color/home/widgets/multilines/ItemMultiLinesMultipic.java b/color/src/main/java/com/color/home/widgets/multilines/ItemMultiLinesMultipic.java[m
+[1mindex e1bd000..2251444 100644[m
+[1m--- a/color/src/main/java/com/color/home/widgets/multilines/ItemMultiLinesMultipic.java[m
+[1m+++ b/color/src/main/java/com/color/home/widgets/multilines/ItemMultiLinesMultipic.java[m
+[36m@@ -35,7 +35,7 @@[m [mimport java.nio.ByteOrder;[m
+ [m
+ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishObserverable {[m
+     // public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable, Runnable {[m
+[31m-    private static final boolean DBG = false;[m
+[32m+[m[32m    private static final boolean DBG = true;[m
+     private static final boolean DBG_DRAW = false;[m
+     // never public, so that another class won't be messed up.[m
+     private final static String TAG = "ItemMultiLinesMultipic";[m
+[1mdiff --git a/color/src/main/java/com/color/home/widgets/multilines/MultiPicScrollObject.java b/color/src/main/java/com/color/home/widgets/multilines/MultiPicScrollObject.java[m
+[1mindex 41476fa..5ab8996 100644[m
+[1m--- a/color/src/main/java/com/color/home/widgets/multilines/MultiPicScrollObject.java[m
+[1m+++ b/color/src/main/java/com/color/home/widgets/multilines/MultiPicScrollObject.java[m
+[36m@@ -43,7 +43,7 @@[m [mimport java.util.regex.Pattern;[m
+ public class MultiPicScrollObject {[m
+     // private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;[m
+     private final static String TAG = "MultiPicScrollObject";[m
+[31m-    private static final boolean DBG = false;[m
+[32m+[m[32m    private static final boolean DBG = true;[m
+     private static final boolean PNG_DBG = false;[m
+     private static final boolean RENDER_DBG = false;[m
+     private static final boolean MATRIX_DBG = false;[m

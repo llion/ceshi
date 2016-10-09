@@ -220,7 +220,8 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
                 Log.i(TAG, "onCreate. [width=" + width + ", height=" + height);
 
             final int picDatalength = width * height * 4;
-            final byte[] content = new byte[picDatalength];
+//            final byte[] content = new byte[picDatalength];
+            byte[] content = new byte[width * 4];
             // byte[] converted = new byte[mWidth * mHeight * 4];
 
             ByteStreams.skipFully(readFromIs, 1024 - 28 + index * picDatalength);
@@ -228,15 +229,19 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
 
             if (DBG)
                 Log.d(TAG, "Must read fully, as this is a zip inputstrea, it could return less than requested bytes on read.");
-            ByteStreams.readFully(readFromIs, content, 0, picDatalength);
+//            ByteStreams.readFully(readFromIs, content, 0, picDatalength);
+            Bitmap bm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            for (int i = 0; i < height; i++){
+                ByteStreams.readFully(readFromIs, content, 0, width * 4);
+                bm.setPixels(MultiPicScrollObject.byteArray2intArray(content), 0, width, 0, i, width, 1);
+            }
 
-            GraphUtils.convertRGBFromPC(content);
+//            GraphUtils.convertRGBFromPC(content);
             // Now put these nice RGBA pixels into a Bitmap object
 
-            Bitmap bm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
             // bm.setPremultiplied(false);
-            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content));
+//            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content));
 
             AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, width, height));
 

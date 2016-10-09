@@ -26,6 +26,7 @@ import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.ItemsAdapter;
+import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.QuadGenerator;
@@ -306,39 +307,51 @@ public class SLPCTextObject {
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
 
             // Always square.
-            byte[] content = new byte[getTexDim() * getTexDim() * 4];
+//            byte[] content = new byte[getTexDim() * getTexDim() * 4];
+//            byte[] content;
+            Bitmap bm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
             if (DBG)
                 Log.i(TAG, "getTexDim = " + getTexDim());
 
-            int readHeight = getPcHeight();
+//            int readHeight = getPcHeight();
             // There could be empty heights.
             if (mPcWidth >= getPcHeight()) {
-                for (int i = 0; i < readHeight; i++) {
-                    // + 1 because, / removes the tail.
-                    // There could be an empty move, if the '%' is 0. So exclude the empty with the 'readSize' check.
-                    for (int j = 0; j < mPcWidth / getTexDim() + 1; j++) {
-                        int readSize = Math.min(mPcWidth - j * getTexDim(), getTexDim());
-                        if (readSize != 0) {
-                            // 4 stands for RGBA.
-                            // i * texWidth is offset into the block (texWidth * pcHeight)
-                            // (texWidth * pcHeight) * j is which block.
-                            ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4 + (getTexDim() * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
-                        }
-                    }
-                }
+                if (DBG)
+                    Log.d(TAG, "checkSinglePic. [mPcWidth > mPcHeight.");
+                MultiPicScrollObject.readFatTextPic(readFromIs, bm, mPcWidth, getPcHeight(), getTexDim());
+//
+//                content = new byte[Math.min(mPcWidth, mTexDim) * 4];
+//                for (int i = 0; i < readHeight; i++) {
+//                    // + 1 because, / removes the tail.
+//                    // There could be an empty move, if the '%' is 0. So exclude the empty with the 'readSize' check.
+//                    for (int j = 0; j < mPcWidth / getTexDim() + 1; j++) {
+//                        int readSize = Math.min(mPcWidth - j * getTexDim(), getTexDim());
+//                        if (readSize != 0) {
+//                            // 4 stands for RGBA.
+//                            // i * texWidth is offset into the block (texWidth * pcHeight)
+//                            // (texWidth * pcHeight) * j is which block.
+////                            ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4 + (getTexDim() * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
+//                            ByteStreams.readFully(readFromIs, content, 0, readSize * 4);
+//                            bm.setPixels(MultiPicScrollObject.byteArray2intArray(content), 0, mTexDim, 0, i + j * mPcHeight, readSize, 1);
+//                        }
+//                    }
+//                }
             } else { // mPcWidth < getPcHeight()
                 if (DBG)
                     Log.d(TAG, "checkSinglePic. [mPcWidth < mPcHeight, only one line in my texture.");
-                 readHeight = Math.min(getPcHeight(), getTexDim());
-                for (int i = 0; i < readHeight; i++) {
-                    ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4, mPcWidth * 1 * 4);
-                }
+                MultiPicScrollObject.readTallTextPic(readFromIs, bm, mPcWidth, getPcHeight(), getTexDim());
+//                content = new byte[mPcWidth * 4];
+//                 readHeight = Math.min(getPcHeight(), getTexDim());
+//                for (int i = 0; i < readHeight; i++) {
+////                    ByteStreams.readFully(readFromIs, content, i * getTexDim() * 4, mPcWidth * 1 * 4);
+//                    ByteStreams.readFully(readFromIs, content, 0, mPcWidth * 4);
+//                    bm.setPixels(MultiPicScrollObject.byteArray2intArray(content), 0, mTexDim, 0, i, mPcWidth, 1);
+//                }
             }
 
-            GraphUtils.convertRGBFromPC(content);
-
-            final Bitmap bm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
-            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, getTexDim() * getTexDim() * 4));
+//            GraphUtils.convertRGBFromPC(content);
+//
+//            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, getTexDim() * getTexDim() * 4));
             AppController.getInstance().addBitmapToMemoryCache(getKeyImgId(0), new MyBitmap(bm, mPcWidth, getPcHeight()));
 
             if (DBG) {
