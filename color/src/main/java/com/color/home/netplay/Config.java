@@ -7,17 +7,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Random;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -175,6 +180,9 @@ public class Config implements ConfigAPI {
             mSp.edit().putString(ATTR_TEXT_ANTIALIAS, antiAlias.trim()).commit();
         }
 
+        if (pp.getProperty(ATTR_MOBILE_ENABLED) != null)
+            setMobileEnabled(pp);
+
         Ethernet eth = new Ethernet(mContext, pp);
         String ip = pp.getProperty(ATTR_SERVER_IP);
         if (ip != null)
@@ -192,6 +200,48 @@ public class Config implements ConfigAPI {
             screenshot(screenshot);
 
         mFtpServer.setupFtpService(pp);
+    }
+
+    private void setMobileEnabled(Properties pp) {
+        Log.d(TAG, "currentlyAirplaneEnabled =" + (Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.AIRPLANE_MODE_ON, 0) == 1));
+
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        String mobileMode = pp.getProperty(ConfigAPI.ATTR_MOBILE_ENABLED);
+        boolean toEnableMobile = Config.isTrue(mobileMode);
+        boolean toEnableAirplane = !toEnableMobile;
+        Log.d(TAG, "Attempt to switch airplane mode to " + toEnableAirplane);
+        cm.setAirplaneMode(toEnableAirplane);
+
+        Settings.System.putInt(mContext.getContentResolver(),
+                Settings.Global.AIRPLANE_MODE_ON,toEnableAirplane ? 1 : 0);
+//        Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+//        intent.putExtra("state", toEnableAirplane);
+//        mContext.sendBroadcast(intent);
+        Log.d(TAG, "isAirplane mode on=" + Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.AIRPLANE_MODE_ON, 0));
+
+        mSp.edit().putString(ATTR_AP_SSID, "AndroidAP").commit();
+        cm.setMobileDataEnabled(toEnableMobile);
+    }
+
+    private void setMobileDataState(boolean mobileDataEnabled)
+    {
+        try
+        {
+            TelephonyManager telephonyService = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+
+            Method setMobileDataEnabledMethod = telephonyService.getClass().getDeclaredMethod("setDataEnabled", boolean.class);
+
+            if (null != setMobileDataEnabledMethod)
+            {
+                setMobileDataEnabledMethod.invoke(telephonyService, mobileDataEnabled);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.e(TAG, "Error setting mobile data state", ex);
+        }
     }
 
     public static boolean isIsoFromTxtFile(Properties pp) {
