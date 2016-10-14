@@ -28,5 +28,5 @@ public interface ConfigAPI {
     public final static String ATTR_LAN_STATIC_DNS2 = "lan.static.dns2";
     public static final String ATTR_TERMINAL_NAME = "terminal.name";
     public static final String ATTR_TEXT_ANTIALIAS = "text.antialias";
-
+    public static final String ATTR_MOBILE_ENABLED = "mobile.enabled";
 }

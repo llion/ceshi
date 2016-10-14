@@ -1234,15 +1234,15 @@ public class MultiPicScrollObject {
         byte[] content = new byte[Math.min(pcWidth, textureWidth) * 4];
         int maxPicWidthPerTexture = textureWidth / pcHeight * textureWidth;
         int readWidth = Math.min(maxPicWidthPerTexture, pcWidth);
-        int segMents = readWidth / textureWidth;
+        int segments = readWidth / textureWidth;
         if (readWidth % textureWidth > 0)
-            segMents++;
+            segments++;
         if (DBG)
             Log.d(TAG, "readFatTextPic. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", textureWidth= " + textureWidth
-                    + ", maxPicWidthPerTexture= " + maxPicWidthPerTexture + ", readWidth= " + readWidth + ", segMents= " + segMents);
+                    + ", maxPicWidthPerTexture= " + maxPicWidthPerTexture + ", readWidth= " + readWidth + ", segments= " + segments);
 
         for (int i = 0; i < pcHeight; i++) {
-            for (int j = 0; j < segMents; j++) {
+            for (int j = 0; j < segments; j++) {
                 int readSize = Math.min(readWidth - j * textureWidth, textureWidth);
                 if (READ_DBG)
                     Log.d(TAG, "i= " + i + ", j= " + j + ", readSize= " + readSize);
@@ -1251,7 +1251,7 @@ public class MultiPicScrollObject {
                     bm.setPixels(byteArray2intArray(content), 0, textureWidth, 0, i + j * pcHeight, readSize, 1);
                 }
                 //skip
-                if ((j == segMents - 1) && (readWidth < pcWidth))
+                if ((j == segments - 1) && (readWidth < pcWidth))
                     ByteStreams.skipFully(is,( pcWidth - readWidth) * 4);
             }
         }
@@ -1261,14 +1261,14 @@ public class MultiPicScrollObject {
         byte[] content = new byte[pcWidth * 4];
         int maxPicHeightPerTexture = textureWidth / pcWidth * textureWidth;
         int readHeight = Math.min(maxPicHeightPerTexture, pcHeight);
-        int segMents = readHeight / textureWidth;
+        int segments = readHeight / textureWidth;
         if (readHeight % textureWidth > 0)
-            segMents++;
+            segments++;
         if (DBG)
             Log.d(TAG, "readTallTextPic. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", textureWidth= " + textureWidth
-             + ", maxPicHeightPerTexture= " + maxPicHeightPerTexture + ", readHeight= " + readHeight + ", segMents= " + segMents);
+             + ", maxPicHeightPerTexture= " + maxPicHeightPerTexture + ", readHeight= " + readHeight + ", segments= " + segments);
 
-        for (int i = 0; i < segMents; i++) {
+        for (int i = 0; i < segments; i++) {
             int readSize = Math.min(readHeight - i * textureWidth, textureWidth);
             for (int j = 0; j <readSize ; j++) {
                     ByteStreams.readFully(is, content, 0, pcWidth * 4);

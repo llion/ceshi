@@ -144,9 +144,10 @@ public class SLPCTextObject {
         MyBitmap texFromMemCache = texFromMemCache();
         if (DBG)
             Log.d(TAG, "texFromMemCache = " + texFromMemCache);
-        if (texFromMemCache == null)
-            prepareTexture();
-        else {
+        if (texFromMemCache == null) {
+            if (!prepareTexture())
+                return;
+        } else {
             setPcWidth(texFromMemCache.mSingleLineWidth);
             setPcHeight(texFromMemCache.mSingleLineHeight);
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
@@ -274,7 +275,7 @@ public class SLPCTextObject {
      * 2. Setup the texture dimension to some POT dim.
      * 3. addBitmapToMemoryCache(getKeyImgId(0)
      */
-    protected void prepareTexture() {
+    protected boolean prepareTexture() {
         final byte[] head = new byte[8];
 
         StreamResolver streamResolver = null;
@@ -286,7 +287,7 @@ public class SLPCTextObject {
             InputStream readFromIs = streamResolver.getReadFromIs();
             if (readFromIs == null) {
                 Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
-                return;
+                return false;
             }
 
             if (DBG) Log.d(TAG, "skip fully.");
@@ -303,6 +304,10 @@ public class SLPCTextObject {
                 Log.i(TAG, "drawCanvasToTexture. [position=" + bb.position());
             setPcWidth(bb.getInt());
             setPcHeight(bb.getInt());
+            if (DBG)
+                Log.i(TAG, "drawCanvasToTexture. mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight);
+            if (mPcWidth <= 0 || mPcHeight <= 0)
+                return false;
             // In case the pc width or height is set too late.
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
 
@@ -361,11 +366,13 @@ public class SLPCTextObject {
 
         } catch (Exception e) {
             Log.e(TAG, "checkSinglePic. [exception:", e);
+            return false;
         } finally {
             if (streamResolver != null) {
                 streamResolver.close();
             }
         }
+        return true;
     }
 
     public MyBitmap texFromMemCache() {
@@ -582,8 +589,15 @@ public class SLPCTextObject {
     }
 
     protected void genQuadSegs() {
-        final int widthRemaining = mPcWidth % getTexDim();
-        mQuadsCount = mPcWidth / getTexDim() + (widthRemaining == 0 ? 0 : 1);
+        int widthRemaining = 0, maxPicWidthPerTexture = 0;
+        try {
+            maxPicWidthPerTexture = getTexDim() / getPcHeight() * getTexDim();
+            int displayWidth = Math.min(maxPicWidthPerTexture, mPcWidth);
+            widthRemaining = displayWidth % getTexDim();
+            mQuadsCount = displayWidth / getTexDim() + (widthRemaining == 0 ? 0 : 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         final int lastQuadWidth = (widthRemaining == 0 ? getTexDim() : widthRemaining);
 
         if (DBG)
@@ -595,15 +609,15 @@ public class SLPCTextObject {
         int left = 0;
         for (int i = 0; i < mQuadsCount; i++) {
             int texTop, texLeft;
-            texTop = i * getEvenPcHeight();
+            texTop = i * getPcHeight();
             texLeft = 0;
 
             // The last quad.
             if (isLastQuad(i)) {
                 // GOOD. mQuadSegs[i] = new QuadSegment(1024, 2048);
-                mQuadSegs[i] = new QuadSegment(top, left, lastQuadWidth, getEvenPcHeight(), texTop, texLeft);
+                mQuadSegs[i] = new QuadSegment(top, left, lastQuadWidth, getPcHeight(), texTop, texLeft);
             } else {
-                mQuadSegs[i] = new QuadSegment(top, left, getTexDim(), getEvenPcHeight(), texTop, texLeft);
+                mQuadSegs[i] = new QuadSegment(top, left, getTexDim(), getPcHeight(), texTop, texLeft);
             }
             left += getTexDim();
         }

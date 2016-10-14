@@ -127,7 +127,8 @@ public class SLPCHTTextObject {
         // Now the pic count is ready.
         genTexs();
         
-        normalizTexToMemCache();
+        if (!normalizTexToMemCache())
+            return;
         updatePageToTexId(0, 0);
 
         if (DBG)
@@ -265,7 +266,7 @@ public class SLPCHTTextObject {
         return mScrollpicinfo.filePath.MD5 + picIndex;
     }
 
-    protected void normalizTexToMemCache() throws Exception {
+    protected boolean normalizTexToMemCache() throws Exception {
         final byte[] head = new byte[8];
 
         StreamResolver streamResolver = null;
@@ -275,7 +276,7 @@ public class SLPCHTTextObject {
             InputStream readFromIs = streamResolver.getReadFromIs();
             if (readFromIs == null) {
                 Log.e(TAG, "Bad file.absFilePath=" + absFilePath);
-                return;
+                return false;
             }
 
             if (DBG) Log.d(TAG, "skip fully.");
@@ -290,6 +291,8 @@ public class SLPCHTTextObject {
 
             mPcWidth = bb.getInt();
             mPcHeight = bb.getInt();
+            if (mPcWidth <= 0 || mPcHeight <= 0)
+                return false;
             setNormarizedEvenPcHeight(MovingTextUtils.evenIt(mPcHeight));
             setNormarizedEvenPcWidth(MovingTextUtils.evenIt(mPcWidth));
 
@@ -397,11 +400,13 @@ public class SLPCHTTextObject {
 
         } catch (Exception e) {
             Log.e(TAG, "checkSinglePic. [exception:", e);
+            return false;
         } finally {
             if (streamResolver != null) {
                 streamResolver.close();
             }
         }
+        return true;
     }
 
 
@@ -617,7 +622,7 @@ public class SLPCHTTextObject {
     }
 
     protected void genQuadSegs() {
-        QuadGenerator qg = new QuadGenerator(mPcWidth, getEvenPcHeight(), mTexWidth, mWidth);
+        QuadGenerator qg = new QuadGenerator(mPcWidth, mPcHeight, mTexWidth, mWidth);
         final int repeatedQuadsSize = qg.getRepeatedQuadsSize();
         mQuadSegs = new QuadSegment[repeatedQuadsSize];
         for (int i = 0; i < repeatedQuadsSize; i++) {
