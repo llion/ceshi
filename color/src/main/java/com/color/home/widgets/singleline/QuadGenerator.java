@@ -26,13 +26,27 @@ public class QuadGenerator {
 //    public static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
 
     public QuadGenerator(int pcWidth, int pcHeight, int texWidth, int itemWidth) {
-        mPcWidth = pcWidth; //maybe an uneven number
+        int maxPicWidthPerTexture = 0;
+        try {
+            maxPicWidthPerTexture = texWidth / pcHeight * texWidth;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        int displayWidth = Math.min(maxPicWidthPerTexture, pcWidth);
+        if (DBG)
+            Log.d(TAG, "maxPicWidthPerTexture= " + maxPicWidthPerTexture + ", displayWidth= " + displayWidth);
+        mPcWidth = displayWidth; //maybe an uneven number
         mPcHeight = pcHeight;
         mTexWidth = texWidth;
         mItemWidth = itemWidth;
 
-        final int widthRemaining = mPcWidth % mTexWidth;
-        mWholeTexQuadsCount = mPcWidth / mTexWidth + (widthRemaining == 0 ? 0 : 1);
+        int widthRemaining = 0;
+        try {
+            widthRemaining = mPcWidth % mTexWidth;
+            mWholeTexQuadsCount = mPcWidth / mTexWidth + (widthRemaining == 0 ? 0 : 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mLastQuadWidth = (widthRemaining == 0 ? mTexWidth : widthRemaining );
 
         final float askingForModelWholeWidth = mPcWidth + mItemWidth + 2.0f;
