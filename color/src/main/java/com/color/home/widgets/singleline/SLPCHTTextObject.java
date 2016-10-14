@@ -25,6 +25,7 @@ import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
+import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.google.common.hash.HashCode;
@@ -50,6 +51,7 @@ public class SLPCHTTextObject {
     private final static String TAG = "SLPCHTTextObject";
     private static final boolean DBG = false;
     private static final boolean DBG_FPS = false;
+    private static final boolean DBG_MATRIX = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -324,38 +326,48 @@ public class SLPCHTTextObject {
                 }
 
                 // Always square.
-                byte[] content = new byte[mTexWidth * mTexHeight * 4];
+                Bitmap bm = Bitmap.createBitmap(mTexWidth, mTexHeight, Bitmap.Config.ARGB_8888);
+//                byte[] content = new byte[mTexWidth * mTexHeight * 4];
+//                byte[] content;
                 // IT'S presumed, the single line picture's width > height.
-                int readHeight = mPcHeight;
+//                int readHeight = mPcHeight;
                 // There could be empty heights.
                 if (mPcWidth >= mPcHeight) {
-                    for (int i = 0; i < readHeight; i++) {
-                        // + 1 because, / removes the tail.
-                        // There could be an empty move, if the '%' is 0. So exclude the empty.
-                        for (int j = 0; j < mPcWidth / mTexWidth + 1; j++) {
-                            int readSize = Math.min(mPcWidth - j * mTexWidth, mTexWidth);
-                            if (readSize != 0) {
-                                // 4 stands for RGBA.
-                                // i * texWidth is offset into the block (texWidth * pcHeight)
-                                // (texWidth * pcHeight) * j is which block.
-                                ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4 + (mTexWidth * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
-                            }
-                            // else {
-                            // is.read(content, i * texWidth * 4 + (texWidth * pcHeight) * j * 4, (pcWidth - j * texWidth) * 1 * 4);
-                            // }
-
-                        }
-                        // Skip what ???? Do not skip the pixels in the file!!!
-                        // It's shorter in width already.
-                        // is.skip((myWidth - mBitmapWidth) * 4);
-                    }
+                    if (DBG)
+                        Log.d(TAG, "checkSinglePic. [mPcWidth > mPcHeight.");
+                    MultiPicScrollObject.readFatTextPic(readFromIs, bm, mPcWidth, mPcHeight, mTexWidth);
+//                    content = new byte[Math.min(mPcWidth, mTexWidth) * 4];
+//                    for (int i = 0; i < readHeight; i++) {
+//                        // + 1 because, / removes the tail.
+//                        // There could be an empty move, if the '%' is 0. So exclude the empty.
+//                        for (int j = 0; j < mPcWidth / mTexWidth + 1; j++) {
+//                            int readSize = Math.min(mPcWidth - j * mTexWidth, mTexWidth);
+//                            if (readSize != 0) {
+//                                // 4 stands for RGBA.
+//                                // i * texWidth is offset into the block (texWidth * pcHeight)
+//                                // (texWidth * pcHeight) * j is which block.
+////                                ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4 + (mTexWidth * getEvenPcHeight()) * j * 4, readSize * 1 * 4);
+//                                ByteStreams.readFully(readFromIs, content, 0, readSize * 4);
+//                                bm.setPixels(MultiPicScrollObject.byteArray2intArray(content), 0, mTexWidth, 0, i + j * mPcHeight, readSize, 1);
+//                            }
+//                            // else {
+//                            // is.read(content, i * texWidth * 4 + (texWidth * pcHeight) * j * 4, (pcWidth - j * texWidth) * 1 * 4);
+//                            // }
+//
+//                        }
+//                        // Skip what ???? Do not skip the pixels in the file!!!
+//                        // It's shorter in width already.
+//                        // is.skip((myWidth - mBitmapWidth) * 4);
+//                    }
                 } else {
                     if (DBG)
                         Log.d(TAG, "checkSinglePic. [mPcWidth < mPcHeight, only one line in my texture.");
-                    readHeight = Math.min(mPcHeight, mTexWidth);
-                    for (int i = 0; i < readHeight; i++) {
-                        ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4, mPcWidth * 1 * 4);
-                    }
+                    MultiPicScrollObject.readTallTextPic(readFromIs, bm, mPcWidth, mPcHeight, mTexWidth);
+//                    content = new byte[mPcWidth * 4];
+//                    readHeight = Math.min(mPcHeight, mTexWidth);
+//                    for (int i = 0; i < readHeight; i++) {
+//                        ByteStreams.readFully(readFromIs, content, i * mTexWidth * 4, mPcWidth * 1 * 4);
+//                    }
                 }
 
                 // mBitmapWidth = myWidth;
@@ -370,12 +382,11 @@ public class SLPCHTTextObject {
                 // if (DBG)
                 // Log.i(TAG, "drawCanvasToTexture. [read size=" + read);
 
-                GraphUtils.convertRGBFromPC(content);
+//                GraphUtils.convertRGBFromPC(content);
                 // Now put these nice RGBA pixels into a Bitmap object
 
-                Bitmap bm = Bitmap.createBitmap(mTexWidth, mTexHeight, Bitmap.Config.ARGB_8888);
                 // bm.setPremultiplied(false);
-                bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTexWidth * mTexHeight * 4));
+//                bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, mTexWidth * mTexHeight * 4));
                 AppController.getInstance().addBitmapToMemoryCache(keyImgId, new MyBitmap(bm, mPcWidth, mPcHeight));
 
                 if (DBG) {
@@ -472,7 +483,7 @@ public class SLPCHTTextObject {
             }
         }
 
-        if(DBG) {
+        if(DBG_MATRIX) {
             Log.d(TAG, "matrix[12] = " + mMMatrix[12]);
             Log.d(TAG, "pixelTemp = " + pixelTemp);
         }
