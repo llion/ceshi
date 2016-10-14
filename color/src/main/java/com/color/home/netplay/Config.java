@@ -221,7 +221,7 @@ public class Config implements ConfigAPI {
         Log.d(TAG, "isAirplane mode on=" + Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.AIRPLANE_MODE_ON, 0));
 
-        mSp.edit().putString(ATTR_AP_SSID, "AndroidAP").commit();
+        mSp.edit().putString(ATTR_AP_SSID, "").commit();
         cm.setMobileDataEnabled(toEnableMobile);
     }
 
