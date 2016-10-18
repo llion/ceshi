@@ -12,7 +12,6 @@ package com.color.home.widgets.singleline.localscroll;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -37,6 +36,11 @@ import java.io.IOException;
 public class TextObject extends SLPCTextObject {
     private final static String TAG = "TextObject";
     private static final boolean DBG = false;
+    private static final boolean DBG_READ = false;
+    private static final boolean DBG_PNG = false;
+    private static final int MAX_DRAW_TEXT_WIDTH = 33000;
+    private static final int MAX_TEXT_BOUNDS_RIGHT = 65400;//
+
 
     private String mText = new String("Empty");
     private float mTextSize = 20;
@@ -58,10 +62,10 @@ public class TextObject extends SLPCTextObject {
     }
 
     @Override
-    public void prepareTexture() {
+    public boolean prepareTexture() {
         if (mTextBitmapHash == null || TextUtils.isEmpty(mText)) {
             Log.e(TAG, "drawCanvasToTexture. [mTextBitmapHash should not be null and mText should not be null");
-            return;
+            return false;
         }
 
         String text = mText;
@@ -85,52 +89,63 @@ public class TextObject extends SLPCTextObject {
         Rect bounds = new Rect();
         mPaint.getTextBounds(text, 0, text.length(), bounds);
         if (DBG)
-            Log.d(TAG, "drawCanvasToTexture. [textBounds=" + bounds + ", realTextWidth=" + (measuredWidth) + ", mTextSize="
-                    + (mTextSize) + ", aText=" + text);
-        final float myw = ensuredWidth(bounds, measuredWidth);
-        mPcWidth = (int) myw;
-
-        LineSegment aline = new LineSegment(text, mLineHeight, mPaint, mEvenedHeight);
-
-        File cacheDir = mContext.getCacheDir();
+            Log.d(TAG, "drawCanvasToTexture. [origin textBounds= " + bounds + ", bounds.right= " + bounds.right+ ", text.length= " + text.length());
+        if (bounds.right > MAX_TEXT_BOUNDS_RIGHT){
+            int count = (int) (MAX_TEXT_BOUNDS_RIGHT / mTextSize);
+            text = text.substring(0, Math.min(text.length(), count));
+            mPaint.getTextBounds(text, 0, text.length(), bounds);
+            measuredWidth = mPaint.measureText(text);
+        }
+        int myw = (int) ensuredWidth(bounds, measuredWidth);
         if (DBG)
-            Log.d(TAG, "drawCanvasToTexture. [hashCode=" + mTextBitmapHash.toString() + ", cacheDir=" + cacheDir);
-        // All the text item has this hash.
-        Bitmap savedBitmap = null;
-        File bitmapCacheFile = new File(cacheDir, getPngName());
-        if (bitmapCacheFile.exists()) {
-            if (DBG)
-                Log.d(TAG, "drawCanvasToTexture. [bitmapCacheFile exist=" + bitmapCacheFile);
-            BitmapFactory.Options bo = new BitmapFactory.Options();
-            bo.inPurgeable = true;
-            // bo.inTempStorage = true;
-            savedBitmap = BitmapFactory.decodeFile(bitmapCacheFile.toString(), bo);
+            Log.d(TAG, "drawCanvasToTexture. [textBounds=" + bounds + ", realTextWidth=" + (measuredWidth)
+                    + ", mTextSize=" + mTextSize + ", (MAX_TEXT_BOUNDS_RIGHT/textSize)= "
+                    + (MAX_TEXT_BOUNDS_RIGHT / mTextSize) + ", myw= " + myw + ", aText=" + text);
 
-            mPcWidth = savedBitmap.getWidth();
-            setPcHeight(savedBitmap.getHeight());
-            if (DBG)
-                Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
-        } else {
-            // Ensure that there is always room for a new .png
+        if (myw > MAX_DRAW_TEXT_WIDTH)
+            myw = MAX_DRAW_TEXT_WIDTH;
+        mPcWidth = myw;
+//        mPcWidth = (int) myw;
 
-            ensureTargetDirRoom();
+        LineSegment aline = new LineSegment(text, bounds, mEvenedHeight);
+
+//        File cacheDir = mContext.getCacheDir();
+//        if (DBG)
+//            Log.d(TAG, "drawCanvasToTexture. [hashCode=" + mTextBitmapHash.toString() + ", cacheDir=" + cacheDir);
+//         All the text item has this hash.
+//        Bitmap savedBitmap = null;
+//        File bitmapCacheFile = new File(cacheDir, getPngName());
+//        if (bitmapCacheFile.exists()) {
+//            if (DBG)
+//                Log.d(TAG, "drawCanvasToTexture. [bitmapCacheFile exist=" + bitmapCacheFile);
+//            BitmapFactory.Options bo = new BitmapFactory.Options();
+//            bo.inPurgeable = true;
+//            // bo.inTempStorage = true;
+//            savedBitmap = BitmapFactory.decodeFile(bitmapCacheFile.toString(), bo);
+//
+//            mPcWidth = savedBitmap.getWidth();
+//            setPcHeight(savedBitmap.getHeight());
+//            if (DBG)
+//                Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
+//        } else {
+//            // Ensure that there is always room for a new .png
+//
+//            ensureTargetDirRoom();
 
             // Prepare bitmap canvas.
             if (DBG)
                 Log.d(TAG, "drawCanvasToTexture. [mPcWidth=" + mPcWidth + ", mPcHeight=" + getPcHeight());
-            savedBitmap = Bitmap.createBitmap(mPcWidth, getPcHeight(), Bitmap.Config.ARGB_8888);
+            Bitmap savedBitmap = Bitmap.createBitmap(mPcWidth, getPcHeight(), Bitmap.Config.ARGB_8888);
             savedBitmap.eraseColor(Color.argb(0, 255, 255, 255));
             // Creates a new canvas that will draw into a bitmap instead of rendering into the screen
             Canvas bitmapCanvas = new Canvas(savedBitmap);
             aline.draw(bitmapCanvas, mPaint, topAllText);
-
-            QuadGenerator.toPng(savedBitmap, bitmapCacheFile);
-        }
-
-        if (DBG) {
+        if (DBG_PNG) {
             new File("/mnt/sdcard/mul").mkdir();
-            QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" + mTextBitmapHash.toString() + "1.png"));
+            QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" +  "origin" + getKeyImgId(0) ));
         }
+//            QuadGenerator.toPng(savedBitmap, bitmapCacheFile);
+//        }
 
         if (DBG)
             Log.d(TAG, "savedBitmap.getWidth()=" + savedBitmap.getWidth()
@@ -142,41 +157,61 @@ public class TextObject extends SLPCTextObject {
 //        ByteBuffer bb = ByteBuffer.wrap(new byte[]{ 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3 });
 //        IntBuffer ib = bb.asIntBuffer();
 
-        int[] intArray = new int[getTexDim() * getTexDim()];
-
+//        int[] intArray = new int[getTexDim() * getTexDim()];
+        int[] content;
+        Bitmap textureBm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
         if (DBG)
             Log.d(TAG, "prepareTexture. [mPcWidth=" + mPcWidth + ", getTexDim=" + getTexDim());
         // + 1 because, / removes the tail.
         // There could be an empty move, if the '%' is 0. So exclude the empty with the 'readSize' check.
 
         if (mPcWidth >= getPcHeight()) {
-            for (int i = 0; i < mPcWidth / getTexDim() + 1; i++) {
-                int readWidth = Math.min(mPcWidth - i * getTexDim(), getTexDim());
-                int readHeight = getPcHeight();
+//            for (int i = 0; i < mPcWidth / getTexDim() + 1; i++) {
+//                int readWidth = Math.min(mPcWidth - i * getTexDim(), getTexDim());
+//                int readHeight = getPcHeight();
+//
+//                if (readWidth != 0) {
+//                    savedBitmap.getPixels(intArray, getPcHeight() * getTexDim() * i, getTexDim(), i * getTexDim(), 0, readWidth, readHeight);
+//                }
+//            }
 
-                if (readWidth != 0) {
-                    savedBitmap.getPixels(intArray, getPcHeight() * getTexDim() * i, getTexDim(), i * getTexDim(), 0, readWidth, readHeight);
+            int maxPicWidthPerTexture = getTexDim() / getPcHeight() * getTexDim();
+            int readWidth = Math.min(maxPicWidthPerTexture, mPcWidth);
+            int segments = readWidth / getTexDim();
+            if (readWidth % getTexDim() > 0)
+                segments++;
+            if (DBG)
+                Log.d(TAG, "maxPicWidthPerTexture= " + maxPicWidthPerTexture + ", readWidth= " + readWidth + ", segments= " + segments);
+            content = new int[Math.min(getTexDim(), mPcWidth)];
+            for (int i = 0; i < segments; i++){
+                int readSize = Math.min(readWidth - i * getTexDim(), getTexDim());
+                for (int j = 0; j < getPcHeight(); j++){
+                    if (DBG_READ)
+                        Log.d(TAG, "i= " + i + "j= " + j + ", i * getPcHeight() + j= " + (i * getPcHeight() + j));
+                    savedBitmap.getPixels(content, 0, getTexDim(), i * getTexDim(), j, readSize, 1);
+                    textureBm.setPixels(content, 0, getTexDim(), 0, i * getPcHeight() + j, readSize, 1);
                 }
             }
         } else { //mPcWidth < mPcHeight
             if (DBG)
-                Log.d(TAG, "tall. mPcWidth : mPcHeight = " + mPcWidth + " : " + getPcHeight() + ", texDim= " + getTexDim());
+                Log.d(TAG, "tall. mPcHeight = " + mPcWidth + ", getPcHeight()= " + getPcHeight()
+                        + ", texDim= " + getTexDim() + ", getPcHeight() / getTexDim() + 1= " + (getPcHeight() / getTexDim() + 1));
 
-            int readWidth = mPcWidth;
-            int readHeight = Math.min(getPcHeight(), getTexDim());
-            if (DBG)
-                Log.d(TAG, "tall."
-                        + ", getTexDim()= " + getTexDim()
-                        + ", readWidth= " + readWidth
-                        + ", readHeight= " + readHeight);
-
-            if (readHeight > 0) {
-                savedBitmap.getPixels(intArray, 0, getTexDim(), 0, 0, readWidth, readHeight);
+//            int readWidth = mPcWidth;
+//            int readHeight = Math.min(getPcHeight(), getTexDim());
+//            savedBitmap.getPixels(intArray, 0, getTexDim(), 0, 0, readWidth, readHeight);
+            content = new int[mPcWidth];
+            for (int i = 0; i < getPcHeight() / getTexDim() + 1; i++) {
+                int readHeight = Math.min(getPcHeight() - i * getTexDim(), getTexDim());
+                    for (int j = 0; j <readHeight ; j++) {
+                        savedBitmap.getPixels(content, 0, getTexDim(), 0, i * getTexDim() + j, mPcWidth, 1);
+                        textureBm.setPixels(content, 0, getTexDim(), i * mPcWidth, j, mPcWidth, 1);
+                    }
             }
 
         }
 
-        Bitmap textureBm = Bitmap.createBitmap(intArray, getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
+//        Bitmap textureBm = Bitmap.createBitmap(intArray, getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
 
         if (DBG)
             Log.d(TAG, "textureBm.getWidth() = " + textureBm.getWidth() + ", textureBm.getHeight() = " + textureBm.getHeight());
@@ -184,10 +219,11 @@ public class TextObject extends SLPCTextObject {
             AppController.getInstance().addBitmapToMemoryCache(getKeyImgId(0), new MyBitmap(textureBm, mPcWidth, getPcHeight()));
         }
 
-        if (DBG) {
+        if (DBG_PNG) {
             new File("/mnt/sdcard/mul").mkdir();
             QuadGenerator.toPng(textureBm, new File("/mnt/sdcard/mul/" + getKeyImgId(0)));
         }
+        return true;
 
     }
 
@@ -247,33 +283,27 @@ public class TextObject extends SLPCTextObject {
         private int mHeight;
         private String mText;
         private Rect mBounds;
-        private Paint mPaint2;
         private int mEvenedHeight;
 
         // private String mLine;
-        public LineSegment(String text, int lineHeight, Paint paint, int evenedHeight) {
-            mPaint2 = paint;
+        public LineSegment(String text, Rect bounds, int evenedHeight) {
             if (DBG)
                 Log.d(TAG,
-                        "LineSegment. [lineHeight=" + lineHeight + ", text length=" + text.length());
-            mHeight = lineHeight;
+                        "LineSegment. text length=" + text.length() + ", bounds= " + bounds);
             mText = text; // + 1, as we are using exact indices.;
+            mBounds = bounds;
 
-            mBounds = new Rect();
-            paint.getTextBounds(mText, 0, mText.length(), mBounds);
-
-            // As by-product, calculate mWidth.
-            float measuredWidth = paint.measureText(mText);
-            if (DBG)
-                Log.d(TAG, "draw. [textBounds=" + mBounds + ", realTextWidth=" + (measuredWidth) + ", mText=" + mText);
-            final float myw = ensuredWidth(mBounds, measuredWidth);
-            mWidth = (int) myw;
+//            // As by-product, calculate mWidth.
+//            float measuredWidth = paint.measureText(mText);
+//            if (DBG)
+//                Log.d(TAG, "draw. [textBounds=" + mBounds + ", realTextWidth=" + (measuredWidth) + ", mText=" + mText);
+//            final float myw = ensuredWidth(mBounds, measuredWidth);
+//            mWidth = (int) myw;
             mEvenedHeight = evenedHeight;
         }
 
         /**
          * Draw is invoked before initShape.
-         *
          * @param bitmapCanvas
          * @param paint
          * @param topAllText

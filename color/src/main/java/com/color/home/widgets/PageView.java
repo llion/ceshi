@@ -86,6 +86,7 @@ public class PageView extends AbsoluteLayout {
         // !TextUtils.isEmpty(mPage.bgaudio.filesource.filepath)) {
         MediaPlayer mediaPlayer = mMediaPlayer;
         try {
+            mediaPlayer.reset();
             mediaPlayer.setDataSource(ItemsAdapter.getAbsFilePathByFileSource(nextAudio.filesource));
             mediaPlayer.prepare();
             mediaPlayer.setLooping(mPage.bgaudios.size() == 1);
