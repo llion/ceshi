@@ -209,6 +209,7 @@ public class Config implements ConfigAPI {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         String mobileMode = pp.getProperty(ConfigAPI.ATTR_MOBILE_ENABLED);
         boolean toEnableMobile = Config.isTrue(mobileMode);
+        Settings.Global.putInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, toEnableMobile ? 1 : 0);
         boolean toEnableAirplane = !toEnableMobile;
         Log.d(TAG, "Attempt to switch airplane mode to " + toEnableAirplane);
         cm.setAirplaneMode(toEnableAirplane);
@@ -221,7 +222,7 @@ public class Config implements ConfigAPI {
         Log.d(TAG, "isAirplane mode on=" + Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.AIRPLANE_MODE_ON, 0));
 
-        mSp.edit().putString(ATTR_AP_SSID, "").commit();
+        mSp.edit().putString(ATTR_AP_SSID, "").apply();
         cm.setMobileDataEnabled(toEnableMobile);
     }
 
