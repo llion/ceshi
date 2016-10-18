@@ -55,6 +55,8 @@ public class MainActivity extends Activity {
     private CopyProgress mCp;
     private KeyBoardNav mKb;
 
+    private boolean mIsScreenOff = false;
+
     private class MainReceiver extends BroadcastReceiver {
 
         @Override
@@ -199,12 +201,14 @@ public class MainActivity extends Activity {
             if (DBG)
                 Log.d(TAG, "status receiver action=" + intent.getAction());
             if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                mIsScreenOff = true;
                 stopProgramInternal();
             } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
                 final File file = AppController.getInstance().getModel().getFile();
                 if (file != null) {
                     if (DBG)
                         Log.d(TAG, "screen on action received , previous file : " + file);
+                    mIsScreenOff = false;
                     startProgram(file);
                 }
             }
@@ -281,8 +285,7 @@ public class MainActivity extends Activity {
         setIntent(intent);
 
         if (DBG)
-            Log.i(TAG, "onNewIntent. getIntent=" + getIntent() + ", data=" + intent.getData());
-
+            Log.i(TAG, "onNewIntent. getIntent=" + getIntent() + ", data=" + intent.getData() + ", mIsScreenOff= " + mIsScreenOff);
         final String action = intent.getAction();
         if (Constants.ACTION_PLAY_PROGRAM.equals(action)) {
 
@@ -294,7 +297,14 @@ public class MainActivity extends Activity {
             if (TextUtils.isEmpty(fileName)) {
                 stopProgram();
             } else {
-                startProgram(generateVsnFile(false, path, fileName));
+                File vsnFile = generateVsnFile(false, path, fileName);
+                if(mIsScreenOff){
+                    Log.e(TAG, "Attempt to start program while the screen is off.", new Exception("Bad time to start program."));
+                    AppController.getInstance().getModel().setCurProgramPathFile(vsnFile);
+                    AppController.getInstance().markProgram(vsnFile);
+                }else {
+                    startProgram(vsnFile);
+                }
 //                if(DBG)
 //                    Log.d(TAG, "after startProgram onNewIntent: isPause=" + isPaused);
 //                isPaused = false;
