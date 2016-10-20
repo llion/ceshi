@@ -28,6 +28,7 @@ import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
+import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;
 
@@ -98,7 +99,8 @@ public class SLPCHTTextObject {
     private int mPcHeight;
     private int mEvenPcHeight;
     private int mEvenPcWidth;
-    
+    private int mRealReadPcWidth;
+
     private int mTexWidth;
     private int mTexHeight;
     private int mColor;
@@ -310,6 +312,8 @@ public class SLPCHTTextObject {
             // byte[] converted = new byte[mWidth * mHeight * 4];
 
             mTexHeight = mTexWidth = closePOT;
+            mRealReadPcWidth = SLPCTextObject.getRealReadPcWidth(mPcWidth, mPcHeight, mTexWidth);
+
             // mTexCount is 1, for now.
             for (int picIndex = 0; picIndex < mTexCount; picIndex++) {
                 String keyImgId = getBitmapKeyImgId(picIndex);
@@ -504,7 +508,7 @@ public class SLPCHTTextObject {
 
 //        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
-        float overflow = mMMatrix[12] - (-mWidth - mPcWidth);
+        float overflow = mMMatrix[12] - (-mWidth - mRealReadPcWidth);
         if (overflow < 0) {
             // if (isFirstRun)
             // isFirstRun = false;

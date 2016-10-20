@@ -358,7 +358,7 @@ public class MultiPicScrollObject {
 //        }
 
         if (mIsTallPCPic && isTallPCPicSurplus) {// fat multipic and tallPCPic is surplus
-            if (modelMat[13] > mHeight + mTextureHeight)
+            if (modelMat[13] > mHeight + mTextureHeight * mRealSegmentsPerTex)
                 reset();
         } else { // fat multipic || (tall multipic && !isTallPCPicSurplus)
             if (modelMat[13] > mHeight + mPcHeight)

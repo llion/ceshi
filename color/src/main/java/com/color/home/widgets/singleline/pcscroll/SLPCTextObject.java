@@ -23,7 +23,6 @@ import android.util.Log;
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.ScrollPicInfo;
-import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
@@ -95,6 +94,7 @@ public class SLPCTextObject {
 
     protected int mPcWidth;
     private int mPcHeight;
+    protected int mRealReadPcWidth;
 
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
@@ -151,6 +151,7 @@ public class SLPCTextObject {
             setPcWidth(texFromMemCache.mSingleLineWidth);
             setPcHeight(texFromMemCache.mSingleLineHeight);
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
+            mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
         }
 
         updatePageToTexId(0, 0);
@@ -310,13 +311,14 @@ public class SLPCTextObject {
                 return false;
             // In case the pc width or height is set too late.
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
+            mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
 
             // Always square.
 //            byte[] content = new byte[getTexDim() * getTexDim() * 4];
 //            byte[] content;
             Bitmap bm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
             if (DBG)
-                Log.i(TAG, "getTexDim = " + getTexDim());
+                Log.i(TAG, "getTexDim = " + getTexDim() + ", mRealReadPcWidth= " + mRealReadPcWidth);
 
 //            int readHeight = getPcHeight();
             // There could be empty heights.
@@ -473,7 +475,9 @@ public class SLPCTextObject {
         if (DBG_MATRIX)
             Log.d(TAG, "mMMatrix [12]  = " + mMMatrix[12]);
 
-        if (mMMatrix[12] < -mEvenedWidth - mPcWidth) {
+        if (mMMatrix[12] < -mEvenedWidth - mRealReadPcWidth) {
+            if (DBG)
+                Log.d(TAG, "mRealReadPcWidth= " + mRealReadPcWidth);
             Matrix.setIdentityM(mMMatrix, 0);
             // if repeat count == 0, infinite loop.
             if (mRepeatCount != 0) {
@@ -803,6 +807,20 @@ public class SLPCTextObject {
     protected void setPcWidth(int pcWidth) {
         mPcWidth = pcWidth;
         mEvenPcWidth = MovingTextUtils.evenIt(pcWidth);
+    }
+
+
+    public static int getRealReadPcWidth(int pcWidth, int pcHeight, int texDim) {
+        if (DBG)
+            Log.d(TAG, "getRealReadPcWidth. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", texDim= " + texDim);
+        if (pcWidth > pcHeight){
+            int maxPcWidthPerTexture = texDim / pcHeight * texDim;
+            if (pcWidth > maxPcWidthPerTexture)
+                return maxPcWidthPerTexture;
+            else
+                return pcWidth;
+        } else
+            return pcWidth;
     }
 
 }

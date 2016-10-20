@@ -75,7 +75,7 @@ public class TextObjectHeadTail extends TextObject {
 
 //        Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         // 09-08 23:04:05.580: D/TextObject(6052): render. [fl=639.0, i=12
-        final float overflow = mMMatrix[12] - (-mEvenedWidth - mPcWidth);
+        final float overflow = mMMatrix[12] - (-mEvenedWidth - mRealReadPcWidth);
         if (overflow < 0) {
             // if (isFirstRun)
             // isFirstRun = false;
