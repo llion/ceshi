@@ -193,11 +193,14 @@ public class ProgramsViewer{
 
                 return;
             }
+            if (DBG)
+                Log.d(TAG, "onPostExecute. isScreenOff= " + mMainActivity.isScreenOff());
 
-            setPrograms(result);
-
-            mMainActivity.onProgramStarted(mVsnFile);
-            inflatePrograms();
+            if (!mMainActivity.isScreenOff()) {
+                setPrograms(result);
+                mMainActivity.onProgramStarted(mVsnFile);
+                inflatePrograms();
+            }
         }
     }
 

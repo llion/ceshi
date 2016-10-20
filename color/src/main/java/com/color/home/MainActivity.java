@@ -201,15 +201,19 @@ public class MainActivity extends Activity {
             if (DBG)
                 Log.d(TAG, "status receiver action=" + intent.getAction());
             if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-                mIsScreenOff = true;
-                stopProgramInternal();
+                if (!mIsScreenOff) {
+                    mIsScreenOff = true;
+                    stopProgramInternal();
+                }
             } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-                final File file = AppController.getInstance().getModel().getFile();
-                if (file != null) {
-                    if (DBG)
-                        Log.d(TAG, "screen on action received , previous file : " + file);
-                    mIsScreenOff = false;
-                    startProgram(file);
+                if (mIsScreenOff) {
+                    final File file = AppController.getInstance().getModel().getFile();
+                    if (file != null) {
+                        if (DBG)
+                            Log.d(TAG, "screen on action received , previous file : " + file);
+                        mIsScreenOff = false;
+                        startProgram(file);
+                    }
                 }
             }
         }
@@ -398,6 +402,10 @@ public class MainActivity extends Activity {
 
     File generateVsnFile(boolean isNetwork, String path, String fileName) {
         return new File(path + "/" + fileName);
+    }
+
+    public boolean isScreenOff(){
+        return mIsScreenOff;
     }
 
 }
