@@ -141,57 +141,64 @@ public class SLPCTextObject {
         genTexs();
 
         // Only one mem cache bitmap currently.
-        MyBitmap texFromMemCache = texFromMemCache();
-        if (DBG)
-            Log.d(TAG, "texFromMemCache = " + texFromMemCache);
-        if (texFromMemCache == null) {
-            if (!prepareTexture())
-                return;
-        } else {
-            setPcWidth(texFromMemCache.mSingleLineWidth);
-            setPcHeight(texFromMemCache.mSingleLineHeight);
-            setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
-            mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
+        synchronized (AppController.sLock) {
+            MyBitmap texFromMemCache = texFromMemCache();
+            if (DBG)
+                Log.d(TAG, "texFromMemCache = " + texFromMemCache);
+            if (texFromMemCache == null) {
+                if (!prepareTexture())
+                    return;
+            } else {
+                setPcWidth(texFromMemCache.mSingleLineWidth);
+                setPcHeight(texFromMemCache.mSingleLineHeight);
+                setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
+
+                if (!MultiPicScrollObject.isMemoryEnough(getTexDim()))
+                    return;
+
+                mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
+            }
+
+            updatePageToTexId(0, 0);
+
+
+            if (DBG)
+                android.util.Log.i(TAG, "bmpSize[" + mPcWidth + ", " + getPcHeight() + "]");
+
+            initShapes();
+
+            setupMVP();
+
+            Matrix.setIdentityM(mMMatrix, 0);
+            // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
+
+            // GLES20.glUseProgram(mProgram);
+
+            GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
+
+            // Apply a ModelView Projection transformation
+            // Matrix.setIdentityM(mMMatrix, 0);
+            // Matrix.scaleM(mMMatrix, 0, (float)bitmapWidth / (float)bitmapHeight, (float)1.0f, 1.0f);
+            // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
+            //
+            // Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+            // Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+
+            GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
+            GLES20.glEnableVertexAttribArray(maPositionHandle);
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
+            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+
+            // Draw the triangle
+            GLES20.glDisable(GLES20.GL_CULL_FACE);
+            GLES20.glEnable(GLES20.GL_BLEND);
+            GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         }
-
-        updatePageToTexId(0, 0);
-
-        if (DBG)
-            android.util.Log.i(TAG, "bmpSize[" + mPcWidth + ", " + getPcHeight() + "]");
-
-        initShapes();
-
-        setupMVP();
-
-        Matrix.setIdentityM(mMMatrix, 0);
-        // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
-
-        // GLES20.glUseProgram(mProgram);
-
-        GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
-
-        // Apply a ModelView Projection transformation
-        // Matrix.setIdentityM(mMMatrix, 0);
-        // Matrix.scaleM(mMMatrix, 0, (float)bitmapWidth / (float)bitmapHeight, (float)1.0f, 1.0f);
-        // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
-        //
-        // Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-        // Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
-
-        GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-        GLES20.glEnableVertexAttribArray(maPositionHandle);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-        GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
-
-        // Draw the triangle
-        GLES20.glDisable(GLES20.GL_CULL_FACE);
-        GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private void setupMVP() {
@@ -311,6 +318,10 @@ public class SLPCTextObject {
                 return false;
             // In case the pc width or height is set too late.
             setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
+
+            if (!MultiPicScrollObject.isMemoryEnough(getTexDim()))
+                return false;
+
             mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
 
             // Always square.

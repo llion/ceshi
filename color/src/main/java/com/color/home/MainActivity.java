@@ -207,11 +207,11 @@ public class MainActivity extends Activity {
                 }
             } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
                 if (mIsScreenOff) {
+                    mIsScreenOff = false;
                     final File file = AppController.getInstance().getModel().getFile();
                     if (file != null) {
                         if (DBG)
                             Log.d(TAG, "screen on action received , previous file : " + file);
-                        mIsScreenOff = false;
                         startProgram(file);
                     }
                 }

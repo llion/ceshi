@@ -37,6 +37,7 @@ public class AppController extends Application {
     private final static String TAG = "AppController";
     private static final boolean  DBG = false;
     public static String sCharset = "GBK";
+    public final static Object sLock = new Object();
 
     /**
      * Global request queue for Volley

@@ -24,6 +24,7 @@ import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
+import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
@@ -86,6 +87,10 @@ public class TextObject extends SLPCTextObject {
         float measuredWidth = mPaint.measureText(text);
         int myw = (int) ensuredWidth(boundsAllText, measuredWidth);
         mPcWidth = myw;
+
+        if (!MultiPicScrollObject.isMemoryEnough(getTexDim()))
+            return false;
+
         mRealReadPcWidth = getRealReadPcWidth(mPcWidth, getPcHeight(), getTexDim());
 
         if (DBG)

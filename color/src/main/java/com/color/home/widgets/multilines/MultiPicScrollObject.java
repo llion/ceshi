@@ -20,6 +20,7 @@ import android.opengl.Matrix;
 import android.os.Process;
 import android.util.Log;
 
+import com.color.home.AppController;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.singleline.QuadGenerator;
@@ -92,7 +93,7 @@ public class MultiPicScrollObject {
     }
 
     void update() {
-        synchronized (MultiPicScrollObject.class) {
+        synchronized (AppController.sLock) {
             if (DBG)
                 Log.d(TAG, "update.");
         /* [Update Text Size] */
@@ -580,7 +581,7 @@ public class MultiPicScrollObject {
                 Log.d(TAG, " mTextureWidth= " + mTextureWidth);
 
             //judge the MemFree is enough or not
-            if (!isMemoryEnough())
+            if (!isMemoryEnough(mTextureWidth))
                 return false;
 
             int shortestDimFromPc = Math.min(mPcWidth, mPcHeight);
@@ -1291,11 +1292,9 @@ public class MultiPicScrollObject {
     }
 
     //memory free is enough or not
-    private boolean isMemoryEnough() {
+    public static boolean isMemoryEnough(int textureWidth) {
 
-        long memNeed = (mTextureWidth * mTextureWidth * 4) / 1048576L + 10;//MB
-        if (DBG)
-            Log.d(TAG, "isMemoryEnough. memNeed= " + memNeed);
+        long memNeed = (textureWidth * textureWidth * 4) / 1048576L + 10;//MB
 
         long memFree = getFreeMem();
 
@@ -1303,7 +1302,7 @@ public class MultiPicScrollObject {
             return true;
 
         if (DBG)
-            Log.d(TAG, "memFree < needMem. memFree= " + memFree + ", needMem= " + memNeed);
+            Log.d(TAG, "compare memFree and needMem in first time, memFree < needMem. memFree= " + memFree + ", needMem= " + memNeed);
         System.gc();
         try {
             Thread.sleep(3000L);
@@ -1323,7 +1322,8 @@ public class MultiPicScrollObject {
     }
 
     //compare memFree & memNeed
-    private boolean isMemFreeEnough(long memFree, long memNeed) {
+    private static boolean isMemFreeEnough(long memFree, long memNeed) {
+        Log.d(TAG, "isMemFreeEnough. memFree= " + memFree + ", memNeed= " + memNeed);
         if (memFree == 0L) {
             Log.e(TAG, "Bad mem info.");
             return false;
@@ -1337,7 +1337,7 @@ public class MultiPicScrollObject {
         return false;
     }
 
-    private long getFreeMem() {
+    private static long getFreeMem() {
         long memFree = 0L;
         RandomAccessFile reader = null;
         try {
