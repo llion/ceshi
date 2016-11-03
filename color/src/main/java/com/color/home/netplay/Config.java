@@ -159,25 +159,25 @@ public class Config implements ConfigAPI {
 
         String locale = pp.getProperty(ATTR_LOCALE);
         if (locale != null) {
-            mSp.edit().putString(ATTR_LOCALE, locale.trim()).commit();
+            mSp.edit().putString(ATTR_LOCALE, locale.trim()).apply();
         }
 
         String terminalName = pp.getProperty(ATTR_TERMINAL_NAME);
         if (terminalName != null) {
             if (isIsoFromTxtFile(pp))
                 terminalName = new String(terminalName.getBytes("ISO-8859-1"), "UTF-8");
-            mSp.edit().putString(ATTR_TERMINAL_NAME, terminalName.trim()).commit();
+            mSp.edit().putString(ATTR_TERMINAL_NAME, terminalName.trim()).apply();
         }
 
         // Add text file charset support. eg. "UTF-8", "GBK" (default).
         String charset = pp.getProperty(ATTR_TEXT_CHARSET);
         if (charset != null) {
-            mSp.edit().putString(ATTR_TEXT_CHARSET, charset.trim()).commit();
+            mSp.edit().putString(ATTR_TEXT_CHARSET, charset.trim()).apply();
         }
 
         String antiAlias = pp.getProperty(ATTR_TEXT_ANTIALIAS);
         if (antiAlias != null) {
-            mSp.edit().putString(ATTR_TEXT_ANTIALIAS, antiAlias.trim()).commit();
+            mSp.edit().putString(ATTR_TEXT_ANTIALIAS, antiAlias.trim()).apply();
         }
 
         if (pp.getProperty(ATTR_MOBILE_ENABLED) != null)

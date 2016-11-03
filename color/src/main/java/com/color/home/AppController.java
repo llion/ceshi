@@ -190,6 +190,15 @@ public class AppController extends Application {
 
     }
 
+    public void reportInternetLog(String description, int level, String others){
+        Intent intent = new Intent(Constants.ACTION_LOG_REPORTING);
+        intent.putExtra("description", description);
+        intent.putExtra("level", level);
+        intent.putExtra("others", others);
+
+        sendBroadcast(intent);
+    }
+
     public static String normPathNameInternalSdToSdcard(String pathNorm) {
         return pathNorm.replace("/mnt/internal_sd/", "/mnt/sdcard/");
     }

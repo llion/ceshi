@@ -9,10 +9,10 @@ import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.color.home.AppController;
-import com.color.home.provider.ColorContract;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,7 +26,7 @@ import libcore.io.IoUtils;
  */
 public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvider {
     final static String TAG = "WifiP2P";
-    static final boolean DBG = false;
+    static final boolean DBG = true;
     private static final int MESSAGE_RETRY = 1;
     private final int DELAY = 5000;
     private Context mContext;
@@ -349,9 +349,16 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
 
     public boolean updateAPInfo() {
         boolean isAPConfiged = mSp.getBoolean(Config.KEY_IS_WIFI_P2P, false);
+
+        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, isAPConfiged ? 1 : 0);
         String ssid = mSp.getString(Config.KEY_AP_SSID, "");
         String pass = mSp.getString(ConfigAPI.ATTR_AP_PASS, "");
         String channel = mSp.getString(ConfigAPI.ATTR_AP_CHANNEL, "6");
+        try {
+            Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, Integer.valueOf(channel));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
         if (DBG)
             Log.d(TAG, "updateAPInfo. [isAPConfiged=" + isAPConfiged
@@ -403,21 +410,21 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
         if (dirty) {
             if (DBG)
                 Log.d(TAG, "Dirty.");
-             updateDb(isAPConfiged, ssid, pass, channel);
+//             updateDb(isAPConfiged, ssid, pass, channel);
         }
 
         return dirty;
     }
 
-    private void updateDb(boolean isAPConfiged, String ssid, String pass, String channel) {
-        ContentValues values = new ContentValues(3);
-        values.put(ColorContract.COLUMN_ENABLED, isAPConfiged ? 1 : 0);
-        values.put(ColorContract.COLUMN_SSID, Wifi.normalize(ssid));
-        values.put(ColorContract.COLUMN_PASS, Wifi.normalize(pass));
-        // Not
-        values.put(ColorContract.COLUMN_RES1, Wifi.normalize(channel));
-        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_AP_CONTENT_URI, values, null, null);
-        if (DBG)
-            Log.d(TAG, "updateDb AP. [update=" + update);
-    }
+//    private void updateDb(boolean isAPConfiged, String ssid, String pass, String channel) {
+//        ContentValues values = new ContentValues(3);
+//        values.put(ColorContract.COLUMN_ENABLED, isAPConfiged ? 1 : 0);
+//        values.put(ColorContract.COLUMN_SSID, Wifi.normalize(ssid));
+//        values.put(ColorContract.COLUMN_PASS, Wifi.normalize(pass));
+//        // Not
+//        values.put(ColorContract.COLUMN_RES1, Wifi.normalize(channel));
+//        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_AP_CONTENT_URI, values, null, null);
+//        if (DBG)
+//            Log.d(TAG, "updateDb AP. [update=" + update);
+//    }
 }

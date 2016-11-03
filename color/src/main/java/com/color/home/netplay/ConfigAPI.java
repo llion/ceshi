@@ -12,6 +12,7 @@ public interface ConfigAPI {
     public static final String ATTR_WIFI_ISHIDDEN = "wifi.ishidden";
     public static final String ATTR_AP_SSID = "wifi.ap.ssid";
     public static final String ATTR_AP_PASS = "wifi.ap.pass";
+    public static final String ATTR_AP_ENABLED = "wifi.ap.enabled";
     public static final String ATTR_AP_CHANNEL = "wifi.ap.channel";
     public static final String ATTR_IS_WIFI_P2P = "is.wifi.p2p";
     // server.ip=10.193.250.193:8080

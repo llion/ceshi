@@ -14,7 +14,6 @@ import com.color.home.AppController;
 import com.color.home.netplay.Config;
 import com.color.home.netplay.ConfigAPI;
 import com.color.home.netplay.Wifi;
-import com.color.home.provider.ColorContract;
 
 public class Ethernet {
     private final static String TAG = "Ethernet";
@@ -146,13 +145,15 @@ public class Ethernet {
         EthernetManager ethManager = (EthernetManager) mContext.getSystemService(Context.ETHERNET_SERVICE);
         if (ethManager != null) {
             ethManager.setEthernetEnabled(false);
+            boolean isEthernetOn = false;
             try {
-                ethManager.setEthernetEnabled(System.getInt(mContentResolver, System.ETHERNET_ON) == 1);
+                isEthernetOn = System.getInt(mContentResolver, System.ETHERNET_ON) == 1;
+                ethManager.setEthernetEnabled(isEthernetOn);
             } catch (SettingNotFoundException e) {
                 e.printStackTrace();
             }
 
-            Log.i(TAG, "Enable ethernet.");
+            Log.i(TAG, "Enable ethernet =" + isEthernetOn);
         } else {
             Log.e(TAG, "get ethernet manager failed.");
         }
@@ -160,7 +161,7 @@ public class Ethernet {
 
     private void save() {
         if (mDirty) {
-            updateDb();
+//            updateDb();
 
             if (DBG)
                 Log.d(TAG, "save. [dirty and action.");
@@ -169,17 +170,17 @@ public class Ethernet {
         }
     }
 
-    private void updateDb() {
-        ContentValues values = new ContentValues(8);
-        values.put(ColorContract.COLUMN_ENABLED, mEnabled ? 1 : 0);
-        values.put(ColorContract.COLUMN_ISSTATIC, mStaticlan);
-        values.put(ColorContract.COLUMN_IP, Wifi.normalize(mIp));
-        values.put(ColorContract.COLUMN_MASK, Wifi.normalize(mNetmask));
-        values.put(ColorContract.COLUMN_GW, Wifi.normalize(mGw));
-        values.put(ColorContract.COLUMN_DNS1, Wifi.normalize(mDns1));
-        values.put(ColorContract.COLUMN_DNS2, Wifi.normalize(mDns2));
-        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_LAN_CONTENT_URI, values, null, null);
-        if (DBG)
-            Log.d(TAG, "updateDb LAN. [update=" + update);
-    }
+//    private void updateDb() {
+//        ContentValues values = new ContentValues(8);
+//        values.put(ColorContract.COLUMN_ENABLED, mEnabled ? 1 : 0);
+//        values.put(ColorContract.COLUMN_ISSTATIC, mStaticlan);
+//        values.put(ColorContract.COLUMN_IP, Wifi.normalize(mIp));
+//        values.put(ColorContract.COLUMN_MASK, Wifi.normalize(mNetmask));
+//        values.put(ColorContract.COLUMN_GW, Wifi.normalize(mGw));
+//        values.put(ColorContract.COLUMN_DNS1, Wifi.normalize(mDns1));
+//        values.put(ColorContract.COLUMN_DNS2, Wifi.normalize(mDns2));
+//        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_LAN_CONTENT_URI, values, null, null);
+//        if (DBG)
+//            Log.d(TAG, "updateDb LAN. [update=" + update);
+//    }
 }
