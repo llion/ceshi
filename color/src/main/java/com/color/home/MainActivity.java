@@ -175,14 +175,17 @@ public class MainActivity extends Activity {
         // }
 
         if (DBG)
-            Log.i(TAG, "onCreate. Present, /mnt/sdcard isSDPresent=" + new File(Constants.MNT_SDCARD).isDirectory());
+            Log.i(TAG, "onCreate. Present, /mnt/sdcard/Android isSDPresent=" + new File(Constants.MNT_SDCARD, "Android").isDirectory());
         // } else {
         // Log.e(TAG, "onCreate. isSDPresent=" + isInternalSDPresent);
         // }
 
         registerUsbSyncEvents();
+        if(DBG)
+            Log.d(TAG, "Before CopyProgress's constructor.");
         mCp = new CopyProgress(this);
-
+        if(DBG)
+            Log.d(TAG, "Before sending broadcast ACTION_COLOR_HOME_STARTED.");
         sendBroadcast(new Intent(Constants.ACTION_COLOR_HOME_STARTED));
 
         // register screen_on/off broadcast receiver
@@ -221,6 +224,8 @@ public class MainActivity extends Activity {
 
 
     private void registerUsbSyncEvents() {
+        if(DBG)
+            Log.d(TAG, "registerUsbSyncEvents..");
         IntentFilter intentFilter = new IntentFilter(Constants.ACTION_USB_SYNC_START);
         intentFilter.addAction(Constants.ACTION_USB_SYNCED);
         intentFilter.addAction(Intent.ACTION_MEDIA_REMOVED);

@@ -91,16 +91,16 @@ public class Config implements ConfigAPI {
 
             if (DBG)
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [serialno=" + serialno);
-            
+
 //            int [] candidateChannels = new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 //            int channelrandom = candidateChannels[new Random().nextInt(11)];
             int [] candidateChannels = new int[] {1, 6, 11};
             int channelrandom = candidateChannels[new Random().nextInt(3)];
-            
+
             if (DBG) {
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [Random channel=" + channelrandom);
             }
-            
+
             saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
             final Editor edit = mSp.edit();
             edit.putBoolean("FirstInit", false);

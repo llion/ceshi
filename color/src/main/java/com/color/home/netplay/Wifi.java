@@ -12,7 +12,7 @@ import com.color.home.network.WifiConnect;
 
 public class Wifi {
     private final static String TAG = "Wifi";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     final WifiConnect mWc;
 
     public Wifi(Properties pp) throws UnsupportedEncodingException {

@@ -220,9 +220,11 @@ public class SyncService extends CLIntentService {
                         // Parallel: the following service's thread differ from the appcontroller handler.
                         if (!new File(Constants.FOLDER_USB_0 + "/nocopy.txt").exists()) {
                             SyncUsbService.startService();
+                        }else {
+                            if(DBG)
+                                Log.d(TAG, "nocopy.txt exists. Play programs in usb..");
+                            mStrategy.onUsbMounted();
                         }
-
-                        mStrategy.onUsbMounted();
                     }
                     // } else if (intent.getData().toString().endsWith("/mnt/sdcard")) {
                     // mStrategy.onMntSdcardMounted();

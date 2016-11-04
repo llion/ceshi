@@ -26,7 +26,7 @@ import libcore.io.IoUtils;
  */
 public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvider {
     final static String TAG = "WifiP2P";
-    static final boolean DBG = true;
+    static final boolean DBG = false;
     private static final int MESSAGE_RETRY = 1;
     private final int DELAY = 5000;
     private Context mContext;

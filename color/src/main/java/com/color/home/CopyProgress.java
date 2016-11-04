@@ -16,6 +16,8 @@ public class CopyProgress {
     private FloatingLayout mFl;
 
     public CopyProgress(MainActivity context) {
+        if(DBG)
+            Log.d(TAG, "CopyProgress :: constructor.");
         mActivity = context;
     }
 

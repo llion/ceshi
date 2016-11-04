@@ -7,7 +7,8 @@
  [m
      private final static String TAG = "AppController";[m
 [31m-    private static final boolean  DBG = false;[m
-[32m+[m[32m    private static final boolean  DBG = true;[m[41m[m
+[32m+[m[32m    private static final boolean  DBG = false;[m[41m
+[m
      public static String sCharset = "GBK";[m
  [m
      /**[m
@@ -20,16 +21,24 @@
                  Log.d(TAG,[m
 [31m-                        "entryRemoved. [reqest GC, oldValue=" + oldValue + ", newValue=" + newValue + ", Thread=" + Thread.currentThread());[m
 [31m-            System.gc();[m
-[32m+[m[32m                        "entryRemoved. [request GC, evicted= " + evicted + ", oldValue=" + oldValue + ", newValue=" + newValue + ", Thread=" + Thread.currentThread());[m[41m[m
+[32m+[m[32m                        "entryRemoved. [request GC, evicted= " + evicted + ", oldValue=" + oldValue + ", newValue=" + newValue + ", Thread=" + Thread.currentThread());[m[41m
+[m
  [m
              super.entryRemoved(evicted, key, oldValue, newValue);[m
-[32m+[m[32m//            if (evicted && oldValue != null) {[m[41m[m
-[32m+[m[32m//                oldValue.mBitmap.recycle();[m[41m[m
-[32m+[m[32m//                oldValue.mBitmap = null;[m[41m[m
-[32m+[m[32m//                System.gc();[m[41m[m
-[32m+[m[32m//            }[m[41m[m
-[32m+[m[32m            System.gc();[m[41m[m
-[32m+[m[41m[m
+[32m+[m[32m//            if (evicted && oldValue != null) {[m[41m
+[m
+[32m+[m[32m//                oldValue.mBitmap.recycle();[m[41m
+[m
+[32m+[m[32m//                oldValue.mBitmap = null;[m[41m
+[m
+[32m+[m[32m//                System.gc();[m[41m
+[m
+[32m+[m[32m//            }[m[41m
+[m
+[32m+[m[32m            System.gc();[m[41m
+[m
+[32m+[m[41m
+[m
          }[m
      };[m
      /**[m
@@ -42,7 +51,7 @@
  public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishObserverable {[m
      // public class ItemMultiLinesMultipic extends ImageView implements OnPlayFinishObserverable, Runnable {[m
 [31m-    private static final boolean DBG = false;[m
-[32m+[m[32m    private static final boolean DBG = true;[m
+[32m+[m[32m    private static final boolean DBG = false;[m
      private static final boolean DBG_DRAW = false;[m
      // never public, so that another class won't be messed up.[m
      private final static String TAG = "ItemMultiLinesMultipic";[m
@@ -55,7 +64,7 @@
      // private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;[m
      private final static String TAG = "MultiPicScrollObject";[m
 [31m-    private static final boolean DBG = false;[m
-[32m+[m[32m    private static final boolean DBG = true;[m
+[32m+[m[32m    private static final boolean DBG = false;[m
      private static final boolean PNG_DBG = false;[m
      private static final boolean RENDER_DBG = false;[m
      private static final boolean MATRIX_DBG = false;[m
