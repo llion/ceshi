@@ -122,7 +122,13 @@ public class ProgramsViewer{
                         long resSize;
                         try {
                             String resPathSubStr = resPath.substring(resPath.lastIndexOf("_") + 1);
-                            resSize = Long.parseLong(resPathSubStr.substring(0, resPathSubStr.indexOf(".")));
+                            String resSizeStr = resPathSubStr.substring(0, resPathSubStr.indexOf("."));
+                            if (resSizeStr.contains("-")){
+                                resSizeStr = resSizeStr.substring(0, resSizeStr.indexOf("-"));
+                            }
+                            if (DBG)
+                                Log.d(TAG, "resSizeStr= " + resSizeStr);
+                            resSize = Long.parseLong(resSizeStr);
                             if(DBG)
                                 Log.d(TAG, "Program parse , resSize : " + resSize);
 
