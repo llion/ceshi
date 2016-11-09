@@ -1,6 +1,5 @@
 package com.color.home.netplay;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -47,10 +46,10 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
                     "enableApOnApplicable. isAPConfiged()=" + isAPConfiged() + ", Device, mWifiManager.isWifiApEnabled()="
                             + mWifiManager.isWifiApEnabled());
 
-        if (isAPConfiged()) {
+        if (isAPConfiged() && Config.isWifiModuleExists(mContext)) {
 //            if (!mWifiManager.isWifiApEnabled())
             // reenable is OK...
-                enable();
+            enable();
 //            else {
 //                if (DBG)
 //                    Log.d(TAG, "enableApOnApplicable. [ap configed and currently device is in AP, ignore.");
@@ -79,14 +78,14 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
 
         enableApOnApplicable();
     }
-    
+
     public static final class WifiP2PConfigManager extends AsyncTask<String,Object,Object> {
         private static final String TAG = WifiP2PConfigManager.class.getSimpleName();
 
         private final WifiManager wifiManager;
 
         public WifiP2PConfigManager(WifiManager wifiManager) {
-          this.wifiManager = wifiManager;
+            this.wifiManager = wifiManager;
         }
 
         @Override
@@ -118,7 +117,7 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
                 netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
                 netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
                 netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-                
+
                 netConfig.wepTxKeyIndex = Integer.parseInt(args[2]);
 
                 boolean result = wifiManager.setWifiApEnabled(null, false);
@@ -136,15 +135,15 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
             } catch (NoSuchFieldException e) {
                 Log.e(TAG, "get WifiConfiguration.KeyMgmt WPA2_PSK error.", e);
             }
-            
+
             return null; // don't care.
         }
     }
 
-    protected void enable() {
+    public void enable() {
         if (DBG)
             Log.d(TAG, "Async me");
-        
+
         new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mSSID, mPass, mChannel);
 
         // assertTrue(mWifiManager.setWifiApEnabled(null, true));
@@ -252,7 +251,7 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
                 public void run() {
                     if (DBG)
                         Log.i(TAG, "onSharedPreferenceChanged. Post mAPConfiged=" + mAPConfiged + ", Thread=" + Thread.currentThread());
-                    if (mAPConfiged) {
+                    if (mAPConfiged && Config.isWifiModuleExists(mContext)) {
                         // if (!mWifiManager.isWifiApEnabled()) {
                         enable();
                     } else {
@@ -369,7 +368,7 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
                     + ", mSSID=" + mSSID
                     + ", mPass=" + mPass
                     + ", mChannel=" + mChannel
-                    );
+            );
 
         boolean dirty = false;
         if (isAPConfiged != mAPConfiged) {
@@ -395,12 +394,12 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
 
             dirty = true;
         }
-        
+
         if (!channel.equals(mChannel)) {
             mChannel = channel;
             if (DBG)
                 Log.d(TAG, "updateAPInfo. [channel changed.");
-            
+
             dirty = true;
         }
 

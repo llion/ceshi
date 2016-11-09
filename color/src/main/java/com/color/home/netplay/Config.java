@@ -9,16 +9,18 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.Random;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -32,9 +34,9 @@ import com.color.home.network.Ethernet;
 
 /**
  * @author zzjd7382
- * 
+ *
  *         Config:V
- * 
+ *
  */
 public class Config implements ConfigAPI {
     public static final boolean DBG = false;;
@@ -62,7 +64,7 @@ public class Config implements ConfigAPI {
         mSp = getSharedPreferences(context);
 
         mFtpServer = new FtpServer();
-        
+
         setupDefaultAPIfFirstRun();
 
         // Read config if ext storage exist and has config.txt.
@@ -76,7 +78,7 @@ public class Config implements ConfigAPI {
 //            edit.putBoolean("FirstInit", true);
 //            edit.apply();
 //        }
-        
+
         if (mSp.getBoolean("FirstInit", true)) {
             String ro_serialno = SystemProperties.get("ro.serialno");
             String serialno = "0000";
@@ -189,7 +191,8 @@ public class Config implements ConfigAPI {
             saveSrvIpNportFromUsb(ip.trim());
 
         if (pp.getProperty(ATTR_WIFI_ENABLED) != null) {
-            new Wifi(pp);
+            if (isWifiModuleExists(mContext))
+                new Wifi(pp);
         }
 
         if (pp.getProperty(ATTR_IS_WIFI_P2P) != null)
@@ -320,44 +323,47 @@ public class Config implements ConfigAPI {
             if (isIsoFromTxtFile(pp))
                 ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
         }
-        
+
         if (ssid != null) {
             ssid = ssid.trim();
         }
-        
+
         if (pass != null) {
             pass = pass.trim();
         }
-        
+
         if (channel != null) {
             channel = channel.trim();
         }
-        
+
         saveAPInfo(apEnabledInUsb, ssid, pass, channel);
     }
 
     /**
      * Save ap info to shared preferences, which in turn notifies WifiP2P.
-     * 
+     *
      * @param enabled
      * @param ssid
      * @param pass
      * @param channel
      */
     private void saveAPInfo(final boolean enabled, String ssid, String pass, String channel) {
+        if (DBG)
+            Log.d(TAG, "saveAPInfo. enabled= " + enabled + ", ssid= " + ssid + ", pass= " + pass + ", channel= " + channel);
         final Editor edit = mSp.edit();
+
         if (ssid != null) {
             edit.putString(Config.KEY_AP_SSID, ssid);
         }
-        
+
         if (pass != null) {
             edit.putString(ConfigAPI.ATTR_AP_PASS, pass);
         }
-        
+
         if (channel != null) {
             edit.putString(ConfigAPI.ATTR_AP_CHANNEL, channel);
         }
-        
+
         // The KEY_IS_WIFI_P2P must be the last one to commit, because the listener is checking this one.
         // and upon receive this attrib's change notification, if will read SSID and PASS.
 
@@ -394,4 +400,54 @@ public class Config implements ConfigAPI {
         return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
+    public static String getDeviceModelName() {
+        String ro_serialno = SystemProperties.get("ro.serialno");
+        String modelname = "cx";
+        if (ro_serialno != null && ro_serialno.length() >= 5) {
+            modelname = ro_serialno.substring(3, 5).toLowerCase();
+        }
+        return modelname;
+    }
+
+
+    public static boolean isWifiModuleExists(Context context) {
+        //
+        String deviceName = getDeviceModelName();
+        if (DBG)
+            Log.d(TAG, "device model name= " + deviceName);
+
+        //
+        if ("c3".equals(deviceName) || "c4".equals(deviceName)) {
+            UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+            HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
+            if (DBG)
+                Log.d(TAG, "usbDevice number= " + usbDevices.size());
+            Iterator<UsbDevice> iterator = usbDevices.values().iterator();
+            while (iterator.hasNext()) {
+                UsbDevice usbDevice = iterator.next();
+
+                if (DBG) {
+                    Log.d(TAG, "DeviceId= " + usbDevice.getDeviceId() + ", DeviceName= " + usbDevice.getDeviceName() +
+                            ", ProductId= " + usbDevice.getProductId() + ", VendorId= " + usbDevice.getVendorId()
+                            + ", DeviceClass= " + usbDevice.getDeviceClass() + ", DeviceProtocol= " + usbDevice.getDeviceProtocol()
+                            + ", InterfaceCount= " + usbDevice.getInterfaceCount());
+
+                }
+
+                if (usbDevice.getProductId() == 33145 && usbDevice.getVendorId() == 3034) {
+                    if (DBG)
+                        Log.d(TAG, deviceName + ", wifi module exists.");
+                    return true;
+                }
+            }
+            if (DBG)
+                Log.d(TAG, deviceName + ", wifi module not exists.");
+            return false;
+
+        } else {
+            if (DBG)
+                Log.d(TAG, deviceName + ", wifi module exists.");
+            return true;
+        }
+    }
 }
