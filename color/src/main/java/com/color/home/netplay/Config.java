@@ -183,7 +183,7 @@ public class Config implements ConfigAPI {
         if (pp.getProperty(ATTR_MOBILE_ENABLED) != null)
             setMobileEnabled(pp);
 
-        Ethernet eth = new Ethernet(mContext, pp);
+        new Ethernet(mContext, pp);
         String ip = pp.getProperty(ATTR_SERVER_IP);
         if (ip != null)
             saveSrvIpNportFromUsb(ip.trim());
