@@ -350,7 +350,10 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
     public boolean updateAPInfo() {
         boolean isAPConfiged = mSp.getBoolean(Config.KEY_IS_WIFI_P2P, false);
 
-        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, isAPConfiged ? 1 : 0);
+        int apEnabledConfig = Settings.Global.getInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, -1);
+
+        if(apEnabledConfig != (isAPConfiged ? 1 : 0))
+            Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, isAPConfiged ? 1 : 0);
         String ssid = mSp.getString(Config.KEY_AP_SSID, "");
         String pass = mSp.getString(ConfigAPI.ATTR_AP_PASS, "");
         String channel = mSp.getString(ConfigAPI.ATTR_AP_CHANNEL, "6");
