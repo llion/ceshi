@@ -23,6 +23,7 @@ import com.color.home.ProgramParser.BgAudio;
 import com.color.home.ProgramParser.Page;
 import com.color.home.ProgramParser.Program;
 import com.color.home.ProgramParser.Region;
+import com.color.home.ProgramParser.Item;
 import com.color.home.R;
 import com.color.home.widgets.ItemImageView.FilePathAndDim;
 
@@ -153,9 +154,14 @@ public class PageView extends AbsoluteLayout {
         for (Region region : regions) {
             if (region != null) {
                 if (DBG)
-                    Log.i(TAG, "setupRegions. region = " + region);
+                    Log.i(TAG, "setupRegions. region = " + region + ", region.name= " + region.name);
 
-                RegionView regionView = (RegionView) li.inflate(R.layout.layout_region, null);
+                RegionView regionView;
+                if (isSinglelineScrollRegion(region))
+                    regionView = (SinglelineScrollRegionView) li.inflate(R.layout.layout_singleline_scroll_region, null);
+                else
+                    regionView = (RegionView) li.inflate(R.layout.layout_region, null);
+
                 mPlayedMap.put(regionView, false);
                 /*
                  * String type; if ("3".equals(region.type)) { regionView = new ImageRegionView(getContext()); } else { if (DBG) Log.i(TAG,
@@ -282,5 +288,37 @@ public class PageView extends AbsoluteLayout {
 
         // Not flipping.
 //        return false;
+    }
+
+    public static boolean isSinglelineScrollRegion(Region region) {
+
+        if ("singleline_scroll".equals(region.name) && region.items.size() >= 2) {
+            if (DBG)
+                Log.d(TAG, "isSinglelineScrollRegion. region name is singleline_scroll.");
+
+            int picNum = 0, textNum = 0;
+            for (Item item : region.items) {
+                if ("2".equals(item.type)) {
+                    picNum++;
+                } else if ("5".equals(item.type)) {
+                    if ("1".equals(item.isscroll))
+                        textNum++;
+                } else {
+                    if (DBG)
+                        Log.d(TAG, "isSinglelineScrollRegion. there is other type, type= " + item.type);
+                    return false;
+                }
+
+            }
+
+            if (DBG)
+                Log.d(TAG, "picNum= " + picNum + ", textNum= " + textNum);
+            if (picNum > 0 && textNum > 0) {
+                return true;
+            }
+
+        }
+
+        return false;
     }
 }
