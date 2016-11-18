@@ -99,7 +99,7 @@ public class Texts {
 
     }
 
-    private String getStringFromFile(String absFilePath) {
+    public static String getStringFromFile(String absFilePath) {
         String fileContent = "";
         final int BUFLEN = 1024;
         BufferedInputStream is = null;
@@ -137,7 +137,7 @@ public class Texts {
                 fileContent = new String(baos.toByteArray(), AppController.sCharset);
 
             if (DBG)
-                Log.d(TAG, "isUTF8= " + isUTF8 + ", isUNICODE= " + isUNICODE + ", isUNICODEBE= " + isUNICODEBE);
+                Log.d(TAG, "getStringFromFile. isUTF8= " + isUTF8 + ", isUNICODE= " + isUNICODE + ", isUNICODEBE= " + isUNICODEBE);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -150,7 +150,7 @@ public class Texts {
             }
         }
         if (DBG)
-            Log.d(TAG, "fileContent= " + fileContent);
+            Log.d(TAG, "getStringFromFile. fileContent= " + fileContent);
         return fileContent;
     }
 

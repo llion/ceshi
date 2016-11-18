@@ -48,7 +48,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             42, 43, 44, 45, 46, 47, 48};
 
 
-    private Region mRegion;
+    protected Region mRegion;
     private PageView mPageView;
 
     private Drawable mDrawable;
@@ -195,7 +195,8 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         mIsAttached = true;
         // Must setupItems after the window attached, otherwise, there no is initial appearing animation.
         // TODO: Try catch. HMH 0819
-        setupItems();
+        if (!PageView.isSinglelineScrollRegion(mRegion))
+            setupItems();
     }
 
     @Override
@@ -347,7 +348,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     public void onPlayFinished(final View view) {
         if (DBG)
             Log.i(TAG, "OnPlayFinished. view = " + view + ", getDisplayedChild()=" + getDisplayedChild()
-                    + ", getAdapter().getCount()=" + getAdapter().getCount() + ", this= " + this + ", parent= " + this.getParent());
+                    + ", this= " + this + ", parent= " + this.getParent());
 
         post(new Runnable() {
 

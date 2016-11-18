@@ -549,6 +549,25 @@ public class ProgramParser {
 
         }
 
+        public HashCode getSinglelineScrollTextBitmapHash(String text) {
+            if (mHash != null)
+                return mHash;
+
+            final String idString = logfont.getIdString();
+            int length = text.length();
+
+            final StringBuilder sb = new StringBuilder(length + idString.length() + 26);
+            sb.append(text).append(textColor).append(backcolor).append(beglaring).append(idString);
+            mHash = Hashing.sha1().hashString(sb.toString(), Charset.forName("UTF-16"));
+            if (DBG) {
+                Log.d(TAG, "getSinglelineScrollTextBitmapHash. [sb=" + sb.toString() + ", mHash=" + mHash
+                        + ", textColor = " + textColor + ", backcolor = " + backcolor + ", beglaring = " + beglaring);
+            }
+
+            return mHash;
+
+        }
+
         private Object mMeta;
 
         public Object getMeta() {
