@@ -1,12 +1,15 @@
 package com.color.home.netplay;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.color.home.netplay.receiver.UsbAttachedReceiver;
+
 /**
  * @author zzjd7382
- * 
+ *
  *         Connectivity:V
  */
 public class Connectivity {
@@ -38,6 +41,15 @@ public class Connectivity {
             Log.i(TAG, "initWifiP2P. Thread=" + Thread.currentThread());
 
         mWifiP2P = new WifiP2P(mContext);
+        //
+        String deviceName = Config.getDeviceModelName();
+        if (DBG)
+            Log.i(TAG, "initWifiP2P. deviceName=" + deviceName);
+        if ("c3".equals(deviceName) || "c4".equals(deviceName)) {
+            IntentFilter filter = new IntentFilter("android.hardware.usb.action.USB_DEVICE_ATTACHED");
+//        filter.addAction("android.hardware.usb.action.USB_DEVICE_DETACHED");
+            mContext.registerReceiver(new UsbAttachedReceiver(mWifiP2P), filter);
+        }
 
         if (DBG) {
             if (mWifiP2P.isAPConfiged()) {
