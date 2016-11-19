@@ -42,7 +42,7 @@ public class SinglineScrollObject {
     private final static String TAG = "SinglineScrollObject";
     private static final boolean DBG = false;
     private static final int MAX_DRAW_TEXT_WIDTH = 33000;
-    private boolean DBG_PNG = true;
+    private boolean DBG_PNG = false;
     private static final boolean DBG_MATRIX = false;
     private boolean DBG_READ = false;
 
@@ -334,7 +334,8 @@ public class SinglineScrollObject {
 
             if (DBG)
                 Log.d(TAG, "mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight
-                        + ", mBeginXinTexture= " + mBeginXinTexture + ", mBeginXinTexture= " + mBeginYinTexture);
+                        + ", mBeginXinTexture= " + mBeginXinTexture + ", mBeginYinTexture= " + mBeginYinTexture
+                 + ", mTexDim= " + getTexDim());
 
             if (DBG)
                 Log.d(TAG, "addBitmapToMemoryCache. mKey= " + mKey);
@@ -377,14 +378,20 @@ public class SinglineScrollObject {
         if (mItems != null){
             String text;
             for (Item item : mItems) {
-                if ("2".equals(item.type) && (item.filesource != null))
-                    mKey += ("_" + item.filesource.MD5);
-                else if ("5".equals(item.type)) {
+                if ("2".equals(item.type) && (item.filesource != null)) {
+                    if (!TextUtils.isEmpty(item.filesource.MD5))
+                        mKey += ("_" + item.filesource.MD5);
+                    else
+                        mKey += ("_" + item.filesource.filepath);
+
+                } else if ("5".equals(item.type)) {
                     text = getText(item);
                     if (!TextUtils.isEmpty(text))
                         mKey += ("_" + item.getSinglelineScrollTextBitmapHash(text));
                 }
             }
+
+            mKey += ("_" + mTextSize);
         }
 
         if (DBG)
@@ -684,13 +691,13 @@ public class SinglineScrollObject {
     private void setupPaint(Paint paint) {
         paint.setTextSize(mTextSize);
         paint.setAntiAlias(AppController.getInstance().getCfg().isAntialias());
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SCREEN));
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
     }
 
     private void setupPaint(Paint paint, Item item) {
         if (DBG)
             Log.d(TAG, "setupPaint. [paint antialis=" + paint.isAntiAlias()
-                    + ", linear=" + paint.isLinearText());
+                    + ", linear=" + paint.isLinearText() + ", textColor= " + item.textColor);
         paint.setColor(GraphUtils.parseColor(item.textColor));
 
         if (item.logfont != null && "1".equals(item.logfont.lfUnderline)) {
@@ -1015,7 +1022,7 @@ public class SinglineScrollObject {
         options.inJustDecodeBounds = true;
 
         String type, text = null;
-        int myw, nextHeight, picWidth, picHeight, scale, pcWidth = 0;
+        int myw, pcWidth = 0;
         Rect bounds = new Rect();
         float measureWidth;
 
@@ -1024,18 +1031,11 @@ public class SinglineScrollObject {
             type = item.type;
             if ("2".equals(type)) {
                 BitmapFactory.decodeFile(item.getAbsFilePath(), options);
-                picWidth = options.outWidth;
-                picHeight = options.outHeight;
-                scale = 1;
-                nextHeight = picHeight;
-                while (nextHeight > mPcHeight) {
-                    scale <<= 1;
-                    nextHeight >>= 1;
-                }
-                pcWidth += picWidth / scale;
+                pcWidth += options.outWidth / (options.outHeight / ((float)getPcHeight()));
                 if (DBG)
-                    Log.d(TAG, "calculatePcWidth. picture item picWidth= " + picWidth + ", picHeight= " + picHeight
-                            + ", scale= " + scale + ", pcWidth= " + pcWidth);
+                    Log.d(TAG, "calculatePcWidth. original bitmap width= " + options.outWidth + ", height= " + options.outHeight
+                     + ", pcHeight= " + getPcHeight() + ", picture need width= " + options.outWidth / (options.outHeight / ((float)getPcHeight()))
+                     + ", pcWidth= " + pcWidth);
 
             } else if ("5".equals(type)) {
 
@@ -1078,9 +1078,9 @@ public class SinglineScrollObject {
         int sampleSize = 1;
         sBitmapOptionsCache.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(filePath, sBitmapOptionsCache);
-        int nextHeight = sBitmapOptionsCache.outHeight;
+        int nextHeight = sBitmapOptionsCache.outHeight >> 1;
         if (DBG)
-            Log.d(TAG, "original bitmap pcHeight= " + nextHeight);
+            Log.d(TAG, "original bitmap width= " + sBitmapOptionsCache.outWidth + ", height= " + sBitmapOptionsCache.outHeight);
         while (nextHeight > pcHeight) {
             sampleSize <<= 1;
             nextHeight >>= 1;
@@ -1093,6 +1093,26 @@ public class SinglineScrollObject {
         sBitmapOptionsCache.inJustDecodeBounds = false;
         sBitmapOptionsCache.inPurgeable = true;
         Bitmap bitmap = BitmapFactory.decodeFile(filePath, sBitmapOptionsCache);
+
+        if (DBG)
+            Log.d(TAG, "getBitmap. after decode, bitmap.width= " + bitmap.getWidth() + ", bitmap.height= " + bitmap.getHeight());
+        if (bitmap.getHeight() > getPcHeight()){
+            android.graphics.Matrix matrix = new android.graphics.Matrix();
+            // 计算宽高缩放率
+            float scaleWidth = getPcHeight() / ((float)bitmap.getHeight());
+            float scaleHeight = scaleWidth;
+            if (DBG)
+                Log.d(TAG, "scaleWidth= " + scaleWidth);
+            // 缩放图片动作
+            matrix.postScale(scaleWidth, scaleHeight);
+            Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            if (DBG)
+                Log.d(TAG, "getBitmap. newBitmap width= " + newBitmap.getWidth() + ", height= " + newBitmap.getHeight());
+//            bitmap.recycle();
+//            bitmap = null;
+//            System.gc();
+            return newBitmap;
+        }
 
         return bitmap;
 
