@@ -76,8 +76,11 @@ public class ProgramsViewer{
             InputStream in = null;
             try {
 
-                if(!validateFile(mVsnFile))
+                if(!validateFile(mVsnFile)) {
+                    AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
+                            "VsnFile does not exist. : (" + mVsnFile + ")" , 5, "", mVsnFile.getName(), mVsnFile.getName());
                     throw new Exception("VsnFile does not exist. : (" + mVsnFile + ")");
+                }
 
                 ProgramParser pp = new ProgramParser(mVsnFile);
 
@@ -103,14 +106,19 @@ public class ProgramsViewer{
 
                     if(resFile.toString().endsWith("mulpic") ) {
                         if (!isGoodMulpic(resFile)) {
+                            AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
+                                    "Invalid asset : (" + resPath + ")" , 5, "", mVsnFile.getName(), resPath);
                             throw new Exception("Invalid asset : (" + resPath + ")");
                         }
 
                         continue;
                     }
 
-                    if(!validateFile(resFile))
+                    if(!validateFile(resFile)) {
+                        AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
+                                "asset does not exist. : (" + resFile + ")" , 5, "", mVsnFile.getName(), resFile.getName());
                         throw new Exception("asset does not exist. : (" + resFile + ")");
+                    }
 
                     String md5Tag = SyncService.getMd5Tag(resPath);
                     if(DBG)
@@ -142,8 +150,11 @@ public class ProgramsViewer{
                             continue;
                         }
 
-                        if (resSize != resFile.length())
+                        if (resSize != resFile.length()) {
+                            AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
+                                    "asset does not exist. : (" + resFile + ")" , 5, "", mVsnFile.getName(), resFile.getName());
                             throw new Exception("Illegal asset file : (" + resPath + ")");
+                        }
 
                     }
                 }

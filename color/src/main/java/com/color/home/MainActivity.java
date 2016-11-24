@@ -309,7 +309,7 @@ public class MainActivity extends Activity {
                 File vsnFile = generateVsnFile(false, path, fileName);
                 if(mIsScreenOff){
                     Log.e(TAG, "Attempt to start program while the screen is off.", new Exception("Bad time to start program."));
-                    AppController.getInstance().reportInternetLog("Attempt to start program while the screen is off.", 4, "");
+                    AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_BAD_OPERATION, "Attempt to start program while the screen is off.", 4, "");
                     AppController.getInstance().getModel().setCurProgramPathFile(vsnFile);
                     AppController.getInstance().markProgram(vsnFile);
                 }else {

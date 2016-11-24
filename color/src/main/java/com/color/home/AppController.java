@@ -190,11 +190,19 @@ public class AppController extends Application {
 
     }
 
-    public void reportInternetLog(String description, int level, String others){
+    public static final String LOG_TYPE_PROGRAM = "log.type.program";
+    public static final String LOG_TYPE_UPDATING = "log.type.failed_updating";
+    public static final String LOG_TYPE_CONNECTIVITY = "log.type.connectivity";
+    public static final String LOG_TYPE_DEVICE = "log.type.device";
+    public static final String LOG_TYPE_BAD_OPERATION = "log.type.bad_operation";
+
+    public void reportInternetLog(String log_type, String description, int level, String others, String... args){
         Intent intent = new Intent(Constants.ACTION_LOG_REPORTING);
+        intent.putExtra("log_type", log_type);
         intent.putExtra("description", description);
         intent.putExtra("level", level);
         intent.putExtra("others", others);
+        intent.putExtra("args", args);
 
         sendBroadcast(intent);
     }
@@ -420,8 +428,6 @@ public class AppController extends Application {
         cheatSheet.setGravity(Gravity.TOP | Gravity.LEFT, 0, 0);
         cheatSheet.show();
     }
-
-
 
 //    LinearLayout mToastGroup;
 //    private void toastMe(Context context, String text, int duration) {
