@@ -6,10 +6,17 @@ import java.util.List;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextPaint;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.StyleSpan;
+import android.util.Log;
 
 public class PageSplitter {
+
+    private static final boolean DBG = false;
+    private final static String TAG = "PageSplitter";
+
     private final int pageWidth;
     private final int pageHeight;
     private final float lineSpacingMultiplier;
@@ -21,19 +28,28 @@ public class PageSplitter {
     private int pageContentHeight;
     private int currentLineWidth;
     private int textLineHeight;
+    private BackgroundColorSpan backgroundColorSpan;
+    private int textSize;
 
-    public PageSplitter(int pageWidth, int pageHeight, float lineSpacingMultiplier, int lineSpacingExtra) {
+    public PageSplitter(int pageWidth, int pageHeight, float lineSpacingMultiplier, int lineSpacingExtra, BackgroundColorSpan backgroundColorSpan, int textSize) {
         this.pageWidth = pageWidth;
         this.pageHeight = pageHeight;
         this.lineSpacingMultiplier = lineSpacingMultiplier;
         this.lineSpacingExtra = lineSpacingExtra;
+        this.backgroundColorSpan = backgroundColorSpan;
+        this.textSize = textSize;
     }
 
     public void append(String text, TextPaint textPaint) {
         textLineHeight = (int) Math.ceil(textPaint.getFontMetrics(null) * lineSpacingMultiplier + lineSpacingExtra);
+        if (DBG)
+            Log.d(TAG, "append. textLineHeight= " + textLineHeight + ", textPaint.getFontMetrics(null)= "+ textPaint.getFontMetrics(null));
+
         String[] paragraphs = text.split("\n", -1);
         int i;
         for (i = 0; i < paragraphs.length - 1; i++) {
+            if (DBG)
+                Log.d(TAG, "append. i= " + i);
             appendText(paragraphs[i], textPaint);
             appendNewLine();
         }
@@ -41,21 +57,32 @@ public class PageSplitter {
     }
 
     private void appendText(String text, TextPaint textPaint) {
+        if (DBG)
+            Log.d(TAG, "appendText. text= " + text);
         String[] words = text.split(" ", -1);
+
         int i;
         for (i = 0; i < words.length - 1; i++) {
+            if (DBG)
+                Log.d(TAG, "appendText. i= " + i);
             appendWord(words[i] + " ", textPaint);
         }
         appendWord(words[i], textPaint);
     }
 
     private void appendNewLine() {
+        if (DBG)
+            Log.d(TAG, "appendNewLine." );
         currentLine.append("\n");
         checkForPageEnd();
         appendLineToPage(textLineHeight);
     }
 
     private void checkForPageEnd() {
+        if (DBG)
+            Log.d(TAG, "checkForPageEnd. currentPage= " + currentPage
+                    + ", pageContentHeight + currentLineHeight= " + (pageContentHeight + currentLineHeight)
+             + ", pageHeight= " + pageHeight);
         if (pageContentHeight + currentLineHeight > pageHeight) {
             pages.add(currentPage);
             currentPage = new SpannableStringBuilder();
@@ -64,7 +91,14 @@ public class PageSplitter {
     }
 
     private void appendWord(String appendedText, TextPaint textPaint) {
+
+        if (DBG)
+            Log.d(TAG, "appendWord. appendedText= " + appendedText);
         int textWidth = (int) Math.ceil(textPaint.measureText(appendedText));
+        if (DBG)
+            Log.d(TAG, "appendWord. textWidth= " + textWidth + ", currentLineWidth + textWidth= " + (currentLineWidth + textWidth)
+             + ", pageWidth= " + pageWidth);
+
         if (currentLineWidth + textWidth >= pageWidth) {
             checkForPageEnd();
             appendLineToPage(textLineHeight);
@@ -73,6 +107,9 @@ public class PageSplitter {
     }
 
     private void appendLineToPage(int textLineHeight) {
+        if (DBG)
+        Log.d(TAG, "appendLineToPage. currentLine= " + currentLine + ", currentPage= " + currentPage);
+
         currentPage.append(currentLine);
         pageContentHeight += currentLineHeight;
 
@@ -82,6 +119,8 @@ public class PageSplitter {
     }
 
     private void appendTextToLine(String appendedText, TextPaint textPaint, int textWidth) {
+        if (DBG)
+            Log.d(TAG, "appendTextToLine. currentLine= " + currentLine);
         currentLineHeight = Math.max(currentLineHeight, textLineHeight);
         currentLine.append(renderToSpannable(appendedText, textPaint));
         currentLineWidth += textWidth;
@@ -100,11 +139,18 @@ public class PageSplitter {
     }
 
     private SpannableString renderToSpannable(String text, TextPaint textPaint) {
+        if (DBG)
+            Log.d(TAG, "renderToSpannable. text= " + text);
+
         SpannableString spannable = new SpannableString(text);
 
         if (textPaint.isFakeBoldText()) {
             spannable.setSpan(new StyleSpan(Typeface.BOLD), 0, spannable.length(), 0);
         }
+
+        if (DBG)
+            Log.d(TAG, "renderToSpannable. spannable.length= " + spannable.length() + ", text.length= " + text.length());
+        spannable.setSpan(backgroundColorSpan, 0, spannable.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         return spannable;
     }
 }

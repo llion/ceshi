@@ -361,7 +361,7 @@ public class ItemsAdapter extends BaseAdapter {
                     } else {
                         ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
                                 R.layout.layout_multilines_paged_text, null);
-                        view.setItem(mRegionView, mRegion, item);
+                        view.setItem(mRegionView, item);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
                         return view;
