@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextPaint;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -15,13 +15,16 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.widget.TextView;
 
+import com.android.internal.util.FastMath;
+import com.color.home.AppController;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.LogFont;
 import com.color.home.ProgramParser.Region;
+import com.color.home.Texts;
 import com.color.home.utils.GraphUtils;
+import com.color.home.widgets.MultilinePageSplitter;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
-import com.color.home.widgets.PageSplitter;
 import com.color.home.widgets.RegionView;
 
 public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObserverable, Runnable {
@@ -29,17 +32,16 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemMultiLinesPagedText";
 
-    private TextView mTv;
+    //    private TextView mTv;
     private Item mItem;
-    private int mHeight;
     private OnPlayFinishedListener mListener;
-    private PageSplitter mPageSplitter;
-    private TextPaint mTextPaint;
+    private MultilinePageSplitter mPageSplitter;
     private String mText;
-    private boolean mIsAttached;
     private int mPageIndex;
-    private long mItemDuration;
-    private boolean mCenteralAlign;
+    private int mRealPlaytimes = 1;
+    private int mNeedPlayTimes;
+    private int mOnePicDuration = 2000;
+    private boolean isFirst = true;
 
     public ItemMultiLinesPagedText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -53,81 +55,192 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         super(context);
     }
 
-    public void setItem(RegionView regionView, Region region, Item item) {
+    public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
         this.mItem = item;
-        mTv = this;
 
-        // From file normally.
-        mText = item.getTexts().mText;
+        setMultilineText();
 
-        // Color.
+        try {
+            mOnePicDuration = Integer.parseInt(item.multipicinfo.onePicDuration);
+            mNeedPlayTimes = Integer.parseInt(item.playTimes);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (DBG)
+            Log.d(TAG, "need play times= " + mNeedPlayTimes);
+        if (mNeedPlayTimes < 1){
+            removeCallbacks(this);
+            post(this);
+            return;
+        }
+
+        int backcolor;
+        if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor)) {
+            if ("0xFF010000".equals(item.backcolor)) {
+                backcolor = GraphUtils.parseColor("0xFF000000");
+            } else {
+                backcolor = GraphUtils.parseColor(item.backcolor);
+            }
+        } else
+            backcolor = GraphUtils.parseColor("0x00000000");
+        setBackgroundColor(backcolor);
+
+        if (TextUtils.isEmpty(mText)){
+            if (DBG)
+                Log.d(TAG, "text is empty.");
+            removeCallbacks(this);
+            postDelayed(this, mOnePicDuration);
+            return;
+        }
+
         if (!TextUtils.isEmpty(item.textColor))
-            mTv.setTextColor(GraphUtils.parseColor(item.textColor));
-        if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor))
-            mTv.setBackgroundColor(GraphUtils.parseColor(item.backcolor));
+            setTextColor(GraphUtils.parseColor(item.textColor));
 
         if (item.alhpa != null)
-            mTv.setAlpha(Float.parseFloat(item.alhpa));
-        // Size.
+            setAlpha(Float.parseFloat(item.alhpa));
+
+        getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
+
         LogFont logfont = item.logfont;
         if (logfont != null) {
+
+            // Size.
             if (logfont.lfHeight != null) {
-                mTv.setTextSize(TypedValue.COMPLEX_UNIT_PX, Integer.parseInt(logfont.lfHeight) * 1.1f);
+                setTextSize(TypedValue.COMPLEX_UNIT_PX, Integer.parseInt(logfont.lfHeight));
             }
-            int typeface = Typeface.NORMAL;
+
+            //style
+            int style = Typeface.NORMAL;
             if ("1".equals(logfont.lfItalic)) {
-                typeface = Typeface.ITALIC;
+                style = Typeface.ITALIC;
             }
             if ("700".equals(logfont.lfWeight)) {
-                typeface |= Typeface.BOLD;
+                style |= Typeface.BOLD;
             }
             if ("1".equals(logfont.lfUnderline)) {
-                mTv.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
+                getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
             }
-            mTv.setTypeface(mTv.getTypeface(), typeface);
-        }
 
-        mItemDuration = Integer.parseInt(item.duration);
+            Typeface typeface = AppController.getInstance().getTypeface(logfont.lfFaceName);
+            if (typeface == null)
+                typeface = Typeface.defaultFromStyle(style);
 
-        mPageSplitter = new PageSplitter(getRegionWidth(region), getRegionHeight(region), 1, 0);
-        // mTextPaint = new TextPaint();
-        // mTextPaint.setTextSize(mTv.getTextSize());
-        mPageSplitter.append(mText, mTv.getPaint());
-        
-        mCenteralAlign = "1".equals(item.centeralalign);
-        if (mCenteralAlign) {
             if (DBG)
-                Log.d(TAG, "setItem. [CENTER_HORIZONTAL");
-            setGravity(Gravity.CENTER_HORIZONTAL);
+                Log.d(TAG, "style= " + style + ", lfFaceName= " + logfont.lfFaceName + ", typeface= " + typeface);
+
+            setTypeface(typeface, style);
+
+            setLineSpacing(getLineSpacingExtra(logfont), 1.0f);
+            if (DBG)
+                Log.d(TAG, "lineHeight= " +  FastMath.round(getPaint().getFontMetrics(null) * 1.0f + getLineSpacingExtra(logfont)));
         }
 
-        mPageIndex = 0;
-        setPageText();
         if (DBG)
-            Log.i(TAG, "onLayout. center align. page 0=" + mPageSplitter.getPages().get(0));
+            Log.d(TAG, "centeralAlign= " + item.centeralalign);
 
+        if ("1".equals(item.centeralalign)) {//居中
+            setGravity(Gravity.CENTER);
+
+        } else if ("2".equals(item.centeralalign)) {//居右
+            setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        }
+
+    }
+
+    private void setMultilineText() {
+        if (mItem.filesource != null) {
+            String filepath = mItem.filesource.filepath;
+
+            if (!TextUtils.isEmpty(filepath) && filepath.endsWith(".txt")) {
+                // We have a file.
+                String absFilePath = AppController.getPlayingRootPath() + "/" + filepath;
+                mText = Texts.getStringFromFile(absFilePath);
+            } else
+                mText = mItem.text;
+
+        } else
+            mText = mItem.text;
+    }
+
+    private float getLineSpacingExtra(LogFont logcat) {
+        return Integer.parseInt(logcat.lfHeight) / 4;
+//        return 2.0f;
     }
 
     private void setPageText() {
-        mTv.setText(mPageSplitter.getPages().get(mPageIndex));
-    }
-
-    private int getRegionHeight(Region region) {
-        return Integer.parseInt(region.rect.height);
-    }
-
-    private int getRegionWidth(Region region) {
         if (DBG)
-            Log.i(TAG, "getRegionWidth. region=" + region);
-        return Integer.parseInt(region.rect.width);
+            Log.i(TAG, "setPageText. mPageIndex= " + mPageIndex);
+        setText(mPageSplitter.getPages().get(mPageIndex));
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+
+        if (isFirst && !TextUtils.isEmpty(mText) && mNeedPlayTimes >= 1) {
+            setVisibility(INVISIBLE);
+//            int textBackColor = GraphUtils.parseColor("0xFF004040");
+//        if (!TextUtils.isEmpty(item.textBackColor) && !"0xFF000000".equals(item.textBackColor)) {
+//            if ("0xFF010000".equals(item.textBackColor)) {
+//                textBackColor = GraphUtils.parseColor("0xFF000000");
+//            } else {
+//                textBackColor = GraphUtils.parseColor(item.textBackColor);
+//            }
+//        }
+//            BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(textBackColor);
+
+            int maxLineNumPerPage = this.getHeight() / this.getLineHeight() + (this.getHeight() % this.getLineHeight() >= (int)this.getPaint().getFontMetrics(null) ? 1 : 0);
+            if(maxLineNumPerPage < 1)
+                maxLineNumPerPage = 1;//最少显示1行
+
+            if (DBG)
+                Log.d(TAG, "onLayout. lineHeight= " + this.getLineHeight() + ", this.height= " + this.getHeight()
+                 + ", getLineSpacingExtra= " + getLineSpacingExtra()
+                + ", maxLineNumPerPage= " + maxLineNumPerPage);
+
+            mPageSplitter = new MultilinePageSplitter(maxLineNumPerPage, this);
+            mPageSplitter.append(mText);
+
+            setVisibility(VISIBLE);
+            mPageIndex = 0;
+            setPageText();
+
+            if (mPageSplitter.getPages().size() > 1) {
+                mHandler = new MTextMarquee(this, mOnePicDuration);
+                mHandler.start();
+            }
+
+            isFirst = false;
+        }
+
+        if (DBG) {
+            Log.i(TAG, "onLayout, isFirst= " + isFirst + ", layout= " + getLayout() + ", line count= " + getLineCount());
+            Layout layout = getLayout();
+            if (layout != null) {
+                for (int i = 0; i < getLineCount(); i++) {
+                    Log.d(TAG, "i= " + i + ", layout.getLineStart(i)= " + layout.getLineStart(i) +
+                            ", layout.getLineEnd(i)= " + layout.getLineEnd(i));
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (DBG)
+            Log.i(TAG, "onAttachedToWindow. layout= " + this.getLayout());
+
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        if (DBG)
+            Log.i(TAG, "onDetachedFromWindow");
 
-        mIsAttached = false;
         removeCallbacks(this);
 
         if (mHandler != null) {
@@ -136,20 +249,6 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         }
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        mIsAttached = true;
-
-        // Schedule item time up.
-        removeCallbacks(this);
-        postDelayed(this, mItemDuration);
-
-        if (mPageSplitter.getPages().size() > 1) {
-            mHandler = new MTextMarquee(this);
-            mHandler.start();
-        }
-    }
 
     MTextMarquee mHandler;
 
@@ -174,11 +273,15 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     public void nextPage() {
         mPageIndex++;
         if (mPageIndex >= mPageSplitter.getPages().size()) {
+            if (mRealPlaytimes == mNeedPlayTimes)
+                tellListener();
+
+            mRealPlaytimes++;
             mPageIndex = 0;
         }
 
         if (DBG)
-            Log.i(TAG, "run. next page. mPageIndex=" + mPageIndex);
+            Log.i(TAG, "next page. mPageIndex=" + mPageIndex);
         setPageText();
     }
 
@@ -190,14 +293,16 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     private static final class MTextMarquee extends Handler {
         private final static String TAG = "MTextMarquee";
         private static final boolean DBG = false;
-        private static final int MARQUEE_DELAY = 5000; // 5 sec.
         private static final int MESSAGE_TICK = 0x1;
+        private int MARQUEE_DELAY;
+
 
         private final WeakReference<ItemMultiLinesPagedText> mView;
         private boolean mShouldStop;
 
-        public MTextMarquee(ItemMultiLinesPagedText view) {
+        public MTextMarquee(ItemMultiLinesPagedText view, int onePicDuration) {
             mView = new WeakReference<ItemMultiLinesPagedText>(view);
+            MARQUEE_DELAY = onePicDuration;
         }
 
         public void start() {
@@ -211,15 +316,15 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-            case MESSAGE_TICK:
-                if (mShouldStop) {
-                    if (DBG)
-                        Log.d(TAG, "handleMessage. [mShouldStop");
-                    return;
-                }
+                case MESSAGE_TICK:
+                    if (mShouldStop) {
+                        if (DBG)
+                            Log.d(TAG, "handleMessage. [mShouldStop");
+                        return;
+                    }
 
-                tick();
-                break;
+                    tick();
+                    break;
             }
         }
 
