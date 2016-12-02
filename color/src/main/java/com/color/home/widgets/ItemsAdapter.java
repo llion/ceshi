@@ -306,8 +306,8 @@ public class ItemsAdapter extends BaseAdapter {
                 if ("1".equals(item.isscroll)) {// multiline scroll
                     if (DBG)
                         Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo);
-                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
-                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
+//                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
+//                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
                         if (DBG)
                             Log.d(TAG, "getView. [scrollmultipic.");
                         ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
@@ -320,20 +320,20 @@ public class ItemsAdapter extends BaseAdapter {
                             Log.d(TAG, "getView. [view=" + view);
 
                         return view;
-                    } else { // legacy scroll view.   one page, scroll
-                        if (DBG)
-                            Log.d(TAG, "getView. [legacy scroll view");
-                        ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
-                                R.layout.layout_multilines_scrollable_text, null);
-                        // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
-                        view.setItem(mRegionView, item);
-                        return view;
-                    }
+//                    } else { // legacy scroll view.   one page, scroll
+//                        if (DBG)
+//                            Log.d(TAG, "getView. [legacy scroll view");
+//                        ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
+//                                R.layout.layout_multilines_scrollable_text, null);
+//                        // String filePath = getAbsFilePath(item);
+//                    /*
+//                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+//                     */
+//                        if (DBG)
+//                            Log.d(TAG, "getView. [view=" + view);
+//                        view.setItem(mRegionView, item);
+//                        return view;
+//                    }
                 } else {  // not scroll
                     final MultiPicInfo multipicinfo = item.multipicinfo;
                     if (DBG)

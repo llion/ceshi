@@ -14,14 +14,23 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Process;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.widget.TextView;
 
 import com.color.home.AppController;
+import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
+import com.color.home.Texts;
+import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
@@ -67,6 +76,7 @@ public class MultiPicScrollObject {
     private int mColor;
     protected int mCurrentRepeats = 0;
     private Context mContext;
+    private Item mItem;
     private ScrollPicInfo mScrollpicinfo;
     /**
      * We split the whole big bitmap into how many pieces.
@@ -83,9 +93,10 @@ public class MultiPicScrollObject {
     public static final Pattern PATTERN = Pattern.compile("([a-zA-Z]+):\\s*(\\d+)");
 
     // Constructor initialize all necessary members
-    public MultiPicScrollObject(Context context, ScrollPicInfo scrollpicinfo) {
+    public MultiPicScrollObject(Context context, Item item) {
         mContext = context;
-        mScrollpicinfo = scrollpicinfo;
+        mItem = item;
+        mScrollpicinfo = item.scrollpicinfo;
         mPcWidth = 1;
         mPcHeight = 1;
 
@@ -99,8 +110,19 @@ public class MultiPicScrollObject {
         /* [Update Text Size] */
 
             // 3. Generate texture with the new evaluated font size
-            if(!drawCanvasToTexture())
-                return;
+            if (DBG)
+                Log.d(TAG, "mScrollpicinfo= " + mScrollpicinfo);
+
+            if (mScrollpicinfo != null && !"0".equals(mScrollpicinfo.picCount)
+                    && mScrollpicinfo.filePath != null
+                    && "1".equals(mScrollpicinfo.filePath.isrelative)
+                    && !TextUtils.isEmpty(mScrollpicinfo.filePath.filepath)) {
+                if (!drawCanvasToTexture())
+                    return;
+            } else {
+                if (!getTextBitmapAndDrawToTexture())
+                    return;
+            }
 
             if (mIsTallPCPic) {
                 generateTallPCMulpicQuads();
@@ -839,6 +861,471 @@ public class MultiPicScrollObject {
             }
 
         }
+    }
+
+
+    private boolean getTextBitmapAndDrawToTexture() {
+        try {
+
+            String text = getText();
+            if (TextUtils.isEmpty(text)){
+                if (DBG)
+                    Log.d(TAG, "text is empty.");
+                return false;
+            }
+
+            TextView textView = new TextView(mContext);
+            if (DBG)
+                Log.d(TAG, "getTextBitmapAndDrawToTexture. mWidth= " + mWidth + ", mHeight= " + mHeight);
+            initTextView(textView);
+            textView.setText(text);
+            textView.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+            if (DBG)
+                Log.d(TAG, "getScaledMaximumDrawingCacheSize= " + ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize());
+
+            if (DBG)
+                Log.d(TAG, "textView.getDrawingCache()= " + textView.getDrawingCache()
+                         + ", textView.getMeasuredWidth()= " + textView.getMeasuredWidth()
+                        + ", textView.getMeasuredHeight()= " + textView.getMeasuredHeight()
+                 + ", textView.getLayout= " + textView.getLayout()
+                         + ", getWidth= " + textView.getLayout().getWidth()
+                         + ", getHeight= " + textView.getLayout().getHeight()
+                         + ", getAlignment= " + textView.getLayout().getAlignment()
+                        + ", textView.getLineCount= " + textView.getLineCount()
+                 + ", textView.getLineHeight= " + textView.getLineHeight()
+                 + ", getLineWidth(0)= " + textView.getLayout().getLineWidth(0));
+
+            int maxLineWidth = 0;
+            for (int i = 0; i < textView.getLayout().getLineCount(); i++){
+
+                if (textView.getLayout().getLineWidth(i) > maxLineWidth)
+                    maxLineWidth = (int) Math.ceil(textView.getLayout().getLineWidth(i));
+            }
+
+            if (DBG)
+                Log.d(TAG, "maxLineWidth= " + maxLineWidth + ", mWidth= " + mWidth);
+
+            int originPicWidth = Math.min(maxLineWidth, mWidth);
+            mTextureWidth = mTextureHeight = QuadGenerator.findClosestPOT(originPicWidth, textView.getLayout().getHeight());
+            if (DBG)
+                Log.d(TAG, "mTextureWidth= " + mTextureWidth + ", originPicWidth= " + originPicWidth
+                 + ", textView.getLayout().getHeight()= " + textView.getLayout().getHeight());
+
+            if (!isMemoryEnough(this.mTextureWidth))
+                return false;
+
+            if (mTextureWidth >= 4096){
+                if (originPicWidth < textView.getLayout().getHeight()){//tall
+                    mPcWidth = originPicWidth;
+                    mPcHeight = Math.min(mTextureWidth / originPicWidth * mTextureWidth, textView.getLayout().getHeight());
+
+                } else{//fat
+                    mPcHeight = textView.getLayout().getHeight();
+                    mPcWidth = Math.min(mTextureWidth / mPcHeight * mTextureWidth, originPicWidth);
+                }
+            } else{
+                mPcWidth = originPicWidth;
+                mPcHeight = textView.getLayout().getHeight();
+            }
+            int segments;
+            if (mPcWidth > mPcHeight) {
+                mIsFatPCPic = true;
+                segments = mPcWidth / this.mTextureWidth;
+                if (mPcWidth % this.mTextureWidth > 0)
+                    segments++;
+                mRealSegmentsPerTex = mMaxSegmentsPerTexContain = segments;
+
+            } else {
+                mIsTallPCPic = true;
+                segments = mPcHeight / mTextureHeight;
+                if (mPcHeight % mTextureHeight > 0)
+                    segments++;
+                mRealSegmentsPerTex = mMaxSegmentsPerTexContain = segments;
+            }
+
+            if (DBG)
+                Log.d(TAG, "mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight + ", mTextureWidth= " + mTextureWidth);
+
+            mTexCount = 1;
+            genTexs();
+            mBitmap = Bitmap.createBitmap(this.mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
+
+            if (mPcWidth * mPcHeight * 4 > ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize()){
+                if (DBG)
+                    Log.d(TAG, "View too large to fit into drawing cache, " +
+                            "needs " + mPcWidth * mPcHeight * 4 + " bytes" +
+                            ", only " + ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize() + " available" +
+                            ", scroll textview and draw cache bitmap to texture.");
+
+                if (mIsFatPCPic) {
+                    getFatPicAndDrawToTexture(textView);
+                } else {
+                    getTallPicAndDrawToTexture(textView);
+                }
+
+                textView.destroyDrawingCache();
+                textView.setDrawingCacheEnabled(false);
+
+            } else {
+                textView.destroyDrawingCache();
+                textView.setDrawingCacheEnabled(true);
+                textView.layout(0, 0, mPcWidth, mPcHeight);
+
+                if (DBG)
+                    Log.d(TAG, "needs cache size= " + mPcWidth * mPcHeight * 4);
+
+                if (!drawBitmapToTexture(textView.getDrawingCache(), segments)) {
+                    textView.destroyDrawingCache();
+                    textView.setDrawingCacheEnabled(false);
+                    return false;
+                }
+
+                textView.destroyDrawingCache();
+                textView.setDrawingCacheEnabled(false);
+            }
+
+            if (PNG_DBG) {
+                Log.d(TAG, "save mBitmap.");
+                String keyImgId = "mBitmap";
+                new File("/mnt/sdcard/mul").mkdir();
+                QuadGenerator.toPng(mBitmap, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+
+    }
+
+    private void getTallPicAndDrawToTexture(TextView textView) {
+
+        int maxCacheHeight = ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize() / 4 / mPcWidth;
+        if (DBG)
+            Log.d(TAG, "getTallPicAndDrawToTexture. maxCacheHeight= " + maxCacheHeight);
+        textView.setDrawingCacheEnabled(true);
+        textView.layout(0, 0, mPcWidth, maxCacheHeight);
+
+        Bitmap cacheBitmap;
+        int[] content = new int[mPcWidth];
+        int beginXinTexture = 0, beginYinTexture = 0, segments, remainAvailableTextureHeightPerCell = mTextureHeight, remainBitmapHeight;
+        int count = mPcHeight / maxCacheHeight;
+        if (mPcHeight % maxCacheHeight > 0)
+            count++;
+
+        if (DBG)
+            Log.d(TAG, "count= " + count);
+        for (int i = 0; i < count; i++){
+            if (i > 0) {
+                textView.destroyDrawingCache();
+                textView.scrollBy(0, maxCacheHeight);//
+//                textView.scrollTo(0, i * maxCacheHeight);
+            }
+
+            if (i == (count - 1) && mPcHeight < maxCacheHeight * count) {//latst cacheBitmap and bitmap width < maxCacheHeight
+                if (DBG)
+                    Log.d(TAG, "latst cacheBitmap and cacheBitmap width < maxCacheHeight, layout height= " + (mPcHeight - i * maxCacheHeight));
+                textView.layout(0, 0, mPcWidth, mPcHeight - i * maxCacheHeight);
+            }
+            cacheBitmap = textView.getDrawingCache();
+            remainBitmapHeight = cacheBitmap.getHeight();
+
+
+            if (DBG)
+                Log.d(TAG, "i= " + i + ", cacheBitmap= " + cacheBitmap);
+            if (cacheBitmap != null){
+
+                if (DBG)
+                    Log.d(TAG, "cacheBitmap width= " + cacheBitmap.getWidth()
+                            + ", height= " + cacheBitmap.getHeight()
+                            + ", beginXinTexture= " + beginXinTexture
+                             + ", beginYinTexture= " + beginYinTexture);
+                if (beginYinTexture > 0) {//setpixels in remain space
+                    remainAvailableTextureHeightPerCell = mTextureHeight - beginYinTexture;
+                    if (DBG)
+                        Log.d(TAG, "cacheBitmap height= " + cacheBitmap.getHeight() + ", remainAvailableTextureHeightPerCell= " + remainAvailableTextureHeightPerCell);
+                    if (cacheBitmap.getHeight() >= remainAvailableTextureHeightPerCell) {
+                        for (int k = 0; k < remainAvailableTextureHeightPerCell; k++) {
+                            cacheBitmap.getPixels(content, 0, cacheBitmap.getWidth(), 0, k, mPcWidth, 1);
+                            mBitmap.setPixels(content, 0, mBitmap.getWidth(), beginXinTexture, beginYinTexture + k, mPcWidth, 1);
+                        }
+                        beginXinTexture += mPcWidth;
+                        beginYinTexture = 0;
+                        remainBitmapHeight -= remainAvailableTextureHeightPerCell;
+                        remainAvailableTextureHeightPerCell = mTextureHeight;
+
+                    } else {//cacheBitmap.getWidth() < remainAvailableTextureHeightPerCell
+                        for (int k = 0; k < cacheBitmap.getHeight(); k++) {
+                            cacheBitmap.getPixels(content, 0, cacheBitmap.getWidth(), 0, k, cacheBitmap.getWidth(), 1);
+                            mBitmap.setPixels(content, 0, mBitmap.getWidth(), beginXinTexture, beginYinTexture + k, cacheBitmap.getWidth(), 1);
+                        }
+                        beginYinTexture += cacheBitmap.getHeight();
+                        continue;
+
+                    }
+
+                }
+
+                //beginXinTexture = 0
+                if (remainBitmapHeight <= 0)
+                    continue;
+                segments = remainBitmapHeight / mTextureHeight;
+                if (remainBitmapHeight % mTextureHeight > 0)
+                    segments++;
+                if (DBG)
+                    Log.d(TAG, "mPcWidth= " + mPcWidth + ", remainBitmapHeight= " + remainBitmapHeight
+                            + ", segments= " + segments + ", beginXinTexture= " + beginXinTexture
+                     + ", beginYinTexture= " + beginYinTexture);
+                int beginYinCacheBitmap;
+                for (int j = 0; j < segments; j++) {
+                    beginYinCacheBitmap = cacheBitmap.getHeight() - remainBitmapHeight;
+                    for (int k = 0; k <  Math.min(remainAvailableTextureHeightPerCell, remainBitmapHeight); k++) {
+                        if (READ_DBG)
+                            Log.d(TAG, "i= " + i + ", j= " + j + ", k= " + k + ", beginYinCacheBitmap= " + beginYinCacheBitmap);
+                        cacheBitmap.getPixels(content, 0, cacheBitmap.getWidth(),
+                                0, beginYinCacheBitmap + k, mPcWidth, 1);
+                        mBitmap.setPixels(content, 0, mTextureWidth,
+                                beginXinTexture, beginYinTexture + k, mPcWidth, 1);
+                    }
+
+                    if (DBG)
+                        Log.d(TAG, "j= " + j + ", remainAvailableTextureHeightPerCell= " + remainAvailableTextureHeightPerCell
+                         + ", remainBitmapHeight= " + remainBitmapHeight);
+                    if ((j < segments - 1) || ((j == (segments - 1) && (remainAvailableTextureHeightPerCell == remainBitmapHeight)))) {
+                        beginXinTexture += mPcWidth;
+                    }
+                    beginYinTexture += Math.min(remainAvailableTextureHeightPerCell, remainBitmapHeight);
+                    if (beginYinTexture >= mTextureHeight)
+                        beginYinTexture = 0;
+
+                    if (j < segments - 1) {
+                        remainBitmapHeight -= Math.min(remainAvailableTextureHeightPerCell, remainBitmapHeight);
+                        remainAvailableTextureHeightPerCell = mTextureHeight - beginYinTexture;
+                    }
+                }
+
+            }
+
+
+        }
+
+
+
+    }
+
+    private void getFatPicAndDrawToTexture(TextView textView) {
+        int maxCacheWidth = ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize() / 4 / mPcHeight;
+        if (DBG)
+            Log.d(TAG, "getFatPicAndDrawToTexture. maxCacheWidth= " + maxCacheWidth);
+        textView.setDrawingCacheEnabled(true);
+        textView.layout(0, 0, maxCacheWidth, mPcHeight);
+        Bitmap cacheBitmap;
+        int[] content = new int[maxCacheWidth];
+        int beginXinTexture = 0, beginYinTexture = 0, segments = 0, remainAvailableTextureWidthPerCell = mTextureWidth,
+            remainBitmapWidth, readSize;
+        int count = mPcWidth / maxCacheWidth;
+        if (mPcWidth % maxCacheWidth > 0)
+            count++;
+
+        if (DBG)
+            Log.d(TAG, "count= " + count);
+        for (int i = 0; i < count; i++){
+            if (i > 0) {
+                textView.destroyDrawingCache();
+                textView.scrollBy(maxCacheWidth, 0);//
+            }
+
+            if (i == (count - 1) && mPcWidth < maxCacheWidth * count) {//latst cacheBitmap and bitmap width < maxCacheWidth
+                if (DBG)
+                    Log.d(TAG, "latst cacheBitmap and cacheBitmap width < maxCacheWidth, layout width= " + (mPcWidth - i * maxCacheWidth));
+                    textView.layout(0, 0, mPcWidth - i * maxCacheWidth, mPcHeight);
+            }
+            cacheBitmap = textView.getDrawingCache();
+            remainBitmapWidth = cacheBitmap.getWidth();
+
+            if (DBG)
+                Log.d(TAG, "i= " + i + ", cacheBitmap= " + cacheBitmap);
+
+            if (cacheBitmap != null){
+                if (DBG)
+                    Log.d(TAG, "cacheBitmap width= " + cacheBitmap.getWidth()
+                            + ", height= " + cacheBitmap.getHeight()
+                            + ", beginXinTexture= " + beginXinTexture
+                            + ", beginYinTexture= " + beginYinTexture);
+
+                if (beginXinTexture > 0) {//setpixels in remain space
+                    remainAvailableTextureWidthPerCell = mTextureWidth - beginXinTexture;
+                    if (DBG)
+                        Log.d(TAG, "cacheBitmap width= " + cacheBitmap.getWidth() + ", remainAvailableTextureWidthPerCell= " + remainAvailableTextureWidthPerCell);
+                    if (cacheBitmap.getWidth() >= remainAvailableTextureWidthPerCell) {
+                        for (int k = 0; k < cacheBitmap.getHeight(); k++) {
+                            cacheBitmap.getPixels(content, 0, cacheBitmap.getWidth(), 0, k, remainAvailableTextureWidthPerCell, 1);
+                            mBitmap.setPixels(content, 0, mBitmap.getWidth(), beginXinTexture, beginYinTexture + k, remainAvailableTextureWidthPerCell, 1);
+                        }
+                        beginXinTexture = 0;
+                        beginYinTexture += cacheBitmap.getHeight();
+                        remainBitmapWidth -= remainAvailableTextureWidthPerCell;
+
+                    } else {//cacheBitmap.getWidth() < remainAvailableTextureWidthPerCell
+                        for (int k = 0; k < cacheBitmap.getHeight(); k++) {
+                            cacheBitmap.getPixels(content, 0, cacheBitmap.getWidth(), 0, k, cacheBitmap.getWidth(), 1);
+                            mBitmap.setPixels(content, 0, mBitmap.getWidth(), beginXinTexture, beginYinTexture + k, cacheBitmap.getWidth(), 1);
+                        }
+                        beginXinTexture += cacheBitmap.getWidth();
+                        continue;
+
+                    }
+
+                }
+
+                //beginXinTexture = 0
+                if (remainBitmapWidth <= 0)
+                    continue;
+                segments = remainBitmapWidth / mTextureWidth;
+                if (remainBitmapWidth % mTextureWidth > 0)
+                    segments++;
+
+                int beginXinCacheBitmap;
+                if (DBG)
+                    Log.d(TAG, "mPcWidth= " + mPcWidth + ", remainBitmapWidth= " + remainBitmapWidth + ", segments= " + segments);
+                for (int j = 0; j < segments; j++) {
+                    beginXinCacheBitmap = cacheBitmap.getWidth() - remainBitmapWidth;
+                    readSize = Math.min(remainBitmapWidth - j * mTextureWidth, mTextureWidth);
+                    for (int k = 0; k < cacheBitmap.getHeight(); k++) {
+                        if (READ_DBG)
+                            Log.d(TAG, "i= " + i + "j= " + j + ", k= " + k);
+                        cacheBitmap.getPixels(content, 0, cacheBitmap.getWidth(),
+                                beginXinCacheBitmap, k, readSize, 1);
+                        mBitmap.setPixels(content, 0, mTextureWidth, 0, beginYinTexture + k, readSize, 1);
+                    }
+                    if (readSize == mTextureWidth)
+                        beginXinTexture = 0;
+                    else beginXinTexture = readSize;
+
+                    if ((j < segments - 1) || (j == (segments - 1) && readSize == mTextureWidth))
+                        beginYinTexture += cacheBitmap.getHeight();
+
+                    if (j < (segments - 1))
+                        remainBitmapWidth -= readSize;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    private void initTextView(TextView textView) {
+        if (DBG)
+            Log.d(TAG, "initTextView. mWidth= " + mWidth + ", mHeight= " + mHeight);
+        textView.setWidth(mWidth);
+        textView.setHeight(1);
+
+        textView.getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
+        textView.setTextColor(GraphUtils.parseColor(mItem.textColor));
+
+        if (mItem.logfont != null) {
+            textView.setLineSpacing(Integer.parseInt(mItem.logfont.lfHeight) / 4, 1.0f);
+
+            // Size.
+            if (mItem.logfont.lfHeight != null) {
+                textView.getPaint().setTextSize(Integer.parseInt(mItem.logfont.lfHeight));
+            }
+
+            //style
+            int style = Typeface.NORMAL;
+            if ("1".equals(mItem.logfont.lfItalic)) {
+                style = Typeface.ITALIC;
+            }
+            if ("700".equals(mItem.logfont.lfWeight)) {
+                style |= Typeface.BOLD;
+            }
+            if ("1".equals(mItem.logfont.lfUnderline)) {
+                textView.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
+            }
+
+            Typeface typeface = AppController.getInstance().getTypeface(mItem.logfont.lfFaceName);
+            if (typeface == null)
+                typeface = Typeface.defaultFromStyle(style);
+            else
+                typeface = Typeface.create(typeface, style);
+
+            if (DBG)
+                Log.d(TAG, "style= " + style + ", lfFaceName= " + mItem.logfont.lfFaceName + ", typeface= " + typeface);
+
+            textView.setTypeface(typeface, style);
+        }
+
+    }
+
+    private boolean drawBitmapToTexture(Bitmap bitmap, int segments) {
+
+        if (DBG)
+            Log.d(TAG, "drawBitmapToTexture. bitmap= " + bitmap);
+        if (bitmap == null) {
+            if (DBG)
+                Log.d(TAG, "the drawing cache is null.");
+            //TODO::draw text to bitmap
+
+            return false;
+        }
+
+        int[] content;
+
+        if (mPcWidth > mPcHeight){//fat
+
+            content = new int[Math.min(mTextureWidth, mPcWidth)];
+            if (DBG)
+                Log.d(TAG, "segments= " + segments);
+
+            for (int i = 0; i < segments; i++){
+                int readSize = Math.min(mPcWidth - i * mTextureWidth, mTextureWidth);
+                for (int j = 0; j < mPcHeight; j++){
+                    if (RENDER_DBG)
+                        Log.d(TAG, "i= " + i + "j= " + j + ", i * mPcHeight() + j= " + (i * mPcHeight + j));
+                    bitmap.getPixels(content, 0, mTextureWidth, i * mTextureWidth, j, readSize, 1);
+                    mBitmap.setPixels(content, 0, mTextureWidth, 0, i * mPcHeight + j, readSize, 1);
+                }
+            }
+
+        } else {//tall
+            if (DBG)
+                Log.d(TAG, "tall. mPcWidth = " + mPcWidth + ", mPcHeight= " + mPcHeight);
+
+            content = new int[mPcWidth];
+            if (DBG)
+                Log.d(TAG, "tall.segments= " + segments);
+
+            for (int i = 0; i < segments; i++) {
+                int readHeight = Math.min(mPcHeight - i * mTextureWidth, mTextureWidth);
+                for (int j = 0; j <readHeight ; j++) {
+                    bitmap.getPixels(content, 0, mTextureWidth, 0, i * mTextureWidth + j, mPcWidth, 1);
+                    mBitmap.setPixels(content, 0, mTextureWidth, i * mPcWidth, j, mPcWidth, 1);
+                }
+            }
+        }
+
+
+        return true;
+
+    }
+
+    private String getText() {
+        if (mItem.filesource != null) {
+            String filepath = mItem.filesource.filepath;
+
+            if (!TextUtils.isEmpty(filepath) && filepath.endsWith(".txt")) {
+                // We have a file.
+                String absFilePath = AppController.getPlayingRootPath() + "/" + filepath;
+                return Texts.getStringFromFile(absFilePath);
+            } else
+                return mItem.text;
+
+        } else
+            return mItem.text;
     }
 
     public void initUpdateTex() {
