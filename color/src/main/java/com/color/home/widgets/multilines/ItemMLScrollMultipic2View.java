@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.utils.GraphUtils;
@@ -31,7 +32,7 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
     }
 
     public void setItem(RegionView regionView, Item item) {
-        MultiPicScrollObject theTextObj = getTextObj(item.scrollpicinfo);
+        MultiPicScrollObject theTextObj = getTextObj(item);
 
         setZOrderOnTop(true);
         setEGLConfigChooser(8, 8, 8, 8, 0, 0);
@@ -94,8 +95,8 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         // return "A=" + Color.alpha(color) + ", R=" + Color.red(color) + ", G=" + Color.green(color) + ", B=" + Color.blue(color);
     }
 
-    protected MultiPicScrollObject getTextObj(ScrollPicInfo scrollPicInfo) {
-        return new MultiPicScrollObject(getContext(), scrollPicInfo);
+    protected MultiPicScrollObject getTextObj(Item item) {
+        return new MultiPicScrollObject(getContext(), item);
     }
 
     @Override
