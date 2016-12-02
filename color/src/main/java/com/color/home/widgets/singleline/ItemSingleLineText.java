@@ -58,6 +58,8 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         if (TextUtils.isEmpty(mText)) {
             mText = " ";
         }
+
+        getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
         
         // Color.
         setTextColor(GraphUtils.parseColor(item.textColor));
