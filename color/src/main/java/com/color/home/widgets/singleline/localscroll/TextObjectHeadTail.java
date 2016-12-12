@@ -15,6 +15,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.color.home.ProgramParser;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
 
@@ -23,8 +24,8 @@ public class TextObjectHeadTail extends TextObject {
     private static final boolean DBG = false;
     private static final boolean DBG_MATRIX = false;
 
-    public TextObjectHeadTail(Context context) {
-        super(context);
+    public TextObjectHeadTail(Context context, ProgramParser.Item item) {
+        super(context, item);
     }
 
     @Override
@@ -42,6 +43,35 @@ public class TextObjectHeadTail extends TextObject {
     private float pixelTemp = 0.0f;
     @Override
     public void render() {
+
+        if (mNeedChangeTexture) {
+
+            if (DBG)
+                Log.d(TAG, "need change texture.");
+
+            mNeedChangeTexture = false;
+
+            if (mCurTextId == 0) {
+                mCurTextId = 1;
+            } else
+                mCurTextId = 0;
+
+            updatePageToTexId(1, mCurTextId);
+            initShapes();
+            setupMVP();
+
+            Matrix.setIdentityM(mMMatrix, 0);
+            GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
+            GLES20.glEnableVertexAttribArray(maPositionHandle);
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
+            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+
+        }
 
         if (mIsGreaterThanAPixelPerFrame)
             Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);

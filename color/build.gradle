@@ -52,9 +52,8 @@ android {
 }
 
 dependencies {
-
     compile 'com.google.guava:guava:18.0'
     // compile 'com.android.support:support-v4:19.1.0'
-
+    compile 'com.jayway.jsonpath:json-path:2.2.0'
     //    compile files('libs/temp_android_full.jar')
 }

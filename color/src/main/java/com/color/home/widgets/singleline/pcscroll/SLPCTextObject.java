@@ -18,11 +18,15 @@ import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
+import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
+import com.color.home.Texts;
 import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
@@ -30,6 +34,7 @@ import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
+import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;
@@ -46,6 +51,7 @@ public class SLPCTextObject {
     static final boolean DBG = false;
     private static final boolean DBG_FPS = false;
     private static final boolean DBG_MATRIX = false;
+    protected Item mItem;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
@@ -63,7 +69,7 @@ public class SLPCTextObject {
     /**
      * Texture dimension.
      */
-    private int muTexScaleHandle;
+    protected int muTexScaleHandle;
     private float[] mMVPMatrix = new float[16];
     protected float[] mMMatrix = new float[16];
     private float[] mVMatrix = new float[16];
@@ -99,7 +105,15 @@ public class SLPCTextObject {
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
 
-    private int getEvenPcHeight() {
+    protected String mText = "";
+    protected boolean mIsCltJson = false;
+    protected int mCurTextId = 0;
+    protected boolean mNeedChangeTexture = false;
+    private Handler mCltHandler;
+    private HandlerThread mCltHandlerThread;
+    private Runnable mCltRunnable;
+
+    protected int getEvenPcHeight() {
         return mEvenPcHeight;
     }
 
@@ -120,9 +134,10 @@ public class SLPCTextObject {
     }
 
     // Constructor initialize all necessary members
-    public SLPCTextObject(Context context, ScrollPicInfo scrollpicinfo) {
+    public SLPCTextObject(Context context, ScrollPicInfo scrollpicinfo, Item item) {
         mContext = context;
         mScrollpicinfo = scrollpicinfo;
+        mItem = item;
     }
 
     // public void setRelPos(float aX, float aY, float aZ) {
@@ -138,29 +153,44 @@ public class SLPCTextObject {
     // }
 
     public void update() {
+        if (DBG)
+            Log.i(TAG, "update. Thread=" + Thread.currentThread().getName());
+
         genTexs();
 
         // Only one mem cache bitmap currently.
         synchronized (AppController.sLock) {
-            MyBitmap texFromMemCache = texFromMemCache();
-            if (DBG)
-                Log.d(TAG, "texFromMemCache = " + texFromMemCache);
-            if (texFromMemCache == null) {
-                if (!prepareTexture())
-                    return;
-            } else {
-                setPcWidth(texFromMemCache.mSingleLineWidth);
-                setPcHeight(texFromMemCache.mSingleLineHeight);
-                setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
 
-                if (!MultiPicScrollObject.isMemoryEnough(getTexDim()))
-                    return;
+            MyBitmap texFromMemCache;
 
-                mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
+            String originText = Texts.getText(mItem);
+            if (Texts.isFontLocallyAvailable(mItem) && Texts.isCltJsonText(originText)) {
+                if (DBG)
+                    Log.d(TAG, "this is CLT_JSON.");
+
+                prepareCltJson(originText);
+
+            }
+
+            if (!mIsCltJson){
+                if (DBG)
+                    Log.d(TAG, "this is not CLT_JSON.");
+
+                texFromMemCache = texFromMemCache();
+                if (DBG)
+                    Log.d(TAG, "this is not CLT_JSON. texFromMemCache= " + texFromMemCache);
+
+                if (texFromMemCache == null) {
+                    if (!prepareTexture())
+                        return;
+
+                } else {
+                    setSize(texFromMemCache);
+                }
+
             }
 
             updatePageToTexId(0, 0);
-
 
             if (DBG)
                 android.util.Log.i(TAG, "bmpSize[" + mPcWidth + ", " + getPcHeight() + "]");
@@ -168,40 +198,155 @@ public class SLPCTextObject {
             initShapes();
 
             setupMVP();
+            setupGL();
 
-            Matrix.setIdentityM(mMMatrix, 0);
-            // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
+        }
 
-            // GLES20.glUseProgram(mProgram);
+    }
 
-            GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
+    private boolean prepareCltJson(String originText) {
+        MyBitmap texFromMemCache;
+        final CltJsonUtils cltJsonUtils;
 
-            // Apply a ModelView Projection transformation
-            // Matrix.setIdentityM(mMMatrix, 0);
-            // Matrix.scaleM(mMMatrix, 0, (float)bitmapWidth / (float)bitmapHeight, (float)1.0f, 1.0f);
-            // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
-            //
-            // Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-            // Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+        cltJsonUtils = new CltJsonUtils();
 
-            GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
+        if (!cltJsonUtils.initMapList(originText)) {
+            if (DBG)
+                Log.d(TAG, " it is not correct CLT_JSON.");
+            return false;
+        }
 
-            // Prepare the triangle data
-            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-            GLES20.glEnableVertexAttribArray(maPositionHandle);
+        mIsCltJson = true;
+        String resultText = cltJsonUtils.getCltText();
+        setText(resultText);
 
-            // Prepare the triangle data
-            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+        if (DBG)
+            Log.d(TAG, "update. isNeedUpdate= " + mItem.isNeedUpdate + ", updateInterval= " + mItem.updateInterval);
+        if ("1".equals(mItem.isNeedUpdate)) {
+            long updateInterval = 0;
+            try {
+                updateInterval = Long.parseLong(mItem.updateInterval);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
 
-            // Draw the triangle
-            GLES20.glDisable(GLES20.GL_CULL_FACE);
-            GLES20.glEnable(GLES20.GL_BLEND);
-            GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+            if (updateInterval > 0) {
+                prepareThread(cltJsonUtils, updateInterval);
+            }
+        }
+
+        //
+        texFromMemCache = texFromMemCache();
+
+        if (DBG)
+            Log.d(TAG, "this is CLT_JSON. texFromMemCache= " + texFromMemCache);
+        if (texFromMemCache == null) {
+            prepareTexture();
+
+        } else {
+            setSize(texFromMemCache);
+        }
+        return true;
+    }
+
+    private void prepareThread(final CltJsonUtils cltJsonUtils, final long updateInterval) {
+        mCltHandlerThread = new HandlerThread("another-thread");
+        mCltHandlerThread.start();
+        mCltHandler = new Handler(mCltHandlerThread.getLooper());
+
+        mCltRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (DBG)
+                    Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
+
+                String resultText = cltJsonUtils.getCltText();
+                MyBitmap texFromMemCache;
+
+                if (!mText.equals(resultText)) {
+                    if (DBG)
+                        Log.d(TAG, "the data had updated.");
+
+                    setText(resultText);
+                    texFromMemCache = texFromMemCache();
+                    if (DBG)
+                        Log.d(TAG, "texFromMemCache= " + texFromMemCache);
+
+                    if (texFromMemCache == null) {
+                        if (!prepareTexture()) {
+                            if (mCltHandler != null && mCltHandlerThread != null) {
+                                mCltHandler.removeCallbacks(this);
+                                mCltHandler.postDelayed(this, updateInterval);
+                            }
+                            return;
+                        }
+
+                    } else {
+                        setSize(texFromMemCache);
+                    }
+
+                    mNeedChangeTexture = true;
+
+                } else {
+                    if (DBG)
+                        Log.d(TAG, "the data had not updated, needn't change texture.");
+                }
+
+                if (mCltHandler != null && mCltHandlerThread != null) {
+                    mCltHandler.removeCallbacks(this);
+                    mCltHandler.postDelayed(this, updateInterval);
+                }
+            }
+        };
+
+        if (mCltHandler != null && mCltHandlerThread != null) {
+            mCltHandler.removeCallbacks(mCltRunnable);
+            mCltHandler.postDelayed(mCltRunnable, updateInterval);
         }
     }
 
-    private void setupMVP() {
+
+    private void setSize(MyBitmap texFromMemCache) {
+        setPcWidth(texFromMemCache.mSingleLineWidth);
+        setPcHeight(texFromMemCache.mSingleLineHeight);
+        setTexDim(QuadGenerator.findClosestPOT(mPcWidth, getEvenPcHeight()));
+
+        mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
+    }
+
+    protected void setupGL() {
+        Matrix.setIdentityM(mMMatrix, 0);
+        // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
+
+        // GLES20.glUseProgram(mProgram);
+
+        GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
+
+        // Apply a ModelView Projection transformation
+        // Matrix.setIdentityM(mMMatrix, 0);
+        // Matrix.scaleM(mMMatrix, 0, (float)bitmapWidth / (float)bitmapHeight, (float)1.0f, 1.0f);
+        // Matrix.translateM(mMMatrix, 0, thePosition.x, thePosition.y, thePosition.z);
+        //
+        // Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+        // Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+
+        GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
+
+        // Prepare the triangle data
+        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
+        GLES20.glEnableVertexAttribArray(maPositionHandle);
+
+        // Prepare the triangle data
+        GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
+        GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+
+        // Draw the triangle
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    protected void setupMVP() {
         if (DBG)
             Log.d(TAG, "setupMVP. [mWidth=" + mEvenedWidth
                     + ", mHeight=" + mEvenedHeight);
@@ -230,8 +375,8 @@ public class SLPCTextObject {
         if (DBG)
             Log.d(TAG, "genTexs. [");
 
-        mTexIds = new int[1];
-
+//        mTexIds = new int[1];
+        mTexIds = new int[2];
         // Set the active texture unit to texture unit 0.
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         TextRenderer.checkGLError("glActiveTexture");
@@ -264,15 +409,24 @@ public class SLPCTextObject {
         TextRenderer.checkGLError("glTexParameterf:GL_TEXTURE_WRAP_T");
     }
 
-    private void updatePageToTexId(int pageTexIndex, int texId) {
+    protected void updatePageToTexId(int pageTexIndex, int texId) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         TextRenderer.checkGLError("glBindTexture");
         updateImage(pageTexIndex);
     }
 
     private void updateImage(int picIndex) {
-        String keyImgId = getKeyImgId(picIndex);
-        MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
+
+//        String keyImgId = getKeyImgId(picIndex);
+
+//        if (DBG)
+//            Log.d(TAG, "updateImage. keyImgId= " + keyImgId);
+//
+//        MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(keyImgId);
+
+        MyBitmap bitmapFromMemCache = texFromMemCache();
+        if (DBG)
+            Log.d(TAG, "updateImage. bitmapFromMemCache= " + bitmapFromMemCache);
         if (bitmapFromMemCache != null)
             // Assigns the OpenGL texture with the Bitmap
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmapFromMemCache.getBitmap(), 0);
@@ -385,13 +539,21 @@ public class SLPCTextObject {
                 streamResolver.close();
             }
         }
-        return true;
+        return false;
     }
 
     public MyBitmap texFromMemCache() {
-        if (DBG)
-            Log.d(TAG, "getKeyImgId(0) = " + getKeyImgId(0));
-        return AppController.getInstance().getBitmapFromMemCache(getKeyImgId(0));
+
+        if (mIsCltJson) {
+            if (DBG)
+                Log.d(TAG, "texFromMemCache. this is CLT_JSON cache key= " + String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText)));
+            return AppController.getInstance().getBitmapFromMemCache(String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText)));
+
+        } else {
+            if (DBG)
+                Log.d(TAG, "texFromMemCache. this is not CLT_JSON cache key= " + getKeyImgId(0));
+            return AppController.getInstance().getBitmapFromMemCache(getKeyImgId(0));
+        }
     }
 
     protected String getKeyImgId(int picIndex) {
@@ -473,6 +635,35 @@ public class SLPCTextObject {
 //            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
 //            pixelTemp += Math.abs((int)pixelTemp);
 //        }
+
+        if (mNeedChangeTexture) {
+
+            if (DBG)
+                Log.d(TAG, "need change texture.");
+
+            mNeedChangeTexture = false;
+
+            if (mCurTextId == 0) {
+                mCurTextId = 1;
+            } else
+                mCurTextId = 0;
+
+            updatePageToTexId(1, mCurTextId);
+            initShapes();
+            setupMVP();
+
+            Matrix.setIdentityM(mMMatrix, 0);
+            GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
+            GLES20.glEnableVertexAttribArray(maPositionHandle);
+
+            // Prepare the triangle data
+            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
+            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+        }
+
         if (mIsGreaterThanAPixelPerFrame)
             Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
         else {
@@ -484,12 +675,13 @@ public class SLPCTextObject {
         }
 
         if (DBG_MATRIX)
-            Log.d(TAG, "mMMatrix [12]  = " + mMMatrix[12]);
+            Log.d(TAG, "mMMatrix [12]  = " + mMMatrix[12] + ", Thread= " + Thread.currentThread());
 
         if (mMMatrix[12] < -mEvenedWidth - mRealReadPcWidth) {
             if (DBG)
                 Log.d(TAG, "mRealReadPcWidth= " + mRealReadPcWidth);
             Matrix.setIdentityM(mMMatrix, 0);
+
             // if repeat count == 0, infinite loop.
             if (mRepeatCount != 0) {
                 if (++mCurrentRepeats >= mRepeatCount) {
@@ -824,7 +1016,7 @@ public class SLPCTextObject {
     public static int getRealReadPcWidth(int pcWidth, int pcHeight, int texDim) {
         if (DBG)
             Log.d(TAG, "getRealReadPcWidth. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", texDim= " + texDim);
-        if (pcWidth > pcHeight){
+        if (pcWidth > pcHeight) {
             int maxPcWidthPerTexture = texDim / pcHeight * texDim;
             if (pcWidth > maxPcWidthPerTexture)
                 return maxPcWidthPerTexture;
@@ -832,6 +1024,25 @@ public class SLPCTextObject {
                 return pcWidth;
         } else
             return pcWidth;
+    }
+
+    public void setText(String aText) {
+        mText = aText;
+    }
+
+    public void removeCltRunnable() {
+
+        if (DBG)
+            Log.d(TAG, "removeCltRunnable. mCltHandler= " + mCltHandler + ", mCltHandlerThread= " + mCltHandlerThread);
+
+        if (mCltHandler != null){
+            mCltHandler.removeCallbacks(mCltRunnable);
+            mCltHandler = null;
+        }
+        if (mCltHandlerThread != null){
+            mCltHandlerThread.quit();
+            mCltHandlerThread = null;
+        }
     }
 
 }

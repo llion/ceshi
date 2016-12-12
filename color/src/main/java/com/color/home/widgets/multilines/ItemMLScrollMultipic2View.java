@@ -6,9 +6,7 @@ import android.opengl.GLSurfaceView;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
-import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.OnPlayFinishObserverable;
@@ -22,6 +20,7 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
     private MultiPicScrollRenderer mRenderer;
     private OnPlayFinishedListener mListener;
     private Item mItem;
+    private MultiPicScrollObject mTheTextObj;
 
     public ItemMLScrollMultipic2View(Context context) {
         super(context);
@@ -32,11 +31,11 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
     }
 
     public void setItem(RegionView regionView, Item item) {
-        MultiPicScrollObject theTextObj = getTextObj(item);
+        mTheTextObj = getTextObj(item);
 
         setZOrderOnTop(true);
         setEGLConfigChooser(8, 8, 8, 8, 0, 0);
-        mRenderer = new MultiPicScrollRenderer(theTextObj);
+        mRenderer = new MultiPicScrollRenderer(mTheTextObj);
         // Set the Renderer for drawing on the GLSurfaceView
         setRenderer(mRenderer);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
@@ -57,17 +56,17 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         }
 
         if ("1".equals(item.invertClr)) {
-            theTextObj.setBackgroundColor(GraphUtils.invertColor(color));
+            mTheTextObj.setBackgroundColor(GraphUtils.invertColor(color));
             if (DBG) {
                 Log.d(TAG, "setItem. [invertClr, color=" + dumpColor(color) + ", invert color=" + GraphUtils.invertColor(color));
             }
         } else {
-            theTextObj.setBackgroundColor(color);
+            mTheTextObj.setBackgroundColor(color);
         }
 
         float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
-//        theTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
-        theTextObj.setPixelPerFrame(pixelPerFrame);
+//        mTheTextObj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+        mTheTextObj.setPixelPerFrame(pixelPerFrame);
 
 
         // Total play length in milisec.
@@ -83,8 +82,8 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
             int repeatCount = Integer.parseInt(item.repeatcount);
             if (DBG)
                 Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
-            theTextObj.setRepeatCount(repeatCount);
-            theTextObj.setView(this);
+            mTheTextObj.setRepeatCount(repeatCount);
+            mTheTextObj.setView(this);
             // int mDuration = Integer.parseInt(item.duration);
         }
 
@@ -112,7 +111,11 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
 
         boolean removeCallbacks = removeCallbacks(this);
         if (DBG)
-            Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
+            Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks
+                     + ", mTheTextObj= " + mTheTextObj);
+
+        if (mTheTextObj != null)
+            mTheTextObj.removeCltRunnable();
         // if (mAnim != null) {
         // if (DBG)
         // Log.i(TAG, "onDetachedFromWindow. mAnim=" + mAnim + ", not null, end it. Thread=" + Thread.currentThread());

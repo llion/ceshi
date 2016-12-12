@@ -42,7 +42,7 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
     }
 
     public void setItem(RegionView regionView, Item item) {
-        SLPCTextObject theTextObj = getTextObj(item.scrollpicinfo);
+        SLPCTextObject theTextObj = getTextObj(item);
 
         setZOrderOnTop(true);
         setEGLConfigChooser(8, 8, 8, 8, 0, 0);
@@ -109,8 +109,8 @@ public class SLPCSurfaceView extends GLSurfaceView implements Runnable, OnPlayFi
 
     }
 
-    protected SLPCTextObject getTextObj(ScrollPicInfo scrollpicinfo) {
-        return new SLPCTextObject(getContext(), scrollpicinfo);
+    protected SLPCTextObject getTextObj(Item item) {
+        return new SLPCTextObject(getContext(), item.scrollpicinfo, item);
     }
 
     @Override

@@ -151,6 +151,8 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
 
+        if (mTextobj != null)
+            mTextobj.removeCltRunnable();
         // if (mAnim != null) {
         // if (DBG)
         // Log.i(TAG, "onDetachedFromWindow. mAnim=" + mAnim + ", not null, end it. Thread=" + Thread.currentThread());

@@ -46,7 +46,7 @@ public class Texts {
         return false;
     }
 
-    private static boolean isFontLocallyAvailable(Item item) {
+    public static boolean isFontLocallyAvailable(Item item) {
         return Constants.FONT_SONG.equals(item.logfont.lfFaceName)
                 || Constants.FONT_FANGSONG.equals(item.logfont.lfFaceName)
                 || Constants.FONT_HEI.equals(item.logfont.lfFaceName)
@@ -184,6 +184,33 @@ public class Texts {
         }
 
         return fileContent.toString();
+    }
+
+
+    public static String getText(Item item) {
+        if (item != null && item.filesource != null) {
+            String filepath = item.filesource.filepath;
+
+            if ("1".equals(item.filesource.isrelative) && !TextUtils.isEmpty(filepath) && filepath.endsWith(".txt")) {
+                // We have a file.
+                String absFilePath = AppController.getPlayingRootPath() + "/" + filepath;
+                return getStringFromFile(absFilePath);
+            } else
+                return item.text;
+
+        } else
+            return item.text;
+    }
+
+    public static boolean isCltJsonText(String text) {
+        if (TextUtils.isEmpty(text))
+            return false;
+
+        if (text.contains("CLT_JSON") && text.indexOf("CLT_JSON") != text.lastIndexOf("CLT_JSON")
+                && text.contains("url") && text.contains("filter")) {
+            return true;
+        }
+        return false;
     }
 
     public String mText;

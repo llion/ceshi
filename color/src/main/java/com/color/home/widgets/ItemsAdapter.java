@@ -255,7 +255,7 @@ public class ItemsAdapter extends BaseAdapter {
                     } else { // Generate my text, do not use pc img.
                         if ("1".equals(item.isheadconnecttail)) {
 //                        SLHTSurfaceView view = new SLHTSurfaceView(mContext);
-                            SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObjectHeadTail(mContext));
+                            SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObjectHeadTail(mContext, item));
                             view.setItem(mRegionView, item);
 
                             if (DBG)
@@ -266,7 +266,7 @@ public class ItemsAdapter extends BaseAdapter {
                             // mInflater.inflate(R.layout.layout_singleline_movingleft_text,
                             // null);
 
-                            SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObject(mContext));
+                            SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObject(mContext, item));
                             // String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
@@ -281,7 +281,7 @@ public class ItemsAdapter extends BaseAdapter {
                 } else {
                     final MultiPicInfo multipicinfo = item.multipicinfo;
                     // if we have multipic and it's correctly packed into relative path.
-                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
+                    if ((!Texts.isCltJsonText(Texts.getText(item))) && multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
                             && "1".equals(multipicinfo.filePath.isrelative)) {
                         PCItemSingleLineText view = new PCItemSingleLineText(mContext);
                         view.setItem(mRegionView, mRegion, item);
@@ -338,13 +338,15 @@ public class ItemsAdapter extends BaseAdapter {
                     final MultiPicInfo multipicinfo = item.multipicinfo;
                     if (DBG)
                         Log.d(TAG, "multipicinfo= " + multipicinfo);
+
                     // if we have multipic and it's correctly packed into relative path.
-                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
+                    if (!("0".equals(item.sourceType) && Texts.isCltJsonText(Texts.getText(item)))
+                         && multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
                         // Multi lines text?  multi page, not scroll
                         ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
-                        // String filePath = getAbsFilePath(item);
+//                         String filePath = getAbsFilePath(item);
                         /*
                          * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                          */
@@ -355,7 +357,7 @@ public class ItemsAdapter extends BaseAdapter {
 
                         if (DBG)
                             Log.d(TAG, "convertView==" + convertView);
-
+//
                         return view;
 //
                     } else {

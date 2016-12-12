@@ -21,6 +21,7 @@ import android.util.Log;
 public class TextRenderer implements GLSurfaceView.Renderer {
     private final static String TAG = "TextRenderer";
     private static final boolean DBG = false;
+    private static final boolean DBG_DRAW = false;
 
     private TextObject mTheTextObj;
     private boolean mIsFinished;
@@ -78,7 +79,7 @@ public class TextRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 unused) {
         // Do not draw.
         if (mIsFinished == true) {
-            if (DBG)
+            if (DBG_DRAW)
                 Log.d(TAG, "onDrawFrame. [Finished.");
             return;
         }
@@ -124,13 +125,15 @@ public class TextRenderer implements GLSurfaceView.Renderer {
     public void onSurfaceChanged(GL10 unused, int width, int height) {
         // theViewportHeight = height;
         // Update viewport
+        if (DBG)
+            Log.d(TAG, "onSurfaceChanged. [width=" + width + ", height=" + height
+                    + ", Thread=" + Thread.currentThread());
+
         GLES20.glViewport(0, 0, width, height);
         mTheTextObj.setDimension(width, height);
 
         mTheTextObj.update();
 
-        if (DBG)
-            Log.d(TAG, "onSurfaceChanged. [width=" + width + ", height=" + height);
         // Update Projection matrix
         // mTheTextObj.updateCamera(width, height);
     }

@@ -453,6 +453,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof ItemMultiLinesPagedText
                 || getChildAt(0) instanceof ItemMultiLinesMultipic
                 || getChildAt(0) instanceof ItemMLScrollMultipic2View
+                || getChildAt(0) instanceof ItemSingleLineText
                 || getChildAt(0) instanceof SLTextSurfaceView
                 || getChildAt(0) instanceof SLPCSurfaceView
                 || getChildAt(0) instanceof SLPCHTSurfaceView

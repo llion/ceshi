@@ -8,6 +8,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -17,10 +18,12 @@ import android.widget.TextView;
 import com.color.home.AppController;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.LogFont;
+import com.color.home.Texts;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
+import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 
 public class ItemSingleLineText extends TextView implements OnPlayFinishObserverable, Runnable {
     private static final boolean DBG = false;
@@ -28,6 +31,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     private final static String TAG = "ItemSingleLineText";
 
     private Item mItem;
+    private RegionView mRegionView;
     private OnPlayFinishedListener mListener;
     private boolean mIsGlaring;
     private boolean mIsDetached;
@@ -36,6 +40,10 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     private Integer[] mSplitTexts;
     private String mText;
     private int mIndex;
+
+    private long mUpdateInterval = 0;
+    private CltJsonUtils mCltJsonUtils;
+    private Runnable mCltRunnable;
 
     public ItemSingleLineText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -51,6 +59,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
     public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
+        mRegionView = regionView;
         this.mItem = item;
 
         mText = item.getTexts().mText;
@@ -91,9 +100,6 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         }
 
 
-        if (DBG)
-            Log.i(TAG, "setItem. textview width=" + getWidth()
-                    + ", full duration=" + mDuration);
 //        mDuration = 1000;
 
         mIsGlaring = "1".equals(mItem.beglaring);
@@ -105,21 +111,75 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         
         
         
-        int itemWidth = regionView.getRegionWidth();
+//        int itemWidth = regionView.getRegionWidth();
         if (DBG)
-            Log.d(TAG, "setItem. [itemWidth=" + itemWidth);
-        mSplitTexts = splitText(mText, itemWidth);
+            Log.d(TAG, "setItem. [mRegionView.getWidth()=" + mRegionView.getWidth());
 
+        if (Texts.isCltJsonText(mText)){
+            if (DBG)
+                Log.d(TAG, "this is CLT_JSON text.");
+
+            if ("1".equals(item.isNeedUpdate)) {
+                mUpdateInterval = Long.parseLong(item.updateInterval);
+            }
+            mCltJsonUtils = new CltJsonUtils();
+
+            if (mCltJsonUtils.initMapList(mText)) {
+
+                mCltRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (DBG)
+                            Log.d(TAG, "mCltRunnable. mUpdateInterval= " + mUpdateInterval + ", Thread= " + Thread.currentThread());
+                        new NetTask().execute("");
+
+                        if ("1".equals(mItem.isNeedUpdate) && mUpdateInterval > 0) {
+                            removeCallbacks(mCltRunnable);
+                            postDelayed(mCltRunnable, mUpdateInterval);
+                        }
+                    }
+                };
+
+                removeCallbacks(mCltRunnable);
+                post(mCltRunnable);
+
+            } else
+                firstShowText();
+
+        } else {
+            if (DBG)
+                Log.d(TAG, "this is not CLT_JSON text.");
+
+            firstShowText();
+
+        }
         
+    }
+
+    private void firstShowText() {
+        if (DBG)
+            Log.d(TAG, "firstShowText.");
+
+        mSplitTexts = splitText(mText, mRegionView.getWidth());
         resetTextFromStart();
-        
-        int fullDuration = Integer.parseInt(item.duration);
+
+        int fullDuration = Integer.parseInt(mItem.duration);
+
+        if (DBG)
+            Log.d(TAG, "firstShowText. mSplitTexts.length= " + mSplitTexts.length);
+
         if (mSplitTexts.length < 2) {
             mDuration = fullDuration;
         } else {
             mDuration = fullDuration / (mSplitTexts.length - 1);
         }
-        
+
+        if (DBG)
+            Log.i(TAG, "firstShowText. textview width=" + getWidth()
+                    + ", full duration=" + fullDuration + ", per page duration= " + mDuration);
+
+        removeCallbacks(this);
+        postDelayed(this, mDuration);
     }
 
     public void resetTextFromStart() {
@@ -187,8 +247,8 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         if (DBG)
             Log.i(TAG, "onAttachedToWindow. image = " + (mItem.filesource == null ? "NULL" : mItem.filesource.filepath));
 
-        removeCallbacks(this);
-        postDelayed(this, mDuration);
+//        removeCallbacks(this);
+//        postDelayed(this, mDuration);
     }
 
     @Override
@@ -197,6 +257,10 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         mIsDetached = true;
 
         boolean removeCallbacks = removeCallbacks(this);
+
+        if (mCltRunnable != null)
+            removeCallbacks(mCltRunnable);
+
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
 
@@ -207,6 +271,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
             if (DBG)
                 Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 
@@ -214,26 +279,55 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     public void run() {
         if (DBG)
             Log.i(TAG, "run.  mSplitTexts.length= " + mSplitTexts.length 
-                    + ", mIndex=" + mIndex);
+                    + ", mIndex=" + mIndex + ", Thread= " + Thread.currentThread());
         
         if (mIndex >= mSplitTexts.length - 1) {
             tellListener();
             if (DBG)
                 Log.d(TAG, "run. [End of texts.");
-            
+            mIndex = 0;
 //            resetTextFromStart();
 //            
 //            removeCallbacks(this);
 //            postDelayed(this, mDuration);
             
-        } else {
-            setText(mText.substring(mSplitTexts[mIndex], mSplitTexts[mIndex + 1]));
-            mIndex++;
-            
-            removeCallbacks(this);
-            postDelayed(this, mDuration);
         }
+
+        if (mSplitTexts.length >= 2) {
+            setText(mText.substring(mSplitTexts[mIndex], mSplitTexts[mIndex + 1]));
+            mIndex ++;
+        }
+
+        removeCallbacks(this);
+        postDelayed(this, mDuration);
+
         
+    }
+
+    public class NetTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            return  mCltJsonUtils.getCltText();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            if (DBG)
+                Log.d(TAG, "onPostExecute. result= " + result);
+            if (result != null && !result.equals(mText)) {
+                if (DBG)
+                    Log.d(TAG, "onPostExecute. result not equals mText, update.");
+                mText = result;
+                firstShowText();
+
+            } else {
+                if (DBG)
+                    Log.d(TAG, "onPostExecute. result is not update.");
+            }
+
+        }
     }
 
 }

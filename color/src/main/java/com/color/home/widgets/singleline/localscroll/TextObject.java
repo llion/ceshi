@@ -24,8 +24,10 @@ import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
+import com.color.home.ProgramParser.Item;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.singleline.QuadGenerator;
+import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
 
@@ -41,13 +43,16 @@ public class TextObject extends SLPCTextObject {
     private static final boolean DBG_PNG = false;
     private static final int MAX_DRAW_TEXT_WIDTH = 33000;
 
-    private String mText = new String("Empty");
+//    protected String mText = new String("Empty");
     private float mTextSize = 20;
     private int mColor;
+    private CltJsonUtils mCltJsonUtils;
 
-    public TextObject(Context context) {
-        super(context, null);
+
+    public TextObject(Context context, Item item) {
+        super(context, null, item);
         mContext = context;
+        mItem = item;
     }
 
     private Context mContext;
@@ -56,9 +61,9 @@ public class TextObject extends SLPCTextObject {
     protected int mLineHeight;
     private HashCode mTextBitmapHash;
 
-    public void setText(String aText) {
-        mText = aText;
-    }
+//    public void setText(String aText) {
+//        mText = aText;
+//    }
 
     @Override
     public boolean prepareTexture() {
@@ -67,9 +72,10 @@ public class TextObject extends SLPCTextObject {
             return false;
         }
 
-        String text = mText;
-
         setupPaint();
+        String text = mText;
+        if (DBG)
+            Log.d(TAG, "prepareTexture. text= " + text);
 
         Rect boundsAllText = new Rect();
         mPaint.getTextBounds(text, 0, text.length(), boundsAllText);
@@ -215,10 +221,19 @@ public class TextObject extends SLPCTextObject {
         if (DBG)
             Log.d(TAG, "textureBm.getWidth() = " + textureBm.getWidth() + ", textureBm.getHeight() = " + textureBm.getHeight());
         if (textureBm != null) {
-            AppController.getInstance().addBitmapToMemoryCache(getKeyImgId(0), new MyBitmap(textureBm, mPcWidth, getPcHeight()));
+            String key;
+            if (mIsCltJson)
+                key = String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText));
+            else
+                key = getKeyImgId(0);
+
+            if (DBG)
+                Log.d(TAG, "save textureBm. mIsCltJson= " + mIsCltJson + ", key= " + key);
+            AppController.getInstance().addBitmapToMemoryCache(key, new MyBitmap(textureBm, mPcWidth, getPcHeight()));
         }
 
         if (DBG_PNG) {
+            Log.d(TAG, "save textureBm. getKeyImgId(0)= " + getKeyImgId(0));
             new File("/mnt/sdcard/mul").mkdir();
             QuadGenerator.toPng(textureBm, new File("/mnt/sdcard/mul/" + getKeyImgId(0)));
         }
@@ -276,6 +291,7 @@ public class TextObject extends SLPCTextObject {
     protected String getKeyImgId(int picIndex) {
         return getPngName();
     }
+
 
     public static class LineSegment {
         private int mWidth;
