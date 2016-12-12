@@ -81,7 +81,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
                     e.printStackTrace();
                 }
             }
-            mCltJsonUtils = new CltJsonUtils();
+            mCltJsonUtils = new CltJsonUtils(mContext);
             mIsCltJsonOk = mCltJsonUtils.initMapList(mText);
         }
 

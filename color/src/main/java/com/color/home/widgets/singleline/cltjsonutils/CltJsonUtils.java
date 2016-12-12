@@ -1,5 +1,7 @@
 package com.color.home.widgets.singleline.cltjsonutils;
 
+import android.content.Context;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -24,6 +26,11 @@ public class CltJsonUtils {
 
     private static final boolean DBG = false;
     private static final String TAG = "CltJsonUtils";
+    private Context context;
+
+    public CltJsonUtils(Context context) {
+        this.context = context;
+    }
 
     public List<CltContent> cltContentList = new ArrayList<CltContent>();
 
@@ -34,7 +41,7 @@ public class CltJsonUtils {
                 if (cltContentList != null && cltContentList.size() > 0){
                     for (CltContent cltContent : cltContentList){
                         str += cltContent.getPrefix();
-                        content = getJsonFronNet(cltContent.getJsonObject().getString("url"), cltContent.getJsonObject().getString("filter"));
+                        content = getJsonFronNet(getUrl(cltContent.getJsonObject().getString("url")), cltContent.getJsonObject().getString("filter"));
                         if (DBG)
                             Log.d(TAG, "content= " + content);
 //  str += getJsonFronNet(cltContent.getJsonObject().getString("url"), cltContent.getJsonObject().getString("filter"));
@@ -54,6 +61,23 @@ public class CltJsonUtils {
             }
 
         return str;
+    }
+
+    private String getUrl(String url) {
+        if (DBG)
+            Log.d(TAG, "getUrl. origin url= " + url);
+
+        if (!TextUtils.isEmpty(url) && url.contains("$(account)")) {
+            String usernameString = Settings.Global.getString(context.getContentResolver(), "user.name");
+            if (DBG)
+                Log.i(TAG, "setItem. usernameString=" + usernameString);
+            if (!TextUtils.isEmpty(usernameString))
+                url = url.replace("$(account)", usernameString);
+        }
+
+        if (DBG)
+            Log.d(TAG, "getUrl. url= " + url);
+        return url;
     }
 
     private String getJsonFronNet(String url, String filter) {

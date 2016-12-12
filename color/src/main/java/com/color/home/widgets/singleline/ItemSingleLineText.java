@@ -122,7 +122,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
             if ("1".equals(item.isNeedUpdate)) {
                 mUpdateInterval = Long.parseLong(item.updateInterval);
             }
-            mCltJsonUtils = new CltJsonUtils();
+            mCltJsonUtils = new CltJsonUtils(mContext);
 
             if (mCltJsonUtils.initMapList(mText)) {
 

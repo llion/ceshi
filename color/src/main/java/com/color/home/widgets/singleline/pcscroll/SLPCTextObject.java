@@ -208,7 +208,7 @@ public class SLPCTextObject {
         MyBitmap texFromMemCache;
         final CltJsonUtils cltJsonUtils;
 
-        cltJsonUtils = new CltJsonUtils();
+        cltJsonUtils = new CltJsonUtils(mContext);
 
         if (!cltJsonUtils.initMapList(originText)) {
             if (DBG)

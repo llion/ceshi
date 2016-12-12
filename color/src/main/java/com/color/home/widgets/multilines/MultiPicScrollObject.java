@@ -96,7 +96,7 @@ public class MultiPicScrollObject {
     Bitmap mBitmap;
     public static final Pattern PATTERN = Pattern.compile("([a-zA-Z]+):\\s*(\\d+)");
 
-
+    private TextView mTextView;
     protected String mText = "";
     protected boolean mIsCltJson = false;
     private int mCurTextId = 0;
@@ -359,7 +359,13 @@ public class MultiPicScrollObject {
 
             mNeedChangeTexture = false;
 
-            initAndPlayTexture();
+            try {
+                if (initSizeAndDrawBitmapToTexture())
+                    initAndPlayTexture();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
 
         float[] modelMat = mMMatrix;
@@ -977,21 +983,20 @@ public class MultiPicScrollObject {
                 return false;
             }
 
-            TextView textView = new TextView(mContext);
+            mTextView = new TextView(mContext);
             if (DBG)
                 Log.d(TAG, "getTextBitmapAndDrawToTexture. mWidth= " + mWidth + ", mHeight= " + mHeight);
-            initTextView(textView);
+            initTextView();
 
-            if (Texts.isCltJsonText(Texts.getText(mItem))){
+            if (Texts.isCltJsonText(text)){
 
                 mIsCltJson = true;
                 final CltJsonUtils cltJsonUtils;
 
-                cltJsonUtils = new CltJsonUtils();
+                cltJsonUtils = new CltJsonUtils(mContext);
                 if (cltJsonUtils.initMapList(text)) {
 
                     String resultText = cltJsonUtils.getCltText();
-                    text = resultText;
                     setText(resultText);
 
                     if (DBG)
@@ -1008,14 +1013,15 @@ public class MultiPicScrollObject {
                         }
 
                         if (updateInterval > 0) {
-                            prepareThread(cltJsonUtils, updateInterval, textView);
+                            prepareThread(cltJsonUtils, updateInterval);
                         }
                     }
-                }
+                } else
+                    setText(text);
+            } else
+                setText(text);
 
-            }
-
-            if (!initSizeAndDrawBitmapToTexture(text, textView))
+            if (!initSizeAndDrawBitmapToTexture())
                 return false;
 
         } catch (Exception e){
@@ -1030,7 +1036,7 @@ public class MultiPicScrollObject {
         mText = text;
     }
 
-    private void prepareThread(final CltJsonUtils cltJsonUtils, final long updateInterval, final TextView textView) throws Exception {
+    private void prepareThread(final CltJsonUtils cltJsonUtils, final long updateInterval) throws Exception {
         mCltHandlerThread = new HandlerThread("another-thread");
         mCltHandlerThread.start();
         mCltHandler = new Handler(mCltHandlerThread.getLooper());
@@ -1049,21 +1055,9 @@ public class MultiPicScrollObject {
                             Log.d(TAG, "the data had updated.");
 
                         setText(resultText);
-//
-                        if (!initSizeAndDrawBitmapToTexture(resultText, textView)) {
-                            if (mCltHandler != null && mCltHandlerThread != null) {
-                                mCltHandler.removeCallbacks(this);
-                                mCltHandler.postDelayed(this, updateInterval);
-                            }
-                            return;
-                        }
 
-                    if (DBG)
-                        Log.d(TAG, "need to change texture content.");
-                    if (mBitmap != null) {
                         mNeedChangeTexture = true;
-                    }
-////
+//
                     } else {
                         if (DBG)
                             Log.d(TAG, "the data had not updated, needn't change texture.");
@@ -1086,63 +1080,64 @@ public class MultiPicScrollObject {
         }
     }
 
-    private boolean initSizeAndDrawBitmapToTexture(String text, TextView textView) throws Exception {
+    private boolean initSizeAndDrawBitmapToTexture() throws Exception {
         if (DBG)
-            Log.d(TAG, "initSizeAndDrawBitmapToTexture. textView= " + textView + ", text= " + text);
+            Log.d(TAG, "initSizeAndDrawBitmapToTexture. mTextView= " + mTextView + ", mText= " + mText);
 
-        textView.setText(text);
-        textView.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        mTextView.setText(mText);
+        mTextView.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
         if (DBG)
             Log.d(TAG, "getScaledMaximumDrawingCacheSize= " + ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize());
 
         if (DBG)
-            Log.d(TAG, "textView.getDrawingCache()= " + textView.getDrawingCache()
-                     + ", textView.getMeasuredWidth()= " + textView.getMeasuredWidth()
-                    + ", textView.getMeasuredHeight()= " + textView.getMeasuredHeight()
-             + ", textView.getLayout= " + textView.getLayout()
-                     + ", getWidth= " + textView.getLayout().getWidth()
-                     + ", getHeight= " + textView.getLayout().getHeight()
-                     + ", getAlignment= " + textView.getLayout().getAlignment()
-                    + ", textView.getLineCount= " + textView.getLineCount()
-             + ", textView.getLineHeight= " + textView.getLineHeight()
-             + ", getLineWidth(0)= " + textView.getLayout().getLineWidth(0));
+            Log.d(TAG, "mTextView.getDrawingCache()= " + mTextView.getDrawingCache()
+                     + ", mTextView.getMeasuredWidth()= " + mTextView.getMeasuredWidth()
+                    + ", mTextView.getMeasuredHeight()= " + mTextView.getMeasuredHeight()
+             + ", mTextView.getLayout= " + mTextView.getLayout()
+                     + ", getWidth= " + mTextView.getLayout().getWidth()
+                     + ", getHeight= " + mTextView.getLayout().getHeight()
+                     + ", getAlignment= " + mTextView.getLayout().getAlignment()
+                    + ", mTextView.getLineCount= " + mTextView.getLineCount()
+             + ", mTextView.getLineHeight= " + mTextView.getLineHeight()
+             + ", getLineWidth(0)= " + mTextView.getLayout().getLineWidth(0));
 
         int maxLineWidth = 0;
-        for (int i = 0; i < textView.getLayout().getLineCount(); i++){
+        for (int i = 0; i < mTextView.getLayout().getLineCount(); i++){
 
-            if (textView.getLayout().getLineWidth(i) > maxLineWidth)
-                maxLineWidth = (int) Math.ceil(textView.getLayout().getLineWidth(i));
+            if (mTextView.getLayout().getLineWidth(i) > maxLineWidth)
+                maxLineWidth = (int) Math.ceil(mTextView.getLayout().getLineWidth(i));
         }
 
         if (DBG)
             Log.d(TAG, "maxLineWidth= " + maxLineWidth + ", mWidth= " + mWidth);
 
         int originPicWidth = Math.min(maxLineWidth, mWidth);
-        mTextureWidth = mTextureHeight = QuadGenerator.findClosestPOT(originPicWidth, textView.getLayout().getHeight());
+        mTextureWidth = mTextureHeight = QuadGenerator.findClosestPOT(originPicWidth, mTextView.getLayout().getHeight());
         if (DBG)
             Log.d(TAG, "mTextureWidth= " + mTextureWidth + ", originPicWidth= " + originPicWidth
-             + ", textView.getLayout().getHeight()= " + textView.getLayout().getHeight());
+             + ", mTextView.getLayout().getHeight()= " + mTextView.getLayout().getHeight());
 
         if (!isMemoryEnough(this.mTextureWidth))
             return false;
 
         if (mTextureWidth >= 4096){
-            if (originPicWidth < textView.getLayout().getHeight()){//tall
+            if (originPicWidth < mTextView.getLayout().getHeight()){//tall
                 mPcWidth = originPicWidth;
-                mPcHeight = Math.min(mTextureWidth / originPicWidth * mTextureWidth, textView.getLayout().getHeight());
+                mPcHeight = Math.min(mTextureWidth / originPicWidth * mTextureWidth, mTextView.getLayout().getHeight());
 
             } else{//fat
-                mPcHeight = textView.getLayout().getHeight();
+                mPcHeight = mTextView.getLayout().getHeight();
                 mPcWidth = Math.min(mTextureWidth / mPcHeight * mTextureWidth, originPicWidth);
             }
         } else{
             mPcWidth = originPicWidth;
-            mPcHeight = textView.getLayout().getHeight();
+            mPcHeight = mTextView.getLayout().getHeight();
         }
         int segments;
         if (mPcWidth > mPcHeight) {
             mIsFatPCPic = true;
+            mIsTallPCPic = false;
             segments = mPcWidth / this.mTextureWidth;
             if (mPcWidth % this.mTextureWidth > 0)
                 segments++;
@@ -1150,6 +1145,7 @@ public class MultiPicScrollObject {
 
         } else {
             mIsTallPCPic = true;
+            mIsFatPCPic = false;
             segments = mPcHeight / mTextureHeight;
             if (mPcHeight % mTextureHeight > 0)
                 segments++;
@@ -1171,36 +1167,36 @@ public class MultiPicScrollObject {
                         ", scroll textview and draw cache bitmap to texture.");
 
             if (mIsFatPCPic) {
-                getFatPicAndDrawToTexture(textView);
-            } else {
-                getTallPicAndDrawToTexture(textView);
+                getFatPicAndDrawToTexture(mTextView);
+            } else   if (mIsTallPCPic){
+                getTallPicAndDrawToTexture(mTextView);
             }
 
-            textView.destroyDrawingCache();
-            textView.setDrawingCacheEnabled(false);
+            mTextView.destroyDrawingCache();
+            mTextView.setDrawingCacheEnabled(false);
 
         } else {
 
-            textView.destroyDrawingCache();
-            textView.setDrawingCacheEnabled(true);
-            textView.layout(0, 0, mPcWidth, mPcHeight);
+            mTextView.destroyDrawingCache();
+            mTextView.setDrawingCacheEnabled(true);
+            mTextView.layout(0, 0, mPcWidth, mPcHeight);
 
             if (DBG)
                 Log.d(TAG, "needs cache size= " + mPcWidth * mPcHeight * 4);
 
-            if (!drawBitmapToTexture(textView.getDrawingCache(), segments)) {
-                textView.destroyDrawingCache();
-                textView.setDrawingCacheEnabled(false);
+            if (!drawBitmapToTexture(mTextView.getDrawingCache(), segments)) {
+                mTextView.destroyDrawingCache();
+                mTextView.setDrawingCacheEnabled(false);
                 return false;
             }
 
-            textView.destroyDrawingCache();
-            textView.setDrawingCacheEnabled(false);
+            mTextView.destroyDrawingCache();
+            mTextView.setDrawingCacheEnabled(false);
 
         }
 
         if (PNG_DBG) {
-            Log.d(TAG, "save mBitmap.");
+            Log.d(TAG, "save mBitmap. mIsFatPCPic= " + mIsFatPCPic + ", mIsTallPCPic= " + mIsTallPCPic);
             String keyImgId = "mBitmap" + mCurTextId;
             new File("/mnt/sdcard/mul").mkdir();
             QuadGenerator.toPng(mBitmap, new File("/mnt/sdcard/mul/" + keyImgId + ".png"));
@@ -1426,23 +1422,23 @@ public class MultiPicScrollObject {
 
     }
 
-    private void initTextView(TextView textView) {
+    private void initTextView() {
         if (DBG)
             Log.d(TAG, "initTextView. mWidth= " + mWidth + ", mHeight= " + mHeight);
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(mWidth, 1);
-        textView.setLayoutParams(params);
-        textView.setWidth(mWidth);
-        textView.setHeight(1);
+        mTextView.setLayoutParams(params);
+        mTextView.setWidth(mWidth);
+        mTextView.setHeight(1);
 
-        textView.getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
-        textView.setTextColor(GraphUtils.parseColor(mItem.textColor));
+        mTextView.getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
+        mTextView.setTextColor(GraphUtils.parseColor(mItem.textColor));
 
         if (mItem.logfont != null) {
-            textView.setLineSpacing(Integer.parseInt(mItem.logfont.lfHeight) / 4, 1.0f);
+            mTextView.setLineSpacing(Integer.parseInt(mItem.logfont.lfHeight) / 4, 1.0f);
 
             // Size.
             if (mItem.logfont.lfHeight != null) {
-                textView.getPaint().setTextSize(Integer.parseInt(mItem.logfont.lfHeight));
+                mTextView.getPaint().setTextSize(Integer.parseInt(mItem.logfont.lfHeight));
             }
 
             //style
@@ -1454,7 +1450,7 @@ public class MultiPicScrollObject {
                 style |= Typeface.BOLD;
             }
             if ("1".equals(mItem.logfont.lfUnderline)) {
-                textView.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
+                mTextView.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
             }
 
             Typeface typeface = AppController.getInstance().getTypeface(mItem.logfont.lfFaceName);
@@ -1466,7 +1462,7 @@ public class MultiPicScrollObject {
             if (DBG)
                 Log.d(TAG, "style= " + style + ", lfFaceName= " + mItem.logfont.lfFaceName + ", typeface= " + typeface);
 
-            textView.setTypeface(typeface, style);
+            mTextView.setTypeface(typeface, style);
         }
 
     }
