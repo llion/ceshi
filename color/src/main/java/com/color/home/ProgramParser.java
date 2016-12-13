@@ -336,6 +336,7 @@ public class ProgramParser {
         public String centeralalign;
         public String regionname;
         public String isshowweather;
+        public String weatherprefix;
         public String temperatureprefix;
         public String isshowtemperature;
         public String windprefix;
@@ -382,7 +383,7 @@ public class ProgramParser {
                     String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime,
                     String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume,
                     String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen,
-                    String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather,
+                    String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname,String weatherprefix, String isshowweather,
                     String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair,
                     String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex,
                     String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud,
@@ -456,6 +457,7 @@ public class ProgramParser {
             this.url = url;
             this.centeralalign = centeralalign;
             this.regionname = regionname;
+            this.weatherprefix = weatherprefix;
             this.isshowweather = isshowweather;
             this.temperatureprefix = temperatureprefix;
             this.isshowtemperature = isshowtemperature;
@@ -603,10 +605,10 @@ public class ProgramParser {
         private final boolean isSeekable;
 
         public VideoItem(String id, String name, String type, String version, String backcolor, String alhpa, String duration, String beglaring, String isNeedUpdate, String updateInterval, String playTimes, EffectType effect, Effect ineffect, Effect outeffect, MultiPicInfo multipicinfo, String beToEndTime, String style, String isMultiLine, String prefix, String endDateTime, String showFormat, String sourceType, LogFont logfont, String text, String textColor, String isShowDayCount, String dayCountColor, String isShowHourCount, String hourCountColor,
-                         String isShowMinuteCount, String minuteCountColor, String isShowSecondCount, String secondCountColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp, ItemRect itemRect) {
+                         String isShowMinuteCount, String minuteCountColor, String isShowSecondCount, String secondCountColor, String width, String height, FileSource filesource, String reserveAS, String isfromfile, String isscroll, String speed, String isheadconnecttail, String wordspacing, String repeatcount, String isscrollbytime, String movedir, String length, String videoWidth, String videoHeight, String inOffset, String playLength, String volume, String showx, String showy, String loop, String showwidth, String showheight, String issetshowregion, String issetplaylen, String ifspeedbyframe, String speedbyframe, String url, String centeralalign, String regionname, String weatherprefix, String isshowweather, String temperatureprefix, String isshowtemperature, String windprefix, String isshowwind, String airprefix, String isshowair, String ultraviolet, String isshowultraviolet, String movementindex, String isshowmovementindex, String coldindex, String isshowcoldindex, String humidity, String serverType, String regioncode, String isshowhumidity, String longitud, String latitude, String timezone, String zoneDescripId, String language, String useproxy, String proxyserver, String proxyport, String proxyuser, String proxypsw, String isshowpic, String showstyle, String isAnalog, DigitalClock digitalClock, AnologClock anologClock, HhourScale hhourScale, MinuteScale minuteScale, ScrollPicInfo scrollpicinfo, String invertClr, ProgramParser pp, ItemRect itemRect) {
             super(id, name, type, version, backcolor, alhpa, duration, beglaring, isNeedUpdate, updateInterval, playTimes, effect, ineffect, outeffect, multipicinfo, beToEndTime, style,
                     isMultiLine, prefix, endDateTime, showFormat, sourceType, logfont, text, textColor, isShowDayCount, dayCountColor, isShowHourCount, hourCountColor,
-                    isShowMinuteCount, minuteCountColor, isShowSecondCount, secondCountColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, pp, itemRect);
+                    isShowMinuteCount, minuteCountColor, isShowSecondCount, secondCountColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed, isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop, showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname,weatherprefix, isshowweather, temperatureprefix, isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex, coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId, language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale, scrollpicinfo, invertClr, pp, itemRect);
 
             isSeekable = checkSeekable();
         }
@@ -1301,6 +1303,7 @@ public class ProgramParser {
         String isshowweather = null;
         String temperatureprefix = null;
         String isshowtemperature = null;
+        String weatherprefix = null;
         String windprefix = null;
         String isshowwind = null;
         String airprefix = null;
@@ -1484,7 +1487,7 @@ public class ProgramParser {
             } else if (tagName.equalsIgnoreCase("IsShowWeather")) {
                 isshowweather = readText(parser);
             } else if (tagName.equalsIgnoreCase("WeatherPrefix")) {
-                windprefix = readText(parser);
+                weatherprefix = readText(parser);
             } else if (tagName.equalsIgnoreCase("IsShowTemperature")) {
                 isshowtemperature = readText(parser);
             } else if (tagName.equalsIgnoreCase("TemperaturePrefix")) {
@@ -1568,7 +1571,7 @@ public class ProgramParser {
                     isMultiLine, prefix, endDateTime, showFormat, sourceType, logfont, text, textColor, isShowDayCount, dayCountColor, isShowHourCount, hourCountColor,
                     isShowMinuteCount, minuteCountColor, isShowSecondCount, secondCountColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed,
                     isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop,
-                    showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix,
+                    showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, weatherprefix, isshowweather, temperatureprefix,
                     isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex,
                     coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId,
                     language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale,
@@ -1578,7 +1581,7 @@ public class ProgramParser {
                     isMultiLine, prefix, endDateTime, showFormat, sourceType, logfont, text, textColor, isShowDayCount, dayCountColor, isShowHourCount, hourCountColor,
                     isShowMinuteCount, minuteCountColor, isShowSecondCount, secondCountColor, width, height, filesource, reserveAS, isfromfile, isscroll, speed,
                     isheadconnecttail, wordspacing, repeatcount, isscrollbytime, movedir, length, videoWidth, videoHeight, inOffset, playLength, volume, showx, showy, loop,
-                    showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, isshowweather, temperatureprefix,
+                    showwidth, showheight, issetshowregion, issetplaylen, ifspeedbyframe, speedbyframe, url, centeralalign, regionname, weatherprefix, isshowweather, temperatureprefix,
                     isshowtemperature, windprefix, isshowwind, airprefix, isshowair, ultraviolet, isshowultraviolet, movementindex, isshowmovementindex,
                     coldindex, isshowcoldindex, humidity, serverType, regioncode, isshowhumidity, longitud, latitude, timezone, zoneDescripId,
                     language, useproxy, proxyserver, proxyport, proxyuser, proxypsw, isshowpic, showstyle, isAnalog, digitalClock, anologClock, hhourScale, minuteScale,

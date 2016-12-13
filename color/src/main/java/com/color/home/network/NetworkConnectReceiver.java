@@ -9,9 +9,6 @@ import android.util.Log;
 
 import com.color.home.widgets.ItemWebView;
 
-/**
- * Created by MrQiang on 2016/8/11.
- */
 
 public class NetworkConnectReceiver extends BroadcastReceiver{
     public  static final String TAG ="NetworkConnectReceiver";

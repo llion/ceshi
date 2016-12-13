@@ -23,7 +23,6 @@ import com.color.home.widgets.clocks.ItemSmoothAnalogClock;
 import com.color.home.widgets.clocks.ItemTextClock;
 import com.color.home.widgets.externalvideo.ItemExternalVideoView;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
-import com.color.home.widgets.multilines.ItemMLScrollableText;
 import com.color.home.widgets.multilines.ItemMultiLinesMultipic;
 import com.color.home.widgets.multilines.ItemMultiLinesPagedText;
 import com.color.home.widgets.singleline.ItemSingleLineText;
@@ -34,7 +33,7 @@ import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
 import com.color.home.widgets.timer.ItemTimer;
-import com.color.home.widgets.weather.ItemWeatherInfo;
+import com.color.home.widgets.weather.ItemWeatherView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -412,7 +411,7 @@ public class ItemsAdapter extends BaseAdapter {
                     }
                 }
             } else if ("14".equals(item.type)) {// web
-                ItemWeatherInfo weather = new ItemWeatherInfo(mContext);
+                ItemWeatherView weather = new ItemWeatherView(mContext);
                 // String filePath = getAbsFilePath(item);
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);

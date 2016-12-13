@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.internal.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,10 +14,12 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by Administrator on 2016/12/6.
@@ -27,9 +30,11 @@ public class CltJsonUtils {
     private static final boolean DBG = false;
     private static final String TAG = "CltJsonUtils";
     private Context context;
+    private OkHttpClient client;
 
     public CltJsonUtils(Context context) {
         this.context = context;
+        client = new OkHttpClient();
     }
 
     public List<CltContent> cltContentList = new ArrayList<CltContent>();
@@ -41,10 +46,9 @@ public class CltJsonUtils {
                 if (cltContentList != null && cltContentList.size() > 0){
                     for (CltContent cltContent : cltContentList){
                         str += cltContent.getPrefix();
-                        content = getJsonFronNet(getUrl(cltContent.getJsonObject().getString("url")), cltContent.getJsonObject().getString("filter"));
+                        content = getContentFronNet(getUrl(cltContent.getJsonObject().getString("url")), cltContent.getJsonObject().getString("filter"));
                         if (DBG)
                             Log.d(TAG, "content= " + content);
-//  str += getJsonFronNet(cltContent.getJsonObject().getString("url"), cltContent.getJsonObject().getString("filter"));
                         str += content;
                         if (DBG)
                             Log.d(TAG, "str= " + str);
@@ -80,28 +84,35 @@ public class CltJsonUtils {
         return url;
     }
 
-    private String getJsonFronNet(String url, String filter) {
-        String json = "";
+    private String getContentFronNet(String url, String filter) {
+
+        Response response = null;
+        String content = "";
+
         try {
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setConnectTimeout(5000);
-            conn.setRequestMethod("GET");
-            if (conn.getResponseCode() == 200) {
-                if (DBG)
-                    Log.d(TAG, "response successful.");
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type", "application/json; charset=utf-8")
+                    .get()
+                    .build();
 
-                InputStream inputStream=conn.getInputStream();
-                json=new String(convertIsToByteArray(inputStream));
-                if (DBG)
-                    Log.d(TAG, "response json= " + json);
+            response = client.newCall(request).execute();
 
-                return  JsonPath.parse(json).read(filter);
+            if (response.isSuccessful()){
+                content = JsonPath.parse(response.body().string()).read(filter);
             }
-            return json;
 
         } catch (Exception e) {
             e.printStackTrace();
-            return json;
+
+        } finally {
+
+            if (response != null)
+                Utils.closeQuietly(response.body());
+
+            if (DBG)
+                Log.d(TAG, "getContentFronNet. content= " + content);
+            return content;
         }
 
     }
