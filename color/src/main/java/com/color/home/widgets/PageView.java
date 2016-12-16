@@ -214,7 +214,7 @@ public class PageView extends AbsoluteLayout {
 
             // Bitmap decodeFile = decodeImagePurgeOnly(file);
 
-            Bitmap decodeFile = ItemImageView.getArtworkQuick(info.file, info.width, info.height);
+            Bitmap decodeFile = ItemImageView.getArtworkQuick(null, info.file, info.width, info.height);
 
             return decodeFile;
         }

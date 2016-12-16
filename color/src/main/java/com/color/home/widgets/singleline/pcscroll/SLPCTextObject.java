@@ -112,6 +112,7 @@ public class SLPCTextObject {
     private Handler mCltHandler;
     private HandlerThread mCltHandlerThread;
     private Runnable mCltRunnable;
+    private CltJsonUtils mCltJsonUtils;
 
     protected int getEvenPcHeight() {
         return mEvenPcHeight;
@@ -168,7 +169,8 @@ public class SLPCTextObject {
                 if (DBG)
                     Log.d(TAG, "this is CLT_JSON.");
 
-                prepareCltJson(originText);
+                if (!prepareCltJson(originText))
+                    return;
 
             }
 
@@ -206,18 +208,17 @@ public class SLPCTextObject {
 
     private boolean prepareCltJson(String originText) {
         MyBitmap texFromMemCache;
-        final CltJsonUtils cltJsonUtils;
 
-        cltJsonUtils = new CltJsonUtils(mContext);
+        mCltJsonUtils = new CltJsonUtils(mContext);
 
-        if (!cltJsonUtils.initMapList(originText)) {
+        if (!mCltJsonUtils.initMapList(originText)) {
             if (DBG)
                 Log.d(TAG, " it is not correct CLT_JSON.");
             return false;
         }
 
         mIsCltJson = true;
-        String resultText = cltJsonUtils.getCltText();
+        String resultText = mCltJsonUtils.getCltText();
         setText(resultText);
 
         if (DBG)
@@ -231,7 +232,10 @@ public class SLPCTextObject {
             }
 
             if (updateInterval > 0) {
-                prepareThread(cltJsonUtils, updateInterval);
+                mCltHandlerThread = new HandlerThread("another-thread");
+                mCltHandlerThread.start();
+                mCltHandler = new Handler(mCltHandlerThread.getLooper());
+                prepareThread(updateInterval, updateInterval);
             }
         }
 
@@ -241,7 +245,8 @@ public class SLPCTextObject {
         if (DBG)
             Log.d(TAG, "this is CLT_JSON. texFromMemCache= " + texFromMemCache);
         if (texFromMemCache == null) {
-            prepareTexture();
+            if (!prepareTexture())
+                return false;
 
         } else {
             setSize(texFromMemCache);
@@ -249,10 +254,7 @@ public class SLPCTextObject {
         return true;
     }
 
-    private void prepareThread(final CltJsonUtils cltJsonUtils, final long updateInterval) {
-        mCltHandlerThread = new HandlerThread("another-thread");
-        mCltHandlerThread.start();
-        mCltHandler = new Handler(mCltHandlerThread.getLooper());
+    private void prepareThread(long delayMillis, final long updateInterval) {
 
         mCltRunnable = new Runnable() {
             @Override
@@ -260,7 +262,7 @@ public class SLPCTextObject {
                 if (DBG)
                     Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
 
-                String resultText = cltJsonUtils.getCltText();
+                String resultText = mCltJsonUtils.getCltText();
                 MyBitmap texFromMemCache;
 
                 if (!mText.equals(resultText)) {
@@ -274,7 +276,7 @@ public class SLPCTextObject {
 
                     if (texFromMemCache == null) {
                         if (!prepareTexture()) {
-                            if (mCltHandler != null && mCltHandlerThread != null) {
+                            if (mCltHandler != null && mCltHandlerThread != null && updateInterval > 0) {
                                 mCltHandler.removeCallbacks(this);
                                 mCltHandler.postDelayed(this, updateInterval);
                             }
@@ -292,7 +294,7 @@ public class SLPCTextObject {
                         Log.d(TAG, "the data had not updated, needn't change texture.");
                 }
 
-                if (mCltHandler != null && mCltHandlerThread != null) {
+                if (mCltHandler != null && mCltHandlerThread != null && updateInterval > 0) {
                     mCltHandler.removeCallbacks(this);
                     mCltHandler.postDelayed(this, updateInterval);
                 }
@@ -301,7 +303,7 @@ public class SLPCTextObject {
 
         if (mCltHandler != null && mCltHandlerThread != null) {
             mCltHandler.removeCallbacks(mCltRunnable);
-            mCltHandler.postDelayed(mCltRunnable, updateInterval);
+            mCltHandler.postDelayed(mCltRunnable, delayMillis);
         }
     }
 
@@ -1044,5 +1046,22 @@ public class SLPCTextObject {
             mCltHandlerThread = null;
         }
     }
+
+    public void setCltJsonText() {
+        if (mIsCltJson){
+            if (mCltHandler == null) {
+                mCltHandlerThread = new HandlerThread("another-thread");
+                mCltHandlerThread.start();
+                mCltHandler = new Handler(mCltHandlerThread.getLooper());
+            }
+            int updateInterval = 0;
+            if ("1".equals(mItem.isNeedUpdate))
+                updateInterval = Integer.parseInt(mItem.updateInterval);
+
+            prepareThread(0, updateInterval);
+        }
+
+    }
+
 
 }

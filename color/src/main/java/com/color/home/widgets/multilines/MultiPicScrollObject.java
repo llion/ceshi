@@ -98,13 +98,14 @@ public class MultiPicScrollObject {
 
     private TextView mTextView;
     protected String mText = "";
-    protected boolean mIsCltJson = false;
     private int mCurTextId = 0;
     private boolean mNeedChangeTexture = false;
 
     private HandlerThread mCltHandlerThread;
     private Handler mCltHandler;
     private Runnable mCltRunnable;
+    private CltJsonUtils mCltJsonUtils;
+    private boolean mIsCltJson = false;
 
     // Constructor initialize all necessary members
     public MultiPicScrollObject(Context context, Item item) {
@@ -203,6 +204,30 @@ public class MultiPicScrollObject {
         }
         if (mCltHandlerThread != null){
             mCltHandlerThread.quit();
+        }
+    }
+
+    public void setCltJsonText(){
+        try {
+
+            if (DBG)
+                Log.d(TAG, "setCltJsonText. mIsCltJson= " + mIsCltJson + ", mCltHandler= " + mCltHandler);
+            if (mIsCltJson) {
+                if (mCltHandler == null) {
+                    mCltHandlerThread = new HandlerThread("another-thread");
+                    mCltHandlerThread.start();
+                    mCltHandler = new Handler(mCltHandlerThread.getLooper());
+                }
+                int updateInterval = 0;
+                if ("1".equals(mItem.isNeedUpdate))
+                    updateInterval = Integer.parseInt(mItem.updateInterval);
+
+                prepareThread(0, updateInterval);
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -478,6 +503,9 @@ public class MultiPicScrollObject {
 
         initShapes();
         setupMVP();
+
+        if (mSr == null)
+            mSr = new SegRender(mHeight);
         resetPos();
 
         GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
@@ -990,13 +1018,11 @@ public class MultiPicScrollObject {
 
             if (Texts.isCltJsonText(text)){
 
-                mIsCltJson = true;
-                final CltJsonUtils cltJsonUtils;
+                mCltJsonUtils = new CltJsonUtils(mContext);
+                if (mCltJsonUtils.initMapList(text)) {
+                    mIsCltJson = true;
 
-                cltJsonUtils = new CltJsonUtils(mContext);
-                if (cltJsonUtils.initMapList(text)) {
-
-                    String resultText = cltJsonUtils.getCltText();
+                    String resultText = mCltJsonUtils.getCltText();
                     setText(resultText);
 
                     if (DBG)
@@ -1013,7 +1039,10 @@ public class MultiPicScrollObject {
                         }
 
                         if (updateInterval > 0) {
-                            prepareThread(cltJsonUtils, updateInterval);
+                            mCltHandlerThread = new HandlerThread("another-thread");
+                            mCltHandlerThread.start();
+                            mCltHandler = new Handler(mCltHandlerThread.getLooper());
+                            prepareThread(updateInterval, updateInterval);
                         }
                     }
                 } else
@@ -1036,10 +1065,7 @@ public class MultiPicScrollObject {
         mText = text;
     }
 
-    private void prepareThread(final CltJsonUtils cltJsonUtils, final long updateInterval) throws Exception {
-        mCltHandlerThread = new HandlerThread("another-thread");
-        mCltHandlerThread.start();
-        mCltHandler = new Handler(mCltHandlerThread.getLooper());
+    private void prepareThread(long delayMillis, final long updateInterval) throws Exception {
 
         mCltRunnable = new Runnable() {
             @Override
@@ -1048,7 +1074,7 @@ public class MultiPicScrollObject {
                     if (DBG)
                         Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
 
-                    String resultText = cltJsonUtils.getCltText();
+                    String resultText = mCltJsonUtils.getCltText();
 
                     if (!mText.equals(resultText)) {
                         if (DBG)
@@ -1063,7 +1089,7 @@ public class MultiPicScrollObject {
                             Log.d(TAG, "the data had not updated, needn't change texture.");
                     }
 
-                    if (mCltHandler != null && mCltHandlerThread != null) {
+                    if (mCltHandler != null && mCltHandlerThread != null && updateInterval > 0) {
                         mCltHandler.removeCallbacks(this);
                         mCltHandler.postDelayed(this, updateInterval);
                     }
@@ -1076,7 +1102,7 @@ public class MultiPicScrollObject {
 
         if (mCltHandler != null && mCltHandlerThread != null) {
             mCltHandler.removeCallbacks(mCltRunnable);
-            mCltHandler.postDelayed(mCltRunnable, updateInterval);
+            mCltHandler.postDelayed(mCltRunnable, delayMillis);
         }
     }
 

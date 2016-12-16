@@ -1,6 +1,8 @@
 package com.color.home.widgets.singleline.cltjsonutils;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -11,12 +13,19 @@ import com.jayway.jsonpath.internal.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Cache;
+import okhttp3.CacheControl;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -26,43 +35,67 @@ import okhttp3.Response;
  */
 public class CltJsonUtils {
 
-
     private static final boolean DBG = false;
     private static final String TAG = "CltJsonUtils";
-    private Context context;
-    private OkHttpClient client;
+    public static final String FOLDER_LAN = "/mnt/sdcard/Android/data/com.color.home/files/Ftp";
+
+    private Context mContext;
+    private OkHttpClient mClient;
+    public List<CltContent> mCltContentList;
+    private File mCacheDir;
+
+    private String mEtag = "";
+    private boolean mIsFirstGetBitmap = true;
+
 
     public CltJsonUtils(Context context) {
-        this.context = context;
-        client = new OkHttpClient();
+        this.mContext = context;
+        setClient();
     }
 
-    public List<CltContent> cltContentList = new ArrayList<CltContent>();
+    private void setClient() {
+
+        mCacheDir = getCacheDir("Okcache");
+        if (!mCacheDir.exists())
+            mCacheDir.mkdir();
+
+        ensureTargetDirRoom();
+
+        int cacheSize = 20 * 1024 * 1024;
+        if (DBG)
+            Log.d(TAG, "cacheSize= " + cacheSize / 1024 / 1024 + "M");
+        Cache cache = new Cache(mCacheDir, cacheSize);
+
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.cache(cache);
+
+        mClient = builder.build();
+    }
 
     public String getCltText() {
+        CacheControl cacheControl = new CacheControl.Builder().noCache().build();
         String str = "";
-        String content = "";
-            try {
-                if (cltContentList != null && cltContentList.size() > 0){
-                    for (CltContent cltContent : cltContentList){
-                        str += cltContent.getPrefix();
-                        content = getContentFronNet(getUrl(cltContent.getJsonObject().getString("url")), cltContent.getJsonObject().getString("filter"));
-                        if (DBG)
-                            Log.d(TAG, "content= " + content);
-                        str += content;
-                        if (DBG)
-                            Log.d(TAG, "str= " + str);
+        try {
+            if (mCltContentList != null && mCltContentList.size() > 0) {
+                for (CltContent cltContent : mCltContentList) {
+                    str += cltContent.getPrefix();
+                    str += getContentFromNet(getUrl(cltContent.getJsonObject().getString("url")),
+                            cltContent.getJsonObject().getString("filter"),
+                            cacheControl);
 
-                        str = str.replaceAll("[\\n]", "\n");
-                        if (DBG)
-                            Log.d(TAG, "str= " + str);
-                    }
+                    if (DBG)
+                        Log.d(TAG, "before replayce \"\\\\n\", str= " + str);
 
+                    str = str.replace("\\n", "\n");
+                    if (DBG)
+                        Log.d(TAG, "str= " + str);
                 }
 
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return str;
     }
@@ -72,7 +105,7 @@ public class CltJsonUtils {
             Log.d(TAG, "getUrl. origin url= " + url);
 
         if (!TextUtils.isEmpty(url) && url.contains("$(account)")) {
-            String usernameString = Settings.Global.getString(context.getContentResolver(), "user.name");
+            String usernameString = Settings.Global.getString(mContext.getContentResolver(), "user.name");
             if (DBG)
                 Log.i(TAG, "setItem. usernameString=" + usernameString);
             if (!TextUtils.isEmpty(usernameString))
@@ -84,23 +117,39 @@ public class CltJsonUtils {
         return url;
     }
 
-    private String getContentFronNet(String url, String filter) {
+    private String getContentFromNet(String url, String filter, CacheControl cacheControl) {
 
         Response response = null;
         String content = "";
 
         try {
-            Request request = new Request.Builder()
+            Request.Builder builder = new Request.Builder()
                     .url(url)
                     .addHeader("Content-Type", "application/json; charset=utf-8")
-                    .get()
-                    .build();
+                    .get();
+            Request request;
+            if (!isNetworkAvailable()) {
+                request = builder
+                        .cacheControl(CacheControl.FORCE_CACHE)
+                        .build();
+            } else {
 
-            response = client.newCall(request).execute();
+                ensureTargetDirRoom();
+                request = builder
+                        .cacheControl(cacheControl)
+                        .build();
+            }
 
-            if (response.isSuccessful()){
+            response = mClient.newCall(request).execute();
+
+            if (DBG)
+                Log.d(TAG, "getContentFromNet. mClient= " + mClient + ", Thread= " + Thread.currentThread());
+            if (response.isSuccessful()) {
+                if (DBG)
+                    Log.d(TAG, "getContentFromNet. response.isSuccessful. cacheResponse= " + response.cacheResponse());
                 content = JsonPath.parse(response.body().string()).read(filter);
             }
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,32 +160,15 @@ public class CltJsonUtils {
                 Utils.closeQuietly(response.body());
 
             if (DBG)
-                Log.d(TAG, "getContentFronNet. content= " + content);
+                Log.d(TAG, "getContentFromNet. content= " + content);
             return content;
         }
 
     }
 
-    private byte[] convertIsToByteArray(InputStream inputStream) {
-        ByteArrayOutputStream baos=new ByteArrayOutputStream();
-        byte buffer[]=new byte[1024];
-        int length=0;
-        try {
-            while ((length=inputStream.read(buffer))!=-1) {
-                baos.write(buffer, 0, length);
-            }
-            inputStream.close();
-            baos.flush();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return baos.toByteArray();
+    public boolean initMapList(String text) {
 
-    }
-
-    public boolean initMapList(String text){
-
+        mCltContentList = new ArrayList<CltContent>();
         String prefix, subStr;
         int firstMarkIndex;
         JSONObject jsonObject;
@@ -150,7 +182,7 @@ public class CltJsonUtils {
             try {
 
                 jsonObject = new JSONObject(subStr.substring(0, subStr.indexOf("CLT_JSON")));
-                cltContentList.add(new CltContent(prefix, jsonObject));
+                mCltContentList.add(new CltContent(prefix, jsonObject));
 
                 if (DBG)
                     Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", url= " + jsonObject.getString("url")
@@ -167,14 +199,99 @@ public class CltJsonUtils {
 
         }
 
-        if (cltContentList != null && cltContentList.size() > 0)
+        if (mCltContentList != null && mCltContentList.size() > 0)
             return true;
         else
             return false;
 
     }
 
-    public class CltContent {
+    public byte[] getBitmapBytes(String originUrl) {
+
+        HttpUrl httpUrl = HttpUrl.parse(originUrl);
+        if (httpUrl == null)
+            return null;
+
+        boolean isNetworkAvailable = isNetworkAvailable();
+        Response response = null;
+        byte[] bytes = null;
+
+        try {
+
+            if (DBG)
+                Log.d(TAG, "isNetworkAvailable= " + isNetworkAvailable + ", mIsFirstGetBitmap= " + mIsFirstGetBitmap);
+
+            //if the network is available,access network.
+            //if the network is not available and it is the first time to get bitmap, get bytes from cache
+            if (isNetworkAvailable || (!isNetworkAvailable && mIsFirstGetBitmap)) {
+                String url = httpUrl.scheme() + "://" + httpUrl.host() + (TextUtils.isEmpty(httpUrl.encodedPath()) ? "" : httpUrl.encodedPath());
+                if (DBG)
+                    Log.d(TAG, "getBitmapBytes. url= " + url);
+
+                Request.Builder builder = new Request.Builder()
+                        .url(url)
+                        .get();
+                Request request;
+
+                if (!isNetworkAvailable) {
+                    request = builder.cacheControl(CacheControl.FORCE_CACHE)
+                            .build();
+
+                } else {
+                    ensureTargetDirRoom();
+                    request = builder.addHeader("If-None-Match", mEtag).build();
+                }
+
+                response = mClient.newCall(request).execute();
+
+                if (DBG)
+                    Log.d(TAG, "response.code= " + response.code());
+                if (response.code() == 304) {//source of network have not changed
+                    if (DBG)
+                        Log.d(TAG, "response.code= 304, response no change.");
+                } else if (response.isSuccessful()) {
+                    if (mIsFirstGetBitmap)
+                        mIsFirstGetBitmap = false;
+
+                    if (isNetworkAvailable) {//source of network have changed
+                        Headers headers = response.headers();
+                        for (int i = 0; i < headers.size(); i++) {
+                            if ("ETag".equals(headers.name(i))) {
+                                mEtag = headers.value(i);
+                                if (DBG)
+                                    Log.d(TAG, "mEtag= " + mEtag);
+                                break;
+                            }
+                        }
+
+                    } else {
+                        if (DBG)
+                            Log.d(TAG, "NetWork is not available. get bytes from cache.");
+                    }
+
+                    bytes = response.body().bytes();
+
+                }
+
+                if (DBG)
+                    Log.d(TAG, "getBitmapBytes. mClient= " + mClient + ", Thread= " + Thread.currentThread()
+                            + ",  response.cacheResponse()= " + response.cacheResponse()
+                            + ", response.networkResponse= " + response.networkResponse());
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (response != null)
+                Utils.closeQuietly(response.body());
+
+            if (DBG)
+                Log.d(TAG, "bytes == null? " + (bytes == null));
+            return bytes;
+        }
+    }
+
+    public static class CltContent {
         String prefix;
         JSONObject jsonObject;
 
@@ -199,6 +316,86 @@ public class CltJsonUtils {
             this.jsonObject = jsonObject;
         }
 
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = cm.getActiveNetworkInfo();
+        if (DBG)
+            Log.d(TAG, "isNetworkAvailable. activeNetworkInfo= " + activeNetworkInfo);
+
+        return activeNetworkInfo != null;
+    }
+
+    private void ensureTargetDirRoom() {
+
+        if (DBG) {
+            long freeSize = mCacheDir.getUsableSpace() / 1024 / 1024;
+            long totalSize = mCacheDir.getTotalSpace() / 1024 / 1024;
+            Log.d(TAG, "ensureTargetDirRoom. cacheDir path= " + mCacheDir.getAbsolutePath() + ", freeSize=  " + freeSize
+                    + "M, totalSize= " + totalSize + "M" + ", mCacheDir.listFiles() == null" + (mCacheDir.listFiles() == null));
+        }
+
+        if (mCacheDir.listFiles() != null && mCacheDir.listFiles().length > 0) {
+            if (((mCacheDir.getUsableSpace() / 1024 / 1024) < 100) || (getDirSize(mCacheDir) > (100 * 1024 * 1024))) {
+                clearDir(mCacheDir);
+            }
+        }
+    }
+
+    private int getDirSize(File dir) {
+        File[] files = dir.listFiles();
+        int dirSize = 0;
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                if (file.isDirectory())
+                    dirSize += getDirSize(file);
+                else
+                    dirSize += file.length();
+            }
+        }
+
+        if (DBG)
+            Log.d(TAG, "dir " + dir.getAbsolutePath() + " size= " + dirSize);
+        return dirSize;
+    }
+
+    public void clearDir(File dir) {
+        if (DBG)
+            Log.d(TAG, "before clearing, cacheDir freeSize= " + dir.getUsableSpace());
+
+        if (dir.exists()) {
+            for (File f : dir.listFiles()) {
+                boolean delFlag = f.delete();
+                if (DBG)
+                    Log.d(TAG, f.getName() + " del- " + delFlag);
+                if (!delFlag) {
+                    try {
+                        FileInputStream fi = new FileInputStream(f);
+                        fi.close();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    f.delete();
+                }
+            }
+        }
+        if (DBG)
+            Log.d(TAG, "after clearing, cacheDir freeSize= " + dir.getUsableSpace());
+
+    }
+
+    public File getCacheDir(String uniqueName) {
+//        String cachePath;
+//        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
+//                || !Environment.isExternalStorageRemovable()) {
+//            cachePath = mContext.getExternalCacheDir().getPath();
+//        } else {
+//            cachePath = mContext.getCacheDir().getPath();
+//        }
+        return new File(FOLDER_LAN + File.separator + uniqueName);
     }
 
 }

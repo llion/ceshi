@@ -3,6 +3,7 @@ package com.color.home.widgets;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +39,8 @@ import com.color.home.widgets.weather.ItemWeatherView;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
+
+import okhttp3.HttpUrl;
 
 public class ItemsAdapter extends BaseAdapter {
     private static final boolean DBG = false;
@@ -420,13 +423,44 @@ public class ItemsAdapter extends BaseAdapter {
                 weather.setItem(mRegionView, item);
                 return weather;
             } else if ("27".equals(item.type)) {// web
-                ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
-                // String filePath = getAbsFilePath(item);
+
+                if (DBG)
+                    Log.d(TAG, "type = 27, url= " + item.url);
+
+                String url;
+                if (!item.url.contains("http://") && !item.url.contains("https://"))
+                    url = "http://" + item.url;
+                else url = item.url;
+
+                HttpUrl httpUrl = HttpUrl.parse(url);
+                if (DBG) {
+                    Log.d(TAG, "url= " + url);
+                    if (httpUrl != null)
+                        Log.d(TAG, "httpUrl.encodedPath()= " + httpUrl.encodedPath());
+                }
+
+                if (httpUrl != null
+                        && (!TextUtils.isEmpty(httpUrl.encodedPath())
+                        && (httpUrl.encodedPath().endsWith(".png") || httpUrl.encodedPath().endsWith(".jpg")
+                        || httpUrl.encodedPath().endsWith(".jpeg") || httpUrl.encodedPath().endsWith(".gif")
+                        || httpUrl.encodedPath().endsWith(".bmp")))
+                        && !TextUtils.isEmpty(httpUrl.queryParameter("updateInterval"))) {
+
+                    ItemImageView itemImageView = new ItemImageView(mContext);
+                    itemImageView.setRegion(mRegion);
+                    itemImageView.setItem(mRegionView, item);
+
+                    return itemImageView;
+
+                } else {
+                    ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
+                    // String filePath = getAbsFilePath(item);
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
              */
-                web.setItem(mContext, mRegionView, item);
-                return web;
+                    web.setItem(mContext, mRegionView, item);
+                    return web;
+                }
             } else {
                 return unknowView(item);
             }

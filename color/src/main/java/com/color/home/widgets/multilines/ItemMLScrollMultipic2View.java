@@ -1,12 +1,16 @@
 package com.color.home.widgets.multilines;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
 import android.opengl.GLSurfaceView;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.ProgramParser.Item;
+import com.color.home.network.NetworkConnectReceiver;
+import com.color.home.network.NetworkObserver;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.FinishObserver;
 import com.color.home.widgets.OnPlayFinishObserverable;
@@ -14,13 +18,14 @@ import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
-public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver {
+public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver, NetworkObserver {
     private final static String TAG = "ItemMLScrollMultipic2V";
     private static final boolean DBG = false;
     private MultiPicScrollRenderer mRenderer;
     private OnPlayFinishedListener mListener;
     private Item mItem;
     private MultiPicScrollObject mTheTextObj;
+    private NetworkConnectReceiver mNetworkConnectReceiver;
 
     public ItemMLScrollMultipic2View(Context context) {
         super(context);
@@ -87,6 +92,15 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
             // int mDuration = Integer.parseInt(item.duration);
         }
 
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+        registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+
+    }
+
+    public static void registerNetworkConnectReceiver(Context context, NetworkConnectReceiver networkConnectReceiver) {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        context.registerReceiver(networkConnectReceiver, filter);
     }
 
     public static String dumpColor(int color) {
@@ -116,6 +130,9 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
 
         if (mTheTextObj != null)
             mTheTextObj.removeCltRunnable();
+
+        if (mNetworkConnectReceiver != null)
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
         // if (mAnim != null) {
         // if (DBG)
         // Log.i(TAG, "onDetachedFromWindow. mAnim=" + mAnim + ", not null, end it. Thread=" + Thread.currentThread());
@@ -149,5 +166,13 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
 
     public MultiPicScrollRenderer getmRenderer() {
         return mRenderer;
+    }
+
+    @Override
+    public void reloadContent() {
+        if (DBG)
+            Log.d(TAG, "reloadContent. mTheTextObj= " + mTheTextObj);
+        if (mTheTextObj != null)
+            mTheTextObj.setCltJsonText();
     }
 }

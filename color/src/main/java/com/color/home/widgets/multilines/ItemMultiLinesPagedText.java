@@ -25,6 +25,8 @@ import com.color.home.AppController;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.LogFont;
 import com.color.home.Texts;
+import com.color.home.network.NetworkConnectReceiver;
+import com.color.home.network.NetworkObserver;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.MultilinePageSplitter;
 import com.color.home.widgets.OnPlayFinishObserverable;
@@ -32,7 +34,7 @@ import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 
-public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObserverable, Runnable {
+public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObserverable, Runnable, NetworkObserver {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemMultiLinesPagedText";
@@ -52,6 +54,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     private CltJsonUtils mCltJsonUtils;
     private boolean mIsCltJsonOk = false;
     private Runnable mCltRunnable;
+    private NetworkConnectReceiver mNetworkConnectReceiver;
 
     public ItemMultiLinesPagedText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -86,6 +89,10 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         }
 
         if (mIsCltJsonOk){
+
+            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+
             mCltRunnable = new Runnable() {
                 @Override
                 public void run() {
@@ -230,6 +237,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
 
             if (mIsCltJsonOk){
                 //get clt_json
+                removeCallbacks(mCltRunnable);
                 post(mCltRunnable);
 
             } else {
@@ -312,6 +320,9 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             mContext.unregisterReceiver(mColorChangeReceiver);
         }
 
+        if (mNetworkConnectReceiver != null)
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
+
         if (mHandler != null) {
             mHandler.stop();
             mHandler = null;
@@ -357,6 +368,17 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     @Override
     public void run() {
         tellListener();
+    }
+
+    @Override
+    public void reloadContent() {
+        if (DBG)
+            Log.d(TAG, "reloadContent. mIsCltJsonOk= " + mIsCltJsonOk + ", mCltRunnable= " + mCltRunnable);
+        if (mIsCltJsonOk && mCltRunnable != null){
+            removeCallbacks(mCltRunnable);
+            post(mCltRunnable);
+        }
+
     }
 
     private static final class MTextMarquee extends Handler {

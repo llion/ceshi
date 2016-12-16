@@ -19,13 +19,16 @@ import com.color.home.AppController;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.LogFont;
 import com.color.home.Texts;
+import com.color.home.network.NetworkConnectReceiver;
+import com.color.home.network.NetworkObserver;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
+import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 
-public class ItemSingleLineText extends TextView implements OnPlayFinishObserverable, Runnable {
+public class ItemSingleLineText extends TextView implements OnPlayFinishObserverable, Runnable, NetworkObserver {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemSingleLineText";
@@ -44,6 +47,8 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     private long mUpdateInterval = 0;
     private CltJsonUtils mCltJsonUtils;
     private Runnable mCltRunnable;
+    private NetworkConnectReceiver mNetworkConnectReceiver;
+    private boolean mIsCltJsonOk = false;
 
     public ItemSingleLineText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -124,7 +129,8 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
             }
             mCltJsonUtils = new CltJsonUtils(mContext);
 
-            if (mCltJsonUtils.initMapList(mText)) {
+            mIsCltJsonOk = mCltJsonUtils.initMapList(mText);
+            if (mIsCltJsonOk) {
 
                 mCltRunnable = new Runnable() {
                     @Override
@@ -153,6 +159,9 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
             firstShowText();
 
         }
+
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+        ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
         
     }
 
@@ -261,6 +270,9 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         if (mCltRunnable != null)
             removeCallbacks(mCltRunnable);
 
+        if (mNetworkConnectReceiver != null)
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
+
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
 
@@ -302,6 +314,17 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         postDelayed(this, mDuration);
 
         
+    }
+
+    @Override
+    public void reloadContent() {
+        if (DBG)
+            Log.d(TAG, "reloadContent. mIsCltJsonOk= " + mIsCltJsonOk + ", mCltRunnable= " + mCltRunnable);
+        if (mIsCltJsonOk && mCltRunnable != null){
+            removeCallbacks(mCltRunnable);
+            post(mCltRunnable);
+        }
+
     }
 
     public class NetTask extends AsyncTask<String, Void, String> {

@@ -20,10 +20,12 @@ import android.webkit.WebViewClient;
 
 import com.color.home.ProgramParser.Item;
 import com.color.home.network.NetworkConnectReceiver;
+import com.color.home.network.NetworkObserver;
+import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 
 import java.util.Map;
 
-public class ItemWebView extends WebView implements OnPlayFinishObserverable, Runnable, FinishObserver {
+public class ItemWebView extends WebView implements OnPlayFinishObserverable, Runnable, FinishObserver, NetworkObserver {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemWebView";
@@ -33,6 +35,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
     private OnPlayFinishedListener mListener;
     private Context mContext;
     private int mDuration = 5000;
+    private NetworkConnectReceiver mNetworkConnectReceiver;
 
     public ItemWebView(Context context, AttributeSet attrs, int defStyle, Map<String, Object> javaScriptInterfaces, boolean privateBrowsing) {
         super(context, attrs, defStyle, javaScriptInterfaces, privateBrowsing);
@@ -121,6 +124,13 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 //            }
 //        });
 
+    }
+
+    @Override
+    public void reloadContent() {
+        if (DBG)
+            Log.d(TAG, "reloadContent.");
+        reload();
     }
 
     private class MyWebViewClient extends WebViewClient {
@@ -286,8 +296,6 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         this.mListener = null;
     }
 
-    private NetworkConnectReceiver mNcl = new NetworkConnectReceiver(this);
-
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -299,9 +307,9 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
         if (DBG) {
             Log.i(TAG, "-----------onAttachedToWindow");
         }
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        getContext().registerReceiver(mNcl, filter);
+
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+        ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
@@ -317,7 +325,9 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 
         removeCallbacks(mRefresh);
 
-        getContext().unregisterReceiver(mNcl);
+        if (mNetworkConnectReceiver != null)
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
+
         boolean removeCallbacks = removeCallbacks(this);
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);

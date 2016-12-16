@@ -5,16 +5,22 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.ImageView;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
+import com.color.home.network.NetworkConnectReceiver;
+import com.color.home.network.NetworkObserver;
+import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
+import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 
-public class ItemImageView extends EffectView implements OnPlayFinishObserverable {
+import okhttp3.HttpUrl;
+
+public class ItemImageView extends EffectView implements OnPlayFinishObserverable, NetworkObserver {
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemImageView";
@@ -23,6 +29,10 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
     private String mFilePath;
     private Bitmap mBitmap;
     public Region mRegion;//....
+
+    private CltJsonUtils mCltJsonUtils;
+    private Runnable mCltRunnable;
+    private NetworkConnectReceiver mNetworkConnectReceiver;
 
     // private static BitmapFactory.Options sPurgeOption = new
     // BitmapFactory.Options();
@@ -67,7 +77,10 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
     public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
         this.mItem = item;
-        mFilePath = item.getAbsFilePath();
+
+        if (TextUtils.isEmpty(item.url))
+            mFilePath = item.getAbsFilePath();
+
         int width = 128;
         int height = 128;
 
@@ -102,14 +115,53 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
     }
 
     // Assume that: the file path, pic name is changed when the content is different.
-    public void loadBitmap(int width, int height) {
-        final String imageKey = mFilePath;
+    public void loadBitmap(final int width, final int height) {
 
-        MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(imageKey);
-        if (bitmapFromMemCache != null) {
-            setImageBitmap(bitmapFromMemCache.getBitmap());
-        } else {
-            new HelpDataParseWorker().execute(new FilePathAndDim(mFilePath, width, height));
+        if (DBG)
+            Log.d(TAG, "loadBitmap. url= " + mItem.url);
+        if (TextUtils.isEmpty(mItem.url)) {
+            final String imageKey = mFilePath;
+
+            MyBitmap bitmapFromMemCache = AppController.getInstance().getBitmapFromMemCache(imageKey);
+            if (bitmapFromMemCache != null) {
+                setImageBitmap(bitmapFromMemCache.getBitmap());
+            } else {
+                new HelpDataParseWorker().execute(new FilePathAndDim(mFilePath, width, height));
+            }
+
+        } else {//get bitmap from net
+            mCltJsonUtils = new CltJsonUtils(mContext);
+            final String url;
+            if (!mItem.url.contains("http://") && !mItem.url.contains("https://"))
+                url = "http://" + mItem.url;
+            else url = mItem.url;
+
+            mCltRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    new HelpDataParseWorker().execute(new FilePathAndDim(url, width, height));
+
+                    try {
+
+                        if (DBG)
+                            Log.d(TAG, "run. url= " + url);
+                        if (Integer.parseInt(HttpUrl.parse(url).queryParameter("updateInterval")) > 0) {
+                            if (DBG)
+                                Log.d(TAG, "updateInterval > 0.");
+                            removeCallbacks(this);
+                            postDelayed(this, Integer.parseInt(HttpUrl.parse(url).queryParameter("updateInterval")));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            };
+            post(mCltRunnable);
+
+            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+
         }
     }
 
@@ -117,13 +169,24 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
 
         @Override
         protected Bitmap doInBackground(FilePathAndDim... params) {
-            final FilePathAndDim info = params[0];
-            if (DBG)
-                Log.i(TAG, "doInBackground. loading image=" + info);
 
-            // Bitmap decodeFile = decodeImagePurgeOnly(file);
-            Bitmap decodeFile = getArtworkQuick(info.file, info.width, info.height);
-            return decodeFile;
+            if (DBG)
+                Log.d(TAG, "doInBackground. params= " + params + ", params.length= " + params.length);
+            final FilePathAndDim info = params[0];
+
+            if (!TextUtils.isEmpty(mItem.url)) {
+
+                return getArtworkQuick(mCltJsonUtils.getBitmapBytes(info.file), null, info.width, info.height);
+
+            } else {
+
+                if (DBG)
+                    Log.i(TAG, "doInBackground. loading image=" + info);
+
+                // Bitmap decodeFile = decodeImagePurgeOnly(file);
+                Bitmap decodeFile = getArtworkQuick(null, info.file, info.width, info.height);
+                return decodeFile;
+            }
         }
 
         @Override
@@ -133,26 +196,32 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
         @Override
         protected void onPostExecute(Bitmap result) {
             if (DBG)
-                Log.i(TAG, "onPostExecute. [result=" + result);
+                Log.i(TAG, "onPostExecute. [result=" + result + ", mFilePath= " + mFilePath);
 
             if (mFilePath != null && result != null)
                 AppController.getInstance().addBitmapToMemoryCache(mFilePath, new MyBitmap(result, 0, 0));
-            setImageBitmap(result);
+
+            if (result != null) {
+                if (DBG)
+                    Log.i(TAG, "onPostExecute. [result=" + result + ", result.getWidth()= " + result.getWidth()
+                            + ", result.getHeight()= " + result.getHeight());
+                setImageBitmap(result);
+            }
         }
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (DBG)
-            Log.i(TAG, "onAttachedToWindow. image = " + mItem.filesource.filepath);
+//        if (DBG)
+//            Log.i(TAG, "onAttachedToWindow. image = " + mItem.filesource.filepath);
 
         mRunnable = new Runnable() {
 
             @Override
             public void run() {
-                if (DBG)
-                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath + "    mduration=======" + mDuration);
+//                if (DBG)
+//                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath + "    mduration=======" + mDuration);
 
                 tellListener();
             }
@@ -169,6 +238,12 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
         if (mRunnable != null) {
             removeCallbacks(mRunnable);
         }
+
+        if (mCltRunnable != null)
+            removeCallbacks(mCltRunnable);
+
+        if (mNetworkConnectReceiver != null)
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
     }
 
     private static Bitmap decodeImagePurgeOnly(final String file) {
@@ -181,7 +256,13 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
     // Get album art for specified album. This method will not try to
     // fall back to getting artwork directly from the file, nor will
     // it attempt to repair the database.
-    static Bitmap getArtworkQuick(String file, int w, int h) {
+    static Bitmap getArtworkQuick(byte[] bitmapBytes, String file, int w, int h) {
+
+        if (DBG)
+            Log.d(TAG, "getArtworkQuick. bitmapBytes == null? " + (bitmapBytes == null) + ", file= " + file);
+
+        if (TextUtils.isEmpty(file) && (bitmapBytes == null || bitmapBytes.length == 0))
+            return null;
         // NOTE: There is in fact a 1 pixel border on the right side in the
         // ImageView
         // used to display this drawable. Take it into account now, so we don't
@@ -191,31 +272,56 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
         // When the file is deleted during playing, such as when it's pruning
         // files, an Exception is thrown complaining file not found.
         // In the line "BitmapFactory.decodeFile(file, sBitmapOptionsCache);"
-        BitmapFactory.Options sBitmapOptionsCache = new BitmapFactory.Options();
-        int sampleSize = 1;
-        // Compute the closest power-of-two scale factor
-        // and pass that to sBitmapOptionsCache.inSampleSize, which will
-        // result in faster decoding and better quality
-        sBitmapOptionsCache.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(file, sBitmapOptionsCache);
-        int nextWidth = sBitmapOptionsCache.outWidth >> 1;
-        int nextHeight = sBitmapOptionsCache.outHeight >> 1;
-        while (nextWidth > w && nextHeight > h) {
-            sampleSize <<= 1;
-            nextWidth >>= 1;
-            nextHeight >>= 1;
+
+        Bitmap b = null;
+
+        try {
+            BitmapFactory.Options sBitmapOptionsCache = new BitmapFactory.Options();
+            int sampleSize = 1;
+            // Compute the closest power-of-two scale factor
+            // and pass that to sBitmapOptionsCache.inSampleSize, which will
+            // result in faster decoding and better quality
+            sBitmapOptionsCache.inJustDecodeBounds = true;
+
+            if (!TextUtils.isEmpty(file))
+                BitmapFactory.decodeFile(file, sBitmapOptionsCache);
+            else
+                BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length, sBitmapOptionsCache);
+
+            if (DBG)
+                Log.d(TAG, "getArtworkQuick. origin bitmap width=" + sBitmapOptionsCache.outWidth
+                        + ", height=" + sBitmapOptionsCache.outHeight + ", regionView width= " + w + ", regionView height= " + h);
+
+            int nextWidth = sBitmapOptionsCache.outWidth >> 1;
+            int nextHeight = sBitmapOptionsCache.outHeight >> 1;
+            if (DBG)
+                Log.d(TAG, "getArtworkQuick. nextWidth= " + nextWidth + ", nextHeight= " + nextHeight);
+
+            while (nextWidth > w && nextHeight > h) {
+                if (DBG)
+                    Log.d(TAG, "getArtworkQuick. nextWidth= " + nextWidth + ", nextHeight= " + nextHeight);
+                sampleSize <<= 1;
+                nextWidth >>= 1;
+                nextHeight >>= 1;
+            }
+
+            sBitmapOptionsCache.inSampleSize = sampleSize;
+            if (DBG)
+                Log.d(TAG, "getArtworkQuick. [sampleSize=" + sampleSize + ", nextWidth=" + nextWidth
+                        + ", nextHeight=" + nextHeight
+                        + ", w=" + w
+                        + ", h=" + h);
+
+            sBitmapOptionsCache.inJustDecodeBounds = false;
+            sBitmapOptionsCache.inPurgeable = true;
+
+            if (!TextUtils.isEmpty(file))
+                b = BitmapFactory.decodeFile(file, sBitmapOptionsCache);
+            else
+                b = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length, sBitmapOptionsCache);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        sBitmapOptionsCache.inSampleSize = sampleSize;
-        if (DBG)
-            Log.d(TAG, "getArtworkQuick. [sampleSize=" + sampleSize + ", nextWidth=" + nextWidth
-                    + ", nextHeight=" + nextHeight
-                    + ", w=" + w
-                    + ", h=" + h);
-
-        sBitmapOptionsCache.inJustDecodeBounds = false;
-        sBitmapOptionsCache.inPurgeable = true;
-        Bitmap b = BitmapFactory.decodeFile(file, sBitmapOptionsCache);
 
         // if (b != null) {
         // // finally rescale to exactly the size we need
@@ -260,6 +366,17 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
         }
     }
 
+    @Override
+    public void reloadContent() {
+        if (DBG)
+            Log.d(TAG, "reloadContent. url= " + mItem.url);
+        if (!TextUtils.isEmpty(mItem.url) && mCltRunnable != null){
+            removeCallbacks(mCltRunnable);
+            post(mCltRunnable);
+        }
+
+    }
+
     //
     @Override
     protected void onDraw(Canvas canvas) {
@@ -275,6 +392,5 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
             effectStyle.onDraw(this, canvas);//处理图
 
     }
-
 
 }
