@@ -184,7 +184,6 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
 
         if (isFirst && !TextUtils.isEmpty(mText) && mNeedPlayTimes >= 1) {
 
-            registerReceiver();
             setVisibility(INVISIBLE);
 //            int textBackColor = GraphUtils.parseColor("0xFF004040");
 //        if (!TextUtils.isEmpty(item.textBackColor) && !"0xFF000000".equals(item.textBackColor)) {
@@ -232,11 +231,6 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         }
     }
 
-    private void registerReceiver() {
-        IntentFilter filter = new IntentFilter("com.clt.intent.action.light.color");
-        mContext.registerReceiver(mColorChangeReceiver, filter);
-    }
-
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -252,8 +246,6 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             Log.i(TAG, "onDetachedFromWindow");
 
         removeCallbacks(this);
-        if (mColorChangeReceiver != null)
-            mContext.unregisterReceiver(mColorChangeReceiver);
 
         if (mHandler != null) {
             mHandler.stop();
@@ -367,22 +359,4 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             }
         }
     }
-
-    private final BroadcastReceiver mColorChangeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            String extra = intent.getStringExtra("color");
-            if (DBG)
-                Log.d(TAG, "color change receiver. extra= " + extra);
-
-            if ("Red".equals(extra))
-                ItemMultiLinesPagedText.this.setTextColor(Color.RED);
-            else if ("Yellow".equals(extra))
-                ItemMultiLinesPagedText.this.setTextColor(Color.YELLOW);
-            else if ("Green".equals(extra))
-                ItemMultiLinesPagedText.this.setTextColor(Color.GREEN);
-
-        }
-    };
 }
