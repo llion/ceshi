@@ -1,8 +1,12 @@
 package com.color.home.widgets;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -11,17 +15,13 @@ import android.widget.FrameLayout;
 
 import com.color.home.ProgramParser.Page;
 import com.color.home.ProgramParser.Program;
-import com.color.home.ResourceCollectable;
 
 public class ProgramView extends FrameLayout implements AdaptedProgram {
     private static final String TAG = "ProgramView";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
 
     private final int FLIP_MSG = 1;
     private int mFlipInterval = Integer.MAX_VALUE;
-    private PageView[] pageViews;
-
-    private ResourceCollectable mProgram;
 
     private final Handler mHandler = new Handler() {
         @Override
@@ -35,6 +35,7 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
     private Adapter mAdapter;
     // Default to -1, so that we can set the 0.
     private int mDisplayedChild = -1;
+    private Program mProgram;
 
     public ProgramView(Context context) {
         super(context);
@@ -56,8 +57,15 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
         setLayoutParams(new FrameLayout.LayoutParams(width, height));
     }
 
+    private void registerReceiver() {
+        IntentFilter filter = new IntentFilter("com.clt.intent.ACTION_SWITCH_PAGE_BY_NAME");
+        getContext().registerReceiver(mColorChangeReceiver, filter);
+    }
+
+
     @Override
     protected void onAttachedToWindow() {
+        registerReceiver();
         super.onAttachedToWindow();
     }
 
@@ -66,6 +74,9 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
         super.onDetachedFromWindow();
         // by default when we update running, we want the
         // current view to animate in
+        if (mColorChangeReceiver != null)
+            getContext().unregisterReceiver(mColorChangeReceiver);
+
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. ");
         destroy();
@@ -82,7 +93,6 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
         if (DBG)
             Log.i(TAG, "setAdapter. adapter=" + adapter);
         mAdapter = adapter;
-        pageViews = new PageView[mAdapter.getCount()];
 
         setDisplayedChild(0);
         scheduleNext();
@@ -120,7 +130,6 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
         // View currentView = getCurrentView();
         // removeViewAt(0);
         // removeView(currentView);
-
         scheduleNext();
     }
 
@@ -236,5 +245,53 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
                 Log.i(TAG, "onAllFinished. pageView");
         }
     }
+    private final BroadcastReceiver mColorChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
 
+            String pageName = intent.getStringExtra("pageName");
+            if (DBG)
+                Log.d(TAG, "Page change message received. extra= " + pageName);
+
+            if (!TextUtils.isEmpty(pageName)) {
+                int pageIndex = findPageIndexByPageName(pageName);
+                if (pageIndex >= 0 && pageIndex < mAdapter.getCount()) {
+                    setDisplayedChild(pageIndex);
+
+                    if (DBG)
+                        Log.d(TAG, "Schedule for the switched page.");
+
+                    scheduleNext();
+                } else {
+                    Log.w(TAG, "Page not found with page name=" + pageName);
+                }
+            }
+
+        }
+    };
+
+    private int findPageIndexByPageName(String pageName) {
+        Log.d(TAG, "findPageIndexByPageName=" + pageName);
+
+        if (mProgram != null && pageName != null && mProgram.pages != null) {
+
+            final int N = mProgram.pages.size();
+            for (int i = 0; i < N; i++) {
+                if (DBG)
+                    Log.d(TAG, "Checkint page with name=" + mProgram.pages.get(i).name);
+
+                if (pageName.equals(mProgram.pages.get(i).name)) {
+                    if (DBG)
+                        Log.d(TAG, "Found page with name=" + pageName);
+
+                    return i;
+                }
+            }
+        } else {
+            Log.e(TAG, " mProgram = " + mProgram + ", pageName=" + pageName + ", pages=" + mProgram.pages);
+        }
+
+        // Not found.
+        return -1;
+    }
 }
