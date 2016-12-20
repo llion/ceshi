@@ -7,6 +7,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.color.home.Constants;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.internal.Utils;
 
@@ -17,6 +18,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,14 +79,21 @@ public class CltJsonUtils {
 
     public String getCltText() {
         CacheControl cacheControl = new CacheControl.Builder().noCache().build();
-        String str = "";
+        String str = "", content;
         try {
             if (mCltContentList != null && mCltContentList.size() > 0) {
                 for (CltContent cltContent : mCltContentList) {
                     str += cltContent.getPrefix();
-                    str += getContentFromNet(getUrl(cltContent.getJsonObject().getString("url")),
+                    content = getContentFromNet(getUrl(cltContent.getJsonObject().getString("url")),
                             cltContent.getJsonObject().getString("filter"),
                             cacheControl);
+
+                    if (DBG)
+                        Log.d(TAG, "content= " + content);
+                    if (content != null && content.contains(Constants.NETWORK_EXCEPTION))
+                        return Constants.NETWORK_EXCEPTION;
+
+                    str += content;
 
                     if (DBG)
                         Log.d(TAG, "before replayce \"\\\\n\", str= " + str);
@@ -153,6 +165,8 @@ public class CltJsonUtils {
 
         } catch (Exception e) {
             e.printStackTrace();
+            if (isNetworkException(e))
+                content = Constants.NETWORK_EXCEPTION;
 
         } finally {
 
@@ -207,10 +221,16 @@ public class CltJsonUtils {
     }
 
     public byte[] getBitmapBytes(String originUrl) {
+        if (DBG)
+            Log.d(TAG, "originUrl= " + originUrl);
 
         HttpUrl httpUrl = HttpUrl.parse(originUrl);
         if (httpUrl == null)
             return null;
+
+        if (DBG)
+            Log.d(TAG, "scheme= " + httpUrl.scheme() + ", host= " + httpUrl.host()
+                    + ", port= " + httpUrl.port() + ", encodedPath= " + httpUrl.encodedPath());
 
         boolean isNetworkAvailable = isNetworkAvailable();
         Response response = null;
@@ -224,7 +244,10 @@ public class CltJsonUtils {
             //if the network is available,access network.
             //if the network is not available and it is the first time to get bitmap, get bytes from cache
             if (isNetworkAvailable || (!isNetworkAvailable && mIsFirstGetBitmap)) {
-                String url = httpUrl.scheme() + "://" + httpUrl.host() + (TextUtils.isEmpty(httpUrl.encodedPath()) ? "" : httpUrl.encodedPath());
+                String url = httpUrl.scheme() + "://"
+                        + httpUrl.host()
+                        + ":" + httpUrl.port()
+                        + (TextUtils.isEmpty(httpUrl.encodedPath()) ? "" : httpUrl.encodedPath());
                 if (DBG)
                     Log.d(TAG, "getBitmapBytes. url= " + url);
 
@@ -396,6 +419,27 @@ public class CltJsonUtils {
 //            cachePath = mContext.getCacheDir().getPath();
 //        }
         return new File(FOLDER_LAN + File.separator + uniqueName);
+    }
+
+    public boolean isNetworkException(Exception e) {
+
+        if (e instanceof UnknownHostException) {
+            Log.e(TAG, "UnknownHostException caught.");
+            return true;
+        }
+        if (e instanceof ConnectException) {
+            Log.e(TAG, "ConnectException caught.");
+            return true;
+        }
+        if (e instanceof SocketTimeoutException) {
+            Log.e(TAG, "SocketTimeoutException caught.");
+            return true;
+        }
+        if (e instanceof SocketException) {
+            Log.e(TAG, "SocketException caught.");
+            return true;
+        }
+        return false;
     }
 
 }

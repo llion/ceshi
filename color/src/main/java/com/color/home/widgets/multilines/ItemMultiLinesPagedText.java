@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import com.android.internal.util.FastMath;
 import com.color.home.AppController;
+import com.color.home.Constants;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.LogFont;
 import com.color.home.Texts;
@@ -454,7 +455,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         protected void onPostExecute(String result) {
             if (DBG)
                 Log.d(TAG, "onPostExecute. result= " + result);
-            if (result != null && !result.equals(mText)) {
+            if (result != null && !Constants.NETWORK_EXCEPTION.equals(result) && !result.equals(mText)) {
                 if (DBG)
                     Log.d(TAG, "onPostExecute. result not equals mText, update.");
                 mText = result;

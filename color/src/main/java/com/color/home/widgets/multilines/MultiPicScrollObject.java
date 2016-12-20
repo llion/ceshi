@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.color.home.AppController;
+import com.color.home.Constants;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.Texts;
@@ -1023,7 +1024,9 @@ public class MultiPicScrollObject {
                     mIsCltJson = true;
 
                     String resultText = mCltJsonUtils.getCltText();
-                    setText(resultText);
+                    if (Constants.NETWORK_EXCEPTION.equals(resultText))
+                        setText("");
+                    else setText(resultText);
 
                     if (DBG)
                         Log.d(TAG,"clt_json resultText= " + resultText);
@@ -1076,7 +1079,7 @@ public class MultiPicScrollObject {
 
                     String resultText = mCltJsonUtils.getCltText();
 
-                    if (!mText.equals(resultText)) {
+                    if (!Constants.NETWORK_EXCEPTION.equals(resultText) && !mText.equals(resultText)) {
                         if (DBG)
                             Log.d(TAG, "the data had updated.");
 
@@ -1109,6 +1112,9 @@ public class MultiPicScrollObject {
     private boolean initSizeAndDrawBitmapToTexture() throws Exception {
         if (DBG)
             Log.d(TAG, "initSizeAndDrawBitmapToTexture. mTextView= " + mTextView + ", mText= " + mText);
+
+        if (TextUtils.isEmpty(mText))
+            return false;
 
         mTextView.setText(mText);
         mTextView.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));

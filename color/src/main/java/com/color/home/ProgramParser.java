@@ -558,8 +558,6 @@ public class ProgramParser {
         }
 
         public HashCode getSinglelineScrollTextBitmapHash(String text) {
-            if (mHash != null)
-                return mHash;
 
             final String idString = logfont.getIdString();
             int length = text.length();

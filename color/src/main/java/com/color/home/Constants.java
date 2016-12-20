@@ -77,6 +77,7 @@ public class Constants {
     public static final String ACTION_CURRENT_PROG_INDEX = "com.clt.intent.action.CURRENT_PROG_INDEX";
     public static final String ACTION_LOG_REPORTING = "com.clt.intent.action.reportLog";
     public static final String VSN_EXT = ".vsn";
+    public static final String NETWORK_EXCEPTION = "NetworkException";
 
     public static File[] listUsbVsnFiles() {
         return listVsns(FOLDER_USB_0);
