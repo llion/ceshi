@@ -233,7 +233,6 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             Log.i(TAG, "onLayout. mIsCltJsonOk= " + mIsCltJsonOk + ", Thread= " + Thread.currentThread());
 
         if (isFirst && !TextUtils.isEmpty(mText) && mNeedPlayTimes >= 1) {
-            registerReceiver();
 
             if (mIsCltJsonOk){
                 //get clt_json
@@ -288,14 +287,10 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         setPageText();
 
         if (mPageSplitter.getPages().size() > 1) {
+            stopHandler();
             mHandler = new MTextMarquee(this, mOnePicDuration);
             mHandler.start();
         }
-    }
-
-    private void registerReceiver() {
-        IntentFilter filter = new IntentFilter("com.clt.intent.action.light.color");
-        mContext.registerReceiver(mColorChangeReceiver, filter);
     }
 
     @Override
@@ -316,13 +311,13 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         if (mCltRunnable != null)
             removeCallbacks(mCltRunnable);
 
-        if (mColorChangeReceiver != null) {
-            mContext.unregisterReceiver(mColorChangeReceiver);
-        }
-
         if (mNetworkConnectReceiver != null)
             mContext.unregisterReceiver(mNetworkConnectReceiver);
 
+        stopHandler();
+    }
+
+    private void stopHandler() {
         if (mHandler != null) {
             mHandler.stop();
             mHandler = null;
@@ -473,21 +468,4 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     }
 
 
-    private final BroadcastReceiver mColorChangeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            String extra = intent.getStringExtra("color");
-            if (DBG)
-                Log.d(TAG, "color change receiver. extra= " + extra);
-
-            if ("Red".equals(extra))
-                ItemMultiLinesPagedText.this.setTextColor(Color.RED);
-            else if ("Yellow".equals(extra))
-                ItemMultiLinesPagedText.this.setTextColor(Color.YELLOW);
-            else if ("Green".equals(extra))
-                ItemMultiLinesPagedText.this.setTextColor(Color.GREEN);
-
-        }
-    };
 }
