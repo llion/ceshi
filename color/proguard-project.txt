@@ -27,3 +27,4 @@
 -keep public class com.google.common.**
 
 -dontwarn com.google.common.**
+-dontwarn okio.*
