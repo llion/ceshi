@@ -228,6 +228,9 @@ public class SyncService extends CLIntentService {
                     }
                     // } else if (intent.getData().toString().endsWith("/mnt/sdcard")) {
                     // mStrategy.onMntSdcardMounted();
+                } else if (intent.getData().toString().startsWith("/mnt/internal_sd")) {
+                    Log.w(TAG, "/mnt/internal_sd was mounted too late, recheck ftp path and restart ftpd.");
+                    AppController.getInstance().ensureFtpServer();
                 }
             } else if (Intent.ACTION_MEDIA_REMOVED.equals(action) && intent.getData().toString().endsWith("0")) {
                 mStrategy.onUsbRemoved();

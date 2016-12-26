@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.LruCache;
@@ -265,7 +266,7 @@ public class AppController extends Application {
             }
         });
 
-        scheduleEnsureFTP(mFtpFacilities, 3000);
+        ensureFtpServer();
 
 
         mModel = new Model();
@@ -280,6 +281,10 @@ public class AppController extends Application {
 
     }
 
+    public void ensureFtpServer() {
+        scheduleEnsureFTP(mFtpFacilities, 3000);
+    }
+
     private void scheduleEnsureFTP(Runnable runnable, int delayMillis) {
         sHandler.removeCallbacks(runnable);
         sHandler.postDelayed(runnable, delayMillis);
@@ -291,6 +296,9 @@ public class AppController extends Application {
             if (!ensureFtpRootAndProgramPath()) {
                 Log.w(TAG, "Schedule another scheduleEnsureFTP.");
                 scheduleEnsureFTP(this, 5000);
+            } else {
+                SystemProperties.set("ftpd.reset", "1");
+                Log.d(TAG, "Reset ftpd anyway. ensured FTP path.");
             }
         }
     };
@@ -305,6 +313,8 @@ public class AppController extends Application {
 
                 return false;
             }
+            Log.e(TAG, "FtpServer. [Not exist, FTP dir:" + ftpDir);
+            return false;
         }
 
         return true;
