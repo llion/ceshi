@@ -13,7 +13,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.LruCache;
@@ -297,8 +296,9 @@ public class AppController extends Application {
                 Log.w(TAG, "Schedule another scheduleEnsureFTP.");
                 scheduleEnsureFTP(this, 5000);
             } else {
-                SystemProperties.set("ftpd.reset", "1");
-                Log.d(TAG, "Reset ftpd anyway. ensured FTP path.");
+                // SystemProperties.set("ftpd.reset", "1");
+                // Need not reset ftpd, as the FTPD'll only validate the path on connected.
+                Log.d(TAG, "Ensured FTP path.");
             }
         }
     };
