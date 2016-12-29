@@ -20,7 +20,7 @@ import com.color.home.network.wifi.WifiParsedResult;
  * WifiConnect:V
  */
 public class WifiConnect {
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     private static final String TAG = "WifiConnect";
 
     private WifiManager mWifiManager;
@@ -56,15 +56,18 @@ public class WifiConnect {
     }
 
     public void setWifi(boolean enable) {
+        if(DBG)
+            Log.d(TAG, "set wifi =" + enable);
+
         if (mWifiManager != null) {
-            if (mWifiManager.isWifiEnabled() != enable) {
-                boolean enabled = mWifiManager.setWifiEnabled(enable);
-                if (DBG)
-                    Log.d(TAG, "openWifi. [setWifiEnabled is enable=" + enable + ", result=" + enabled);
-            }else{
-                if(DBG)
-                    Log.d(TAG, "wifi is already enabled..");
-            }
+//            if (mWifiManager.isWifiEnabled() != enable) {
+            boolean enabled = mWifiManager.setWifiEnabled(enable);
+            if (DBG)
+                Log.d(TAG, "openWifi. [setWifiEnabled is enable=" + enable + ", result=" + enabled);
+//            }else{
+//                if(DBG)
+//                    Log.d(TAG, "wifi is already enabled..");
+//            }
 
         }else{
             Log.e(TAG, "wifi manager is null!");

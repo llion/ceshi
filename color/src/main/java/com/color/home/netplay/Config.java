@@ -191,12 +191,14 @@ public class Config implements ConfigAPI {
             saveSrvIpNportFromUsb(ip.trim());
 
         if (pp.getProperty(ATTR_WIFI_ENABLED) != null) {
-            if (isWifiModuleExists(mContext))
-                new Wifi(pp);
+//            if (isWifiModuleExists(mContext))
+                new Wifi(pp, mContext);
         }
 
-        if (pp.getProperty(ATTR_IS_WIFI_P2P) != null)
-            saveWifiP2PFromExt(pp);
+        if (pp.getProperty(ATTR_IS_WIFI_P2P) != null) {
+//            saveWifiP2PFromExt(pp);
+            new WifiP2P(pp, mContext);
+        }
 
         String screenshot = pp.getProperty(CMD_SCREENSHOT);
         if (screenshot != null)
@@ -225,7 +227,8 @@ public class Config implements ConfigAPI {
         Log.d(TAG, "isAirplane mode on=" + Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.AIRPLANE_MODE_ON, 0));
 
-        mSp.edit().putString(ATTR_AP_SSID, "").apply();
+//        if(toEnableAirplane)
+//            new WifiP2P(mContext);
         cm.setMobileDataEnabled(toEnableMobile);
     }
 

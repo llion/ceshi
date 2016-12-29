@@ -9,6 +9,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.AppController;
@@ -16,9 +17,14 @@ import com.color.home.AppController;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.util.Properties;
 
 import libcore.io.IoUtils;
+
+import static com.color.home.netplay.Config.isIsoFromTxtFile;
+import static com.color.home.netplay.ConfigAPI.ATTR_IS_WIFI_P2P;
 
 /**
  * @author zzjd7382 WifiP2P:V
@@ -54,6 +60,81 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
 //                if (DBG)
 //                    Log.d(TAG, "enableApOnApplicable. [ap configed and currently device is in AP, ignore.");
 //            }
+        }
+    }
+
+    public WifiP2P(Properties pp, Context context) throws UnsupportedEncodingException{
+        mContext = context;
+
+        if(mWifiManager == null)
+            mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+
+        String propIsAP = pp.getProperty(ATTR_IS_WIFI_P2P);
+        if (propIsAP == null) {
+            if (DBG)
+                Log.d(TAG, "saveWifiP2PFromExt. [is.wifi.p2p not set, so do not save to pref. Abort.");
+            return;
+        }
+
+        if (DBG)
+            Log.i(TAG, "saveWifiP2PFromExt. strIsWifiP2PFromConfig=" + pp + ", Thread=" + Thread.currentThread());
+
+        final boolean apEnabledInUsb = Config.isTrue(propIsAP.trim());
+
+        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, apEnabledInUsb ? 1 : 0);
+
+        String ssid = pp.getProperty(ConfigAPI.ATTR_AP_SSID);
+        String pass = pp.getProperty(ConfigAPI.ATTR_AP_PASS);
+        String channel = pp.getProperty(ConfigAPI.ATTR_AP_CHANNEL, "6");
+
+        if (apEnabledInUsb && !TextUtils.isEmpty(ssid) && pass != null) {
+            if (isIsoFromTxtFile(pp))
+                ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
+        }
+
+        if (!TextUtils.isEmpty(ssid)) {
+            ssid = ssid.trim();
+        }else{
+            return;
+        }
+
+        if (!TextUtils.isEmpty(pass)) {
+            pass = pass.trim();
+        }else{
+            return;
+        }
+
+        if (!TextUtils.isEmpty(channel)) {
+            channel = channel.trim();
+        }
+
+        if (DBG)
+            Log.i(TAG, "Post apEnabledInUsb=" + apEnabledInUsb + ", Thread=" + Thread.currentThread() +
+                        "ssid=" + ssid +
+                        "pass=" + pass +
+                        "channel=" + channel);
+
+        if (apEnabledInUsb && Config.isWifiModuleExists(mContext)) {
+            if(!mWifiManager.isWifiApEnabled()) {
+                enable(ssid, pass, channel);
+                Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, channel);
+            }
+        } else {
+            disable();
+        }
+
+//        enableApOnApplicable();
+    }
+
+    private class WifiApConfig{
+        private String ssid;
+        private String pass;
+        private String channel;
+
+        public WifiApConfig(String ssid, String pass, String channel) {
+            this.ssid = ssid;
+            this.pass = pass;
+            this.channel = channel;
         }
     }
 
@@ -138,6 +219,21 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
 
             return null; // don't care.
         }
+    }
+
+    public void enable(String ssid, String pass, String channel) {
+        if (DBG)
+            Log.d(TAG, "Async me");
+
+        new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, ssid, pass, channel);
+
+        // assertTrue(mWifiManager.setWifiApEnabled(null, true));
+        // mWifiConfig = mWifiManager.getWifiApConfiguration();
+        // if (mWifiConfig != null) {
+        // Log.v(TAG, "mWifiConfig is " + mWifiConfig.toString());
+        // } else {
+        // Log.v(TAG, "mWifiConfig is null.");
+        // }
     }
 
     public void enable() {
