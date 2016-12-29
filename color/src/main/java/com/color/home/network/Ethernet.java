@@ -6,6 +6,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.ethernet.EthernetManager;
+import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
 import android.util.Log;
@@ -93,14 +94,14 @@ public class Ethernet {
         if (property != null) {
             if (DBG)
                 try {
-                    Log.i(TAG, "setEnabled. value=" + property + ", enabled=" + System.getInt(mContentResolver, System.ETHERNET_ON));
+                    Log.i(TAG, "setEnabled. value=" + property + ", enabled=" + Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON));
                 } catch (SettingNotFoundException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
 
             mEnabled = Config.isTrue(property);
-            System.putInt(mContentResolver, System.ETHERNET_ON, mEnabled ? 1 : 0);
+            Settings.Secure.putInt(mContentResolver, System.ETHERNET_ON, mEnabled ? 1 : 0);
             dirty();
         }
     }
@@ -144,10 +145,9 @@ public class Ethernet {
     private void action() {
         EthernetManager ethManager = (EthernetManager) mContext.getSystemService(Context.ETHERNET_SERVICE);
         if (ethManager != null) {
-            ethManager.setEthernetEnabled(false);
             boolean isEthernetOn = false;
             try {
-                isEthernetOn = System.getInt(mContentResolver, System.ETHERNET_ON) == 1;
+                isEthernetOn = Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON) == 1;
                 ethManager.setEthernetEnabled(isEthernetOn);
             } catch (SettingNotFoundException e) {
                 e.printStackTrace();
