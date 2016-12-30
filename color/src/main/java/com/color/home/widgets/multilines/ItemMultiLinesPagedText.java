@@ -153,7 +153,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     }
 
     private void setMultilineText() {
-        if (mItem.filesource != null) {
+        if (mItem.filesource != null && "1".equals(mItem.filesource.isrelative)) {
             String filepath = mItem.filesource.filepath;
 
             if (!TextUtils.isEmpty(filepath) && filepath.endsWith(".txt")) {
