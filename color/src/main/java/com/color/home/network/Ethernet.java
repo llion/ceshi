@@ -18,7 +18,7 @@ import com.color.home.netplay.Wifi;
 
 public class Ethernet {
     private final static String TAG = "Ethernet";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
     private ContentResolver mContentResolver;
     private Context mContext;
     private boolean mDirty = false;
@@ -145,14 +145,14 @@ public class Ethernet {
     private void action() {
         EthernetManager ethManager = (EthernetManager) mContext.getSystemService(Context.ETHERNET_SERVICE);
         if (ethManager != null) {
-            boolean isEthernetOn = false;
-            try {
-                isEthernetOn = Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON) == 1;
-                ethManager.setEthernetEnabled(isEthernetOn);
-            } catch (SettingNotFoundException e) {
-                e.printStackTrace();
-            }
+            boolean isEthernetOn = Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON, 0) == 1;
 
+            // Must bring down firstly the if, then enable if so as to validate the new config.
+            // setEthernetEnabled is going to change the Secure settings.
+            ethManager.setEthernetEnabled(false);
+
+            // And then enable if applicable.
+            ethManager.setEthernetEnabled(isEthernetOn);
             Log.i(TAG, "Enable ethernet =" + isEthernetOn);
         } else {
             Log.e(TAG, "get ethernet manager failed.");
