@@ -117,7 +117,7 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
         if (apEnabledInUsb && Config.isWifiModuleExists(mContext)) {
             if(!mWifiManager.isWifiApEnabled()) {
                 enable(ssid, pass, channel);
-                Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, channel);
+                Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, Integer.parseInt(channel));
             }
         } else {
             disable();

@@ -65,7 +65,7 @@ public class Config implements ConfigAPI {
 
         mFtpServer = new FtpServer();
 
-        setupDefaultAPIfFirstRun();
+//        setupDefaultAPIfFirstRun();
 
         // Read config if ext storage exist and has config.txt.
         // it will write the sp if there is any.
@@ -103,10 +103,21 @@ public class Config implements ConfigAPI {
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [Random channel=" + channelrandom);
             }
 
-            saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
-            final Editor edit = mSp.edit();
-            edit.putBoolean("FirstInit", false);
-            edit.apply();
+            Properties pp = new Properties();
+            pp.setProperty(ATTR_IS_WIFI_P2P, "true");
+            pp.setProperty(ATTR_AP_SSID, modelname + "-" + serialno);
+            pp.setProperty(ATTR_AP_PASS, "123456789");
+            pp.setProperty(ATTR_AP_CHANNEL, String.valueOf(channelrandom));
+
+            try {
+                new WifiP2P(pp, mContext);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+//            saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
+//            final Editor edit = mSp.edit();
+//            edit.putBoolean("FirstInit", false);
+//            edit.apply();
         }
     }
 
