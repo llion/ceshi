@@ -7,7 +7,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.color.home.AppController;
-import com.color.home.Constants;
 
 public abstract class CLIntentService extends Service {
     private final static String TAG = "CLIntentService";
@@ -71,9 +70,6 @@ public abstract class CLIntentService extends Service {
             Log.v(TAG, "onDestroy. [");
 
         // Don't call super.onDestory(), as we'd like to keep the "Looper".
-
-        if (Constants.HTTP_SERVER_SUPPORT && AppController.getInstance().getConnectivity().hasServer())
-            PollingUtils.startPollingService(getApplicationContext(), 6000, SyncService.class, Constants.ACTION_REFRESH);
     }
 
     /**

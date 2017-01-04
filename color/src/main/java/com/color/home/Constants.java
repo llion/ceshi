@@ -47,9 +47,9 @@ public class Constants {
     public static final int TYPE_NET = 2;
     public static final int TYPE_FTP = 3;
 
-    public static String getRemoteFileUri(String relativeFilepath) {
-        return AppController.getInstance().getConnectivity().getProgramFolderUri() + relativeFilepath;
-    }
+//    public static String getRemoteFileUri(String relativeFilepath) {
+//        return AppController.getInstance().getConnectivity().getProgramFolderUri() + relativeFilepath;
+//    }
 
     public static String getAbsPath(String fileName) {
         return AppController.getInstance().getDownloadDataDir() +
