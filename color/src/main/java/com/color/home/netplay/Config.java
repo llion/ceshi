@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,7 +23,6 @@ import android.net.NetworkInfo;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -219,48 +217,51 @@ public class Config implements ConfigAPI {
     }
 
     private void setMobileEnabled(Properties pp) {
-        Log.d(TAG, "currentlyAirplaneEnabled =" + (Settings.Global.getInt(mContext.getContentResolver(),
-                Settings.Global.AIRPLANE_MODE_ON, 0) == 1));
-
-        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         String mobileMode = pp.getProperty(ConfigAPI.ATTR_MOBILE_ENABLED);
         boolean toEnableMobile = Config.isTrue(mobileMode);
-        Settings.Global.putInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, toEnableMobile ? 1 : 0);
-        boolean toEnableAirplane = !toEnableMobile;
-        Log.d(TAG, "Attempt to switch airplane mode to " + toEnableAirplane);
-        cm.setAirplaneMode(toEnableAirplane);
+        int rilProperExpected = toEnableMobile ? 1 : 0;
 
-        Settings.System.putInt(mContext.getContentResolver(),
-                Settings.Global.AIRPLANE_MODE_ON,toEnableAirplane ? 1 : 0);
-//        Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-//        intent.putExtra("state", toEnableAirplane);
-//        mContext.sendBroadcast(intent);
-        Log.d(TAG, "isAirplane mode on=" + Settings.Global.getInt(mContext.getContentResolver(),
-                Settings.Global.AIRPLANE_MODE_ON, 0));
+        if(Settings.Global.getInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, 0) == rilProperExpected) {
+            Log.w(TAG, "setMobileEnabled not changed. abort. toEnableMobile=" + toEnableMobile);
+            return;
+        }
 
-//        if(toEnableAirplane)
-//            new WifiP2P(mContext);
-        cm.setMobileDataEnabled(toEnableMobile);
+        // Dirty and take action.
+        Settings.Global.putInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, rilProperExpected);
+        Log.d(TAG, "Attempt to " + (toEnableMobile ? "enable" : "disable") + " mobile data.");
+
+        if(! rilProperChanged(rilProperExpected)) {
+            Log.w(TAG, "huawei proper not changed. abort.!");
+            return;
+        }
+
+        if(toEnableMobile)
+            enableRil();
+        else
+            disableRil();
     }
 
-    private void setMobileDataState(boolean mobileDataEnabled)
-    {
-        try
-        {
-            TelephonyManager telephonyService = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-
-            Method setMobileDataEnabledMethod = telephonyService.getClass().getDeclaredMethod("setDataEnabled", boolean.class);
-
-            if (null != setMobileDataEnabledMethod)
-            {
-                setMobileDataEnabledMethod.invoke(telephonyService, mobileDataEnabled);
-            }
+    private boolean rilProperChanged(int rilProperExpected){
+        boolean properChanged = false;
+        try {
+            int rilProper = Integer.parseInt(SystemProperties.get("persist.color.modem.huawei"));
+            if(rilProperExpected != rilProper)
+                properChanged = true;
+        }catch (NumberFormatException e){
+            e.printStackTrace();
+            properChanged = true;
         }
-        catch (Exception ex)
-        {
-            Log.e(TAG, "Error setting mobile data state", ex);
-        }
+        return properChanged;
     }
+
+    private static void enableRil(){
+        SystemProperties.set("persist.color.modem.huawei", "1");
+    }
+
+    private static void disableRil(){
+        SystemProperties.set("persist.color.modem.huawei", "0");
+    }
+
 
     public static boolean isIsoFromTxtFile(Properties pp) {
         return !pp.contains(UTF_8);
