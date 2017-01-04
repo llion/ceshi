@@ -170,7 +170,7 @@ public class SyncService extends CLIntentService {
                         try {
                             pp.setProperty(Config.UTF_8, "1");
                             AppController.getInstance().getCfg().cfgByProperties(pp);
-                        } catch (UnsupportedEncodingException e) {
+                        }catch (IOException e){
                             e.printStackTrace();
                         }
                     }

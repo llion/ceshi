@@ -31,11 +31,11 @@ public class WifiP2P {
     public void setupWifiAP() {
         if (DBG)
             Log.i(TAG,
-                    "setupWifiAP. isAPConfiged()=" + isAPConfiged() + ", Device, mWifiManager.isWifiApEnabled()="
+                    "setupWifiAP. isAPConfigured()=" + isAPConfigured() + ", Device, mWifiManager.isWifiApEnabled()="
                             + mWifiManager.isWifiApEnabled());
 
         if (Config.isWifiModuleExists(mContext))
-            if (isAPConfiged()) {
+            if (isAPConfigured()) {
     //            if (!mWifiManager.isWifiApEnabled())
                 // reenable is OK...
                 enable();
@@ -67,7 +67,7 @@ public class WifiP2P {
         {
             final boolean enableAPRequested = Config.isTrue(propIsAP.trim());
 
-//        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, apEnabledInUsb ? 1 : 0);
+//        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.KEY_AP_ENABLED, apEnabledInUsb ? 1 : 0);
 
             String ssid = pp.getProperty(ConfigAPI.ATTR_AP_SSID);
             String pass = pp.getProperty(ConfigAPI.ATTR_AP_PASS);
@@ -129,7 +129,7 @@ public class WifiP2P {
         if(DBG)
             Log.d(TAG, "isApConfigChanged..");
         boolean dirty = false;
-        if(isApConfig != isAPConfiged()){
+        if(isApConfig != isAPConfigured()){
             saveApEnableConfig(isApConfig);
             dirty = true;
         }
@@ -354,8 +354,8 @@ public class WifiP2P {
     }
 
 
-    public boolean isAPConfiged() {
-        return Settings.Global.getInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, 0) == 1;
+    public boolean isAPConfigured() {
+        return Settings.Global.getInt(mContext.getContentResolver(), ConfigAPI.KEY_AP_ENABLED, 0) == 1;
     }
 
     public String getChannelFromProvider() {
@@ -371,7 +371,7 @@ public class WifiP2P {
     }
 
     public void saveApEnableConfig(boolean isApConfig) {
-        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, isApConfig ? 1 : 0);
+        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.KEY_AP_ENABLED, isApConfig ? 1 : 0);
     }
 
     public void saveChannelToProvider(String channel) {

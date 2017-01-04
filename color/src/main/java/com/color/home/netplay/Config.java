@@ -105,7 +105,7 @@ public class Config implements ConfigAPI {
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [Random channel=" + channelrandom);
             }
 
-            Settings.Global.putString(mContext.getContentResolver(), ATTR_IS_WIFI_P2P, "true" );
+            Settings.Global.putInt(mContext.getContentResolver(), KEY_AP_ENABLED, 1);
             Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_SSID, modelname + "-" + serialno);
             Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_PASS, "123456789");
             Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_CHANNEL, String.valueOf(channelrandom));
@@ -162,7 +162,7 @@ public class Config implements ConfigAPI {
         return pp;
     }
 
-    public void cfgByProperties(Properties pp) throws UnsupportedEncodingException {
+    public void cfgByProperties(Properties pp) throws IOException {
         if (DBG) {
             ConnectivityManager mConnectivityManager = (ConnectivityManager) AppController.getInstance().getSystemService(
                     Context.CONNECTIVITY_SERVICE);
@@ -216,7 +216,7 @@ public class Config implements ConfigAPI {
 
     }
 
-    private void setMobileEnabled(Properties pp) {
+    private void setMobileEnabled(Properties pp) throws IOException {
         String mobileMode = pp.getProperty(ConfigAPI.ATTR_MOBILE_ENABLED);
         boolean toEnableMobile = Config.isTrue(mobileMode);
         int rilProperExpected = toEnableMobile ? 1 : 0;
@@ -244,7 +244,7 @@ public class Config implements ConfigAPI {
     private boolean rilProperChanged(int rilProperExpected){
         boolean properChanged = false;
         try {
-            int rilProper = Integer.parseInt(SystemProperties.get("persist.color.modem.huawei"));
+            int rilProper = SystemProperties.getInt("persist.color.modem.huawei", 0);
             if(rilProperExpected != rilProper)
                 properChanged = true;
         }catch (NumberFormatException e){
@@ -254,12 +254,14 @@ public class Config implements ConfigAPI {
         return properChanged;
     }
 
-    private static void enableRil(){
-        SystemProperties.set("persist.color.modem.huawei", "1");
+    private static void enableRil() throws IOException {
+        Log.d(TAG, "enable ril");
+        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 1"});
     }
 
-    private static void disableRil(){
-        SystemProperties.set("persist.color.modem.huawei", "0");
+    private static void disableRil() throws IOException {
+        Log.d(TAG, "disable ril");
+        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 0"});
     }
 
 

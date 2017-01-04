@@ -23,13 +23,6 @@ public class Ethernet {
     private Context mContext;
     private boolean mDirty = false;
     private Properties mPp;
-    private boolean mEnabled;
-    private int mStaticlan;
-    private String mIp;
-    private String mNetmask;
-    private String mGw;
-    private String mDns1;
-    private String mDns2;
 
     public Ethernet(Context context, Properties pp) {
         mContext = context;
@@ -40,77 +33,92 @@ public class Ethernet {
     }
 
     public void setIp() {
-        mIp = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_IP);
-        if (mIp != null) {
+        final String ip = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_IP);
+        if (ip != null && !ip.equals(System.getString(mContentResolver, System.ETHERNET_STATIC_IP))) {
             if (DBG)
-                Log.i(TAG, "setIp. ip=" + mIp);
-            System.putString(mContentResolver, System.ETHERNET_STATIC_IP, mIp);
+                Log.i(TAG, "setIp. ip=" + ip);
+            System.putString(mContentResolver, System.ETHERNET_STATIC_IP, ip);
             dirty();
         }
     }
 
     public void setNetmask() {
-        mNetmask = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_NETMASK);
-        if (mNetmask != null) {
+        final String netmask = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_NETMASK);
+
+        if (netmask != null && !netmask.equals(System.getString(mContentResolver, System.ETHERNET_STATIC_NETMASK))) {
             if (DBG)
-                Log.i(TAG, "setNetmask. netmask=" + mNetmask);
-            System.putString(mContentResolver, System.ETHERNET_STATIC_NETMASK, mNetmask);
+                Log.i(TAG, "setNetmask. netmask=" + netmask);
+
+            System.putString(mContentResolver, System.ETHERNET_STATIC_NETMASK, netmask);
             dirty();
         }
     }
 
     public void setGw() {
-        mGw = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_GATEWAY);
-        if (mGw != null) {
+        final String gw = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_GATEWAY);
+        if (gw != null && !gw.equals(System.getString(mContentResolver, System.ETHERNET_STATIC_GATEWAY))) {
             if (DBG)
-                Log.i(TAG, "setGw. gw=" + mGw);
-            System.putString(mContentResolver, System.ETHERNET_STATIC_GATEWAY, mGw);
+                Log.i(TAG, "setGw. gw=" + gw);
+            System.putString(mContentResolver, System.ETHERNET_STATIC_GATEWAY, gw);
             dirty();
         }
     }
 
     public void setDns1() {
-        mDns1 = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_DNS1);
-        if (mDns1 != null) {
+        final String dns1 = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_DNS1);
+        if (dns1 != null && !dns1.equals(System.getString(mContentResolver, System.ETHERNET_STATIC_DNS1))) {
             if (DBG)
-                Log.i(TAG, "setDns1. dns1=" + mDns1);
-            System.putString(mContentResolver, System.ETHERNET_STATIC_DNS1, mDns1);
+                Log.i(TAG, "setDns1. dns1=" + dns1);
+            System.putString(mContentResolver, System.ETHERNET_STATIC_DNS1, dns1);
             dirty();
         }
     }
 
     public void setDns2() {
-        mDns2 = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_DNS2);
-        if (mDns2 != null) {
+        final String dns2 = mPp.getProperty(ConfigAPI.ATTR_LAN_STATIC_DNS2);
+        if (dns2 != null && ! dns2.equals(System.getString(mContentResolver, System.ETHERNET_STATIC_DNS2))) {
             if (DBG)
-                Log.i(TAG, "setDns2. dns2=" + mDns2);
-            System.putString(mContentResolver, System.ETHERNET_STATIC_DNS2, mDns2);
+                Log.i(TAG, "setDns2. dns2=" + dns2);
+            System.putString(mContentResolver, System.ETHERNET_STATIC_DNS2, dns2);
             dirty();
         }
     }
 
     public void setEnabled() {
-        String property = mPp.getProperty(ConfigAPI.ATTR_LAN_ENABLED);
-        if (property != null) {
-            if (DBG)
-                try {
-                    Log.i(TAG, "setEnabled. value=" + property + ", enabled=" + Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON));
-                } catch (SettingNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+        final String enabled = mPp.getProperty(ConfigAPI.ATTR_LAN_ENABLED);
+        if (enabled != null ) {
 
-            mEnabled = Config.isTrue(property);
-            Settings.Secure.putInt(mContentResolver, System.ETHERNET_ON, mEnabled ? 1 : 0);
-            dirty();
+            boolean ethOnInSettings = Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON, 0) == 1;
+            boolean bEnabled = Config.isTrue(enabled);
+
+            if (bEnabled != ethOnInSettings) {
+
+                if (DBG)
+                    try {
+                        Log.i(TAG, "setEnabled. value=" + enabled + ", enabled=" + Settings.Secure.getInt(mContentResolver, System.ETHERNET_ON));
+                    } catch (SettingNotFoundException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+
+                Settings.Secure.putInt(mContentResolver, System.ETHERNET_ON, bEnabled ? 1 : 0);
+                dirty();
+            }
         }
     }
 
     public void setLanMode() {
         String mode = mPp.getProperty(ConfigAPI.ATTR_LAN_MODE);
+
         if (mode != null) {
-            setEthStatic("static".equalsIgnoreCase(mode) ? 1 : 0);
-            dirty();
+            int staticFlagInSettings = System.getInt(mContentResolver, System.ETHERNET_USE_STATIC_IP, 0);
+            int staticFlagToSet = "static".equalsIgnoreCase(mode) ? 1 : 0;
+
+            if (staticFlagToSet != staticFlagInSettings) {
+                setEthStatic(staticFlagToSet);
+                dirty();
+            }
         }
     }
 
@@ -127,7 +135,6 @@ public class Ethernet {
     }
 
     private void setEthStatic(int staticlan) {
-        mStaticlan = staticlan;
         if (DBG)
             Log.i(TAG, "setEthStatic. isstaticip=" + staticlan);
         System.putInt(mContentResolver, System.ETHERNET_USE_STATIC_IP, staticlan);
