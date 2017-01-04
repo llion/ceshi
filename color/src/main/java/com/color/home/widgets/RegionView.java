@@ -104,7 +104,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 mStrokePaint.setStrokeWidth(1);
 
                 if (borderWidth == 3) {
-                    mIntervals = new float[]{4.f, 4.f};
+                    mIntervals = new float[]{8.f, 8.f};
                     lineWidth = 0.5f;
 
                 } else {// triangle
@@ -121,9 +121,9 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         private void setPathShape() {
             mShape = new Path();
-            mShape.moveTo(0, 2);
-            mShape.lineTo(2, -2);
-            mShape.lineTo(4, 2);
+            mShape.moveTo(0, -2);
+            mShape.lineTo(4, -2);
+            mShape.lineTo(2, 2);
             mShape.close();
         }
 
@@ -144,7 +144,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                  mPhase -= 0.3f;
 
                 if (DBG_DRAW)
-                    Log.d(TAG, "callBack= " + getCallback());
+                    Log.d(TAG, "callBack= " + getCallback() + ", mPhase= " + mPhase);
                 invalidateSelf();
 
             }
@@ -228,10 +228,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
             if (borderWidth > 0) {
 
-                if (borderWidth == 3)
-                    RegionView.this.setPadding(1, 1, 1, 1);
-                else
-                    RegionView.this.setPadding(borderWidth, borderWidth, borderWidth, borderWidth);
+                RegionView.this.setPadding(borderWidth, borderWidth, borderWidth, borderWidth);
 
                 int rectWidth = 0, rectHeight = 0;
                 try {
@@ -240,9 +237,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
+
                 mDrawable = new BorderDrawable(rectWidth, rectHeight, borderWidth, GraphUtils.parseColor(region.rect.bordercolor));
-                this.setLayerType(LAYER_TYPE_SOFTWARE, null);
-                mDrawable.setCallback(this);
+                if (borderWidth > 2) {
+                    this.setLayerType(LAYER_TYPE_SOFTWARE, null);
+                    mDrawable.setCallback(this);
+                }
+
             }
         }
 
