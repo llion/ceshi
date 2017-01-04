@@ -1,19 +1,5 @@
 package com.color.home.netplay;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Random;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -31,6 +17,20 @@ import android.util.Log;
 import com.color.home.AppController;
 import com.color.home.Constants;
 import com.color.home.network.Ethernet;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Random;
 
 /**
  * @author zzjd7382
@@ -65,7 +65,7 @@ public class Config implements ConfigAPI {
 
         mFtpServer = new FtpServer();
 
-//        setupDefaultAPIfFirstRun();
+        setupDefaultAPIfFirstRun();
 
         // Read config if ext storage exist and has config.txt.
         // it will write the sp if there is any.
@@ -78,8 +78,11 @@ public class Config implements ConfigAPI {
 //            edit.putBoolean("FirstInit", true);
 //            edit.apply();
 //        }
+        final boolean firstRun = Settings.Global.getInt(mContext.getContentResolver(), "clt.FirstRun", 1) == 1;
 
-        if (mSp.getBoolean("FirstInit", true)) {
+        if (firstRun) {
+            Settings.Global.putInt(mContext.getContentResolver(), "clt.FirstRun", 0);
+
             String ro_serialno = SystemProperties.get("ro.serialno");
             String serialno = "0000";
             if (ro_serialno != null && ro_serialno.length() >= 4) {
@@ -103,17 +106,17 @@ public class Config implements ConfigAPI {
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [Random channel=" + channelrandom);
             }
 
-            Properties pp = new Properties();
-            pp.setProperty(ATTR_IS_WIFI_P2P, "true");
-            pp.setProperty(ATTR_AP_SSID, modelname + "-" + serialno);
-            pp.setProperty(ATTR_AP_PASS, "123456789");
-            pp.setProperty(ATTR_AP_CHANNEL, String.valueOf(channelrandom));
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_IS_WIFI_P2P, "true" );
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_SSID, modelname + "-" + serialno);
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_PASS, "123456789");
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_CHANNEL, String.valueOf(channelrandom));
 
-            try {
-                new WifiP2P(pp, mContext);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+
+//            try {
+//                new WifiP2P(pp, mContext);
+//            } catch (UnsupportedEncodingException e) {
+//                e.printStackTrace();
+//            }
 //            saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
 //            final Editor edit = mSp.edit();
 //            edit.putBoolean("FirstInit", false);
@@ -197,9 +200,6 @@ public class Config implements ConfigAPI {
             setMobileEnabled(pp);
 
         new Ethernet(mContext, pp);
-        String ip = pp.getProperty(ATTR_SERVER_IP);
-        if (ip != null)
-            saveSrvIpNportFromUsb(ip.trim());
 
         if (pp.getProperty(ATTR_WIFI_ENABLED) != null) {
 //            if (isWifiModuleExists(mContext))
@@ -215,7 +215,6 @@ public class Config implements ConfigAPI {
         if (screenshot != null)
             screenshot(screenshot);
 
-        mFtpServer.setupFtpService(pp);
     }
 
     private void setMobileEnabled(Properties pp) {
@@ -384,22 +383,6 @@ public class Config implements ConfigAPI {
         // XXX: Shared pref will only notify upon a change of the KEY.
         // If the following KEY_IS_WIFI_P2P is not changed, no notification will be issued.
         edit.putBoolean(KEY_IS_WIFI_P2P, enabled).commit();
-    }
-
-    public void saveSrvIpNportFromUsb(String srvIpNPort) {
-        final String ipNPort = mSp.getString(KEY_SERVER_IPPORT, "");
-        if (ipNPort.equals(srvIpNPort)) {
-            if (DBG)
-                Log.i(TAG, "persistentServerIpNportFromExtStorage. serverIpNPort=" + srvIpNPort
-                        + ", from sdcard is identical to the sp, do nothing.");
-
-        } else {
-            if (DBG)
-                Log.i(TAG, "persistentServerIpNportFromExtStorage. Differs and save. sdcard ipport=" + srvIpNPort + ", while the sp="
-                        + ipNPort);
-
-            mSp.edit().putString(KEY_SERVER_IPPORT, srvIpNPort).commit();
-        }
     }
 
     public boolean isAntialias() {

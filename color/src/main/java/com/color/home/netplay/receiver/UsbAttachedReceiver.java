@@ -7,8 +7,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
-import com.color.home.netplay.Config;
-import com.color.home.netplay.Wifi;
 import com.color.home.netplay.WifiP2P;
 
 /**
@@ -39,8 +37,9 @@ public class UsbAttachedReceiver extends BroadcastReceiver {
             if (usbDevice != null && usbDevice.getProductId() == 33145 && usbDevice.getVendorId() == 3034) {
                 if (DBG)
                     Log.d(TAG, "mWifiP2P=null? " + (mWifiP2P == null));
-                if (mWifiP2P != null && mWifiP2P.isAPConfiged())
-                    mWifiP2P.enable();
+
+
+                mWifiP2P.setupWifiAP();
             }
 
         }
