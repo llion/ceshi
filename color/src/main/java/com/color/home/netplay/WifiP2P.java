@@ -258,7 +258,7 @@ public class WifiP2P {
         if (DBG)
             Log.d(TAG, "Async me");
 
-        new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSSIDFromProvider(), getPassFromProvider(), getPassFromProvider());
+        new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSSIDFromProvider(), getPassFromProvider(), getChannelFromProvider());
 
         // assertTrue(mWifiManager.setWifiApEnabled(null, true));
         // mWifiConfig = mWifiManager.getWifiApConfiguration();
