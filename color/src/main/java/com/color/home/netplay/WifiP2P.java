@@ -20,7 +20,7 @@ import static com.color.home.netplay.ConfigAPI.ATTR_IS_WIFI_P2P;
  */
 public class WifiP2P {
     final static String TAG = "WifiP2P";
-    static final boolean DBG = true;
+    static final boolean DBG = false;
     private static final int MESSAGE_RETRY = 1;
     private final int DELAY = 5000;
     private Context mContext;

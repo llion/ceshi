@@ -20,7 +20,7 @@ import com.color.home.network.wifi.WifiParsedResult;
  * WifiConnect:V
  */
 public class WifiConnect {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private static final String TAG = "WifiConnect";
 
     private WifiManager mWifiManager;

@@ -11,7 +11,7 @@ import org.json.JSONObject;
 
 public class WeatherJsonUtil {
     private static final String TAG = "WeatherJsonUtil";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     public static WeatherBean WeatherJson(String[] mJsonText){
         WeatherBean mWeatherBean = new WeatherBean();

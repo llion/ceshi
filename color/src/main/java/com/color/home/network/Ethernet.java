@@ -18,7 +18,7 @@ import com.color.home.netplay.Wifi;
 
 public class Ethernet {
     private final static String TAG = "Ethernet";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private ContentResolver mContentResolver;
     private Context mContext;
     private boolean mDirty = false;
