@@ -70,22 +70,35 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         theTextObj.setPixelPerFrame(pixelPerFrame);
 
 
-        // Total play length in milisec.
-        int mPlayLength = Integer.parseInt(item.playLength);
-        if (DBG)
-            Log.d(TAG, "setItem. [mPlayLength=" + mPlayLength);
-        boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
-        if (mIsScrollByTime) {
-            removeCallbacks(this);
-            postDelayed(this, mPlayLength);
-        } else {
-            // Counts.
-            int repeatCount = Integer.parseInt(item.repeatcount);
+        if ("5".equals(mItem.type)) {
+            // Total play length in milisec.
+            long playLength = 300000;
+            try {
+                playLength = Long.parseLong(item.playLength);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
             if (DBG)
-                Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
-            theTextObj.setRepeatCount(repeatCount);
-            theTextObj.setView(this);
-            // int mDuration = Integer.parseInt(item.duration);
+                Log.d(TAG, "setItem. [playLength=" + playLength + ", mItem.type= " + mItem.type);
+
+            boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
+            if (mIsScrollByTime) {
+                removeCallbacks(this);
+                postDelayed(this, playLength);
+            } else {
+                // Counts.
+                int repeatCount = 1;
+                try {
+                    repeatCount = Integer.parseInt(item.repeatcount);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+                if (DBG)
+                    Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
+                theTextObj.setRepeatCount(repeatCount);
+                theTextObj.setView(this);
+                // int mDuration = Integer.parseInt(item.duration);
+            }
         }
 
     }

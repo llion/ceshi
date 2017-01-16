@@ -22,12 +22,16 @@ import com.color.home.widgets.multilines.MultiPicScrollRenderer;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
 public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver {
-    private final static String TAG = "SLTextSurfaceView";
-    private static final boolean DBG = false;
+    protected final static String TAG = "SLTextSurfaceView";
+    protected static final boolean DBG = false;
     private TextRenderer mRenderer;
     private OnPlayFinishedListener mListener;
-    private Item mItem;
-    private TextObject mTextobj;
+    protected Item mItem;
+    protected TextObject mTextobj;
+
+    public SLTextSurfaceView(Context context){
+        super(context);
+    }
 
     public SLTextSurfaceView(Context context, TextObject theTextObj) {
         super(context);
@@ -50,7 +54,8 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         mListener = regionView;
         this.mItem = item;
 
-        mTextobj.setText(item.getTexts().mText);
+        if ("4".equals(mItem.type))
+            mTextobj.setText(item.getTexts().mText);
         if (DBG)
             Log.d(TAG, "setItem. [item.getTextBitmapHash()=" + item.getTextBitmapHash() + ", text=" + item.getTexts().mText);
         mTextobj.setTextItemBitmapHash(item.getTextBitmapHash());
@@ -109,22 +114,35 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
 //        mTextobj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
         mTextobj.setPixelPerFrame(pixelPerFrame);
 
-        // Total play length in milisec.
-        int mPlayLength = Integer.parseInt(item.playLength);
-        if (DBG)
-            Log.d(TAG, "setItem. [mPlayLength=" + mPlayLength);
-        boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
-        if (mIsScrollByTime) {
-            removeCallbacks(this);
-            postDelayed(this, mPlayLength);
-        } else {
-            // Counts.
-            int repeatCount = Integer.parseInt(item.repeatcount);
+        if ("4".equals(mItem.type)) {
+            // Total play length in milisec.
+            long playLength = 300000;
+            try {
+                playLength = Long.parseLong(item.playLength);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
             if (DBG)
-                Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
-            mTextobj.setRepeatCount(repeatCount);
-            mTextobj.setView(this);
-            // int mDuration = Integer.parseInt(item.duration);
+                Log.d(TAG, "setItem. [playLength=" + playLength);
+
+            boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
+            if (mIsScrollByTime) {
+                removeCallbacks(this);
+                postDelayed(this, playLength);
+            } else {
+                // Counts.
+                int repeatCount = 1;
+                try {
+                    repeatCount = Integer.parseInt(item.repeatcount);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+                if (DBG)
+                    Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
+                mTextobj.setRepeatCount(repeatCount);
+                mTextobj.setView(this);
+                // int mDuration = Integer.parseInt(item.duration);
+            }
         }
 
         boolean isGlaring = "1".equals(mItem.beglaring);

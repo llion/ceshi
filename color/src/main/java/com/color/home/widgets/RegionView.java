@@ -529,15 +529,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof SLPCSurfaceView
                 || getChildAt(0) instanceof SLPCHTSurfaceView
                 || getChildAt(0) instanceof PCItemSingleLineText
+                || getChildAt(0) instanceof ItemSingleLineText
                 || getChildAt(0) instanceof ItemExternalVideoView)
                 ) {
             if (DBG)
                 Log.d(TAG, "showNext. getChildAt(0)= " + getChildAt(0));
 
             if (DBG)
-                Log.d(TAG, "showNext. [Single item and the item instance of ItemTimer, " +
-                        "ItemWebView, ItemMultiLinesPagedText, ItemMultiLinesMultipic, ItemMLScrollMultipic2View," +
-                        "SLTextSurfaceView, SLPCSurfaceView, SLPCHTSurfaceView, ItemExternalVideoView. Don't move on to next.");
+                Log.d(TAG, "showNext. [Single item, Don't move on to next.");
 
             //ItemMLScrollMultipic2View
             if (getChildAt(0) instanceof ItemMLScrollMultipic2View) {

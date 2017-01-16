@@ -7,19 +7,17 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
-import com.color.home.widgets.ItemWebView;
-
 
 public class NetworkConnectReceiver extends BroadcastReceiver{
     public  static final String TAG ="NetworkConnectReceiver";
     public  static boolean DBG = false;
-    private final ItemWebView mWebView;
+    private final NetworkObserver mNetworkObserver;
 
 
-    public NetworkConnectReceiver(ItemWebView mWebView) {
+    public NetworkConnectReceiver(NetworkObserver networkObserver) {
         if (DBG)
-            Log.d(TAG, "mWebView=" + mWebView);
-        this.mWebView = mWebView;
+            Log.d(TAG, "networkObserver=" + networkObserver);
+        this.mNetworkObserver = networkObserver;
     }
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -39,12 +37,12 @@ public class NetworkConnectReceiver extends BroadcastReceiver{
                         Log.i(TAG,"---------Internet connected.");
                         Log.i(TAG,"InternetType:" + info.getType() + " connected.");
                     }
-                    if (mWebView != null) {
+                    if (mNetworkObserver != null) {
                         if (DBG){
-                            Log.i(TAG,"------mWebView.reload");
+                            Log.i(TAG,"------mNetworkObserver.reloadContent");
                         }
 
-                        mWebView.reload();
+                        mNetworkObserver.reloadContent();
                     }
                 }
             }else{

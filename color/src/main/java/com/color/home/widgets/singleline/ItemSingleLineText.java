@@ -27,15 +27,16 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemSingleLineText";
 
-    private Item mItem;
+    protected Item mItem;
     private OnPlayFinishedListener mListener;
     private boolean mIsGlaring;
     private boolean mIsDetached;
-    private int mDuration;
+    protected long mDuration;
     private Runnable mRunnable;
-    private Integer[] mSplitTexts;
-    private String mText;
-    private int mIndex;
+    protected Integer[] mSplitTexts;
+    protected String mText = "";
+    protected int mIndex;
+    protected RegionView mRegionView;
 
     public ItemSingleLineText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -51,12 +52,16 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
     public void setItem(RegionView regionView, Item item) {
         mListener = regionView;
+        mRegionView = regionView;
         this.mItem = item;
 
-        mText = item.getTexts().mText;
-        // At least a blank.
-        if (TextUtils.isEmpty(mText)) {
-            mText = " ";
+        if ("4".equals(mItem.type)) {
+            mText = item.getTexts().mText;
+            Log.d(TAG, "mText= " + mText);
+            // At least a blank.
+            if (TextUtils.isEmpty(mText)) {
+                mText = " ";
+            }
         }
 
         getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
@@ -93,7 +98,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
         if (DBG)
             Log.i(TAG, "setItem. textview width=" + getWidth()
-                    + ", full duration=" + mDuration);
+                    + ", full duration=" + item.duration);
 //        mDuration = 1000;
 
         mIsGlaring = "1".equals(mItem.beglaring);
@@ -104,25 +109,31 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         }
         
         
-        
-        int itemWidth = regionView.getRegionWidth();
-        if (DBG)
-            Log.d(TAG, "setItem. [itemWidth=" + itemWidth);
-        mSplitTexts = splitText(mText, itemWidth);
+        if ("4".equals(item.type)) {
+            int itemWidth = regionView.getRegionWidth();
+            if (DBG)
+                Log.d(TAG, "setItem. [itemWidth=" + itemWidth);
+            mSplitTexts = splitText(mText, itemWidth);
 
-        
-        resetTextFromStart();
-        
-        int fullDuration = Integer.parseInt(item.duration);
-        if (mSplitTexts.length < 2) {
-            mDuration = fullDuration;
-        } else {
-            mDuration = fullDuration / (mSplitTexts.length - 1);
+            int fullDuration = Integer.parseInt(item.duration);
+            if (mSplitTexts.length < 2) {
+                mDuration = fullDuration;
+            } else {
+                mDuration = fullDuration / (mSplitTexts.length - 1);
+            }
+
+            if (DBG)
+                Log.d(TAG, "setItem. [mDuration=" + mDuration);
         }
+
+        resetTextFromStart();
         
     }
 
     public void resetTextFromStart() {
+        if (DBG)
+            Log.d(TAG, "mSplitTexts.length= " + mSplitTexts.length + ", mText= " + mText
+                    + ", this.getWidth= " + this.getWidth() + ", this.getHeight= " + this.getHeight());
         mIndex = 0;
         if (mSplitTexts.length < 2) {
             setText(mText);
@@ -132,7 +143,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         }
     }
     
-    private Integer[] splitText(String text, int width) {
+    protected Integer[] splitText(String text, int width) {
         if (width == 0) {
             if (DBG)
                 Log.d(TAG, "splitText. [BAD width 0.");
@@ -187,8 +198,10 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         if (DBG)
             Log.i(TAG, "onAttachedToWindow. image = " + (mItem.filesource == null ? "NULL" : mItem.filesource.filepath));
 
-        removeCallbacks(this);
-        postDelayed(this, mDuration);
+        if ("4".equals(mItem.type)) {
+            removeCallbacks(this);
+            postDelayed(this, mDuration);
+        }
     }
 
     @Override
@@ -199,41 +212,38 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         boolean removeCallbacks = removeCallbacks(this);
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
-
     }
 
-    private void tellListener() {
+    protected void tellListener() {
+
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 
     @Override
     public void run() {
         if (DBG)
-            Log.i(TAG, "run.  mSplitTexts.length= " + mSplitTexts.length 
-                    + ", mIndex=" + mIndex);
-        
+            Log.i(TAG, "run.  mSplitTexts.length= " + mSplitTexts.length
+                    + ", mIndex=" + mIndex + ", mDuration= " + mDuration);
+
         if (mIndex >= mSplitTexts.length - 1) {
             tellListener();
             if (DBG)
-                Log.d(TAG, "run. [End of texts.");
-            
-//            resetTextFromStart();
-//            
-//            removeCallbacks(this);
-//            postDelayed(this, mDuration);
-            
-        } else {
-            setText(mText.substring(mSplitTexts[mIndex], mSplitTexts[mIndex + 1]));
-            mIndex++;
-            
-            removeCallbacks(this);
-            postDelayed(this, mDuration);
+                Log.d(TAG, "run. [End of texts, set index to zero.");
+            mIndex = 0;
         }
-        
+
+        setText(mText.substring(mSplitTexts[mIndex], mSplitTexts[mIndex + 1]));
+        mIndex++;
+
+        removeCallbacks(this);
+        postDelayed(this, mDuration);
+
+
     }
 
 }

@@ -33,7 +33,10 @@ import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
 import com.color.home.widgets.timer.ItemTimer;
-import com.color.home.widgets.weather.ItemWeatherView;
+import com.color.home.widgets.weather.ItemWeatherMLPagesView;
+import com.color.home.widgets.weather.ItemWeatherMLScrollView;
+import com.color.home.widgets.weather.ItemWeatherSLPagesView;
+import com.color.home.widgets.weather.ItemWeatherSLScrollView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -408,15 +411,42 @@ public class ItemsAdapter extends BaseAdapter {
                         return unknowView(item);
                     }
                 }
-            } else if ("14".equals(item.type)) {// web
-                ItemWeatherView weather = new ItemWeatherView(mContext);
-                // String filePath = getAbsFilePath(item);
-            /*
-             * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-             */
-                weather.setRegion(mRegion);
-                weather.setItem(mRegionView, item);
-                return weather;
+            } else if ("14".equals(item.type)) {// weather
+                if ("0".equals(item.showstyle)){//一般风格
+                    if ("1".equals(item.isMultiLine)){//多行
+                        if ("0".equals(item.moveType)) {//翻页
+                            ItemWeatherMLPagesView itemWeatherMLPagesView = new ItemWeatherMLPagesView(mContext);
+                            itemWeatherMLPagesView.setItem(mRegionView, item);
+                            return itemWeatherMLPagesView;
+
+                        } else if ("3".equals(item.moveType)){//上移
+                            ItemWeatherMLScrollView itemWeatherMLScrollView = new ItemWeatherMLScrollView(mContext);
+                            itemWeatherMLScrollView.setItem(mRegionView, item);
+                            return itemWeatherMLScrollView;
+
+                        } else
+                            return unknowView(item);
+
+                    } else {//单行
+                        if ("0".equals(item.moveType)) {//翻页
+
+                            ItemWeatherSLPagesView itemWeatherSLPagesView = new ItemWeatherSLPagesView(mContext);
+                            itemWeatherSLPagesView.setItem(mRegionView, item);
+                            return itemWeatherSLPagesView;
+
+                        } else if ("1".equals(item.moveType)){//左移
+
+                            ItemWeatherSLScrollView itemWeatherSLScrollView = new ItemWeatherSLScrollView(mContext, item);
+                            itemWeatherSLScrollView.setItem(mRegionView, item);
+                            return itemWeatherSLScrollView;
+
+                        } else
+                            return unknowView(item);
+                    }
+
+                } else
+                    return unknowView(item);
+
             } else if ("27".equals(item.type)) {// web
                 ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
                 // String filePath = getAbsFilePath(item);

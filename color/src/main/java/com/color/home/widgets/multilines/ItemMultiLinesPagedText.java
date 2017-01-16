@@ -2,11 +2,7 @@ package com.color.home.widgets.multilines;
 
 import java.lang.ref.WeakReference;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Handler;
@@ -36,15 +32,15 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     private final static String TAG = "ItemMultiLinesPagedText";
 
     //    private TextView mTv;
-    private Item mItem;
+    protected Item mItem;
     private OnPlayFinishedListener mListener;
-    private MultilinePageSplitter mPageSplitter;
-    private String mText;
-    private int mPageIndex;
+    protected MultilinePageSplitter mPageSplitter;
+    protected String mText = "";
+    protected int mPageIndex;
     private int mRealPlaytimes = 1;
     private int mNeedPlayTimes;
-    private int mOnePicDuration = 2000;
-    private boolean isFirst = true;
+    protected long mOnePicDuration = 2000;
+    protected boolean mIsFirst = true;
 
     public ItemMultiLinesPagedText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -62,10 +58,12 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         mListener = regionView;
         this.mItem = item;
 
-        setMultilineText();
+        if ("5".equals(mItem.type))
+            setMultilineText();
 
         try {
-            mOnePicDuration = Integer.parseInt(item.multipicinfo.onePicDuration);
+            if (item.multipicinfo != null)
+                mOnePicDuration = Integer.parseInt(item.multipicinfo.onePicDuration);
             mNeedPlayTimes = Integer.parseInt(item.playTimes);
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,9 +88,9 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             backcolor = GraphUtils.parseColor("0x00000000");
         setBackgroundColor(backcolor);
 
-        if (TextUtils.isEmpty(mText)){
+        if ("5".equals(item.type) && TextUtils.isEmpty(mText)){
             if (DBG)
-                Log.d(TAG, "text is empty.");
+                Log.d(TAG, "text is empty. mOnePicDuration= " + mOnePicDuration);
             removeCallbacks(this);
             postDelayed(this, mOnePicDuration);
             return;
@@ -172,7 +170,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
 //        return 2.0f;
     }
 
-    private void setPageText() {
+    protected void setPageText() {
         if (DBG)
             Log.i(TAG, "setPageText. mPageIndex= " + mPageIndex);
         setText(mPageSplitter.getPages().get(mPageIndex));
@@ -182,7 +180,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
 
-        if (isFirst && !TextUtils.isEmpty(mText) && mNeedPlayTimes >= 1) {
+        if (mIsFirst && !TextUtils.isEmpty(mText) && mNeedPlayTimes >= 1) {
 
             setVisibility(INVISIBLE);
 //            int textBackColor = GraphUtils.parseColor("0xFF004040");
@@ -216,11 +214,11 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
                 mHandler.start();
             }
 
-            isFirst = false;
+            mIsFirst = false;
         }
 
         if (DBG) {
-            Log.i(TAG, "onLayout, isFirst= " + isFirst + ", layout= " + getLayout() + ", line count= " + getLineCount());
+            Log.i(TAG, "onLayout, mIsFirst= " + mIsFirst + ", layout= " + getLayout() + ", line count= " + getLineCount());
             Layout layout = getLayout();
             if (layout != null) {
                 for (int i = 0; i < getLineCount(); i++) {
@@ -243,7 +241,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (DBG)
-            Log.i(TAG, "onDetachedFromWindow");
+            Log.i(TAG, "onDetachedFromWindow, mHandler= " + mHandler);
 
         removeCallbacks(this);
 
@@ -254,7 +252,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     }
 
 
-    MTextMarquee mHandler;
+    protected MTextMarquee mHandler;
 
     @Override
     public void setListener(OnPlayFinishedListener listener) {
@@ -266,11 +264,14 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         this.mListener = null;
     }
 
-    private void tellListener() {
+    protected void tellListener() {
+        if (DBG)
+            Log.d(TAG, "tellListener. mListener= " + mListener);
         if (mListener != null) {
             if (DBG)
                 Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 
@@ -294,17 +295,17 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         tellListener();
     }
 
-    private static final class MTextMarquee extends Handler {
+    protected static final class MTextMarquee extends Handler {
         private final static String TAG = "MTextMarquee";
         private static final boolean DBG = false;
         private static final int MESSAGE_TICK = 0x1;
-        private int MARQUEE_DELAY;
+        private long MARQUEE_DELAY;
 
 
         private final WeakReference<ItemMultiLinesPagedText> mView;
         private boolean mShouldStop;
 
-        public MTextMarquee(ItemMultiLinesPagedText view, int onePicDuration) {
+        public MTextMarquee(ItemMultiLinesPagedText view, long onePicDuration) {
             mView = new WeakReference<ItemMultiLinesPagedText>(view);
             MARQUEE_DELAY = onePicDuration;
         }
@@ -332,7 +333,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             }
         }
 
-        void stop() {
+        public void stop() {
             if (DBG)
                 Log.d(TAG, "stop.");
 
