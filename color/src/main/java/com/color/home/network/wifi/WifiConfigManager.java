@@ -21,7 +21,11 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.color.home.AppController;
+
 import java.util.regex.Pattern;
+
+import static com.color.home.AppController.LOG_TYPE_WIFI_CONFIG;
 
 
 /**
@@ -50,6 +54,8 @@ public final class WifiConfigManager extends AsyncTask<WifiParsedResult, Object,
 
 
         WifiParsedResult theWifiResult = args[0];
+        AppController.getInstance().reportInternetLog(LOG_TYPE_WIFI_CONFIG, "Wifi configured.", 6, "", theWifiResult.getSsid(),
+                theWifiResult.getPassword(), theWifiResult.getType().toString(), theWifiResult.isHidden() + "");
         // Start WiFi, otherwise nothing will work
         if (!wifiManager.isWifiEnabled()) {
             Log.i(TAG, "Enabling wi-fi...");

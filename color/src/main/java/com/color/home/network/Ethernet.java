@@ -16,6 +16,8 @@ import com.color.home.netplay.Config;
 import com.color.home.netplay.ConfigAPI;
 import com.color.home.netplay.Wifi;
 
+import static com.color.home.AppController.LOG_TYPE_ETHERNET_CONFIG;
+
 public class Ethernet {
     private final static String TAG = "Ethernet";
     private static final boolean DBG = false;
@@ -157,7 +159,7 @@ public class Ethernet {
             // Must bring down firstly the if, then enable if so as to validate the new config.
             // setEthernetEnabled is going to change the Secure settings.
             ethManager.setEthernetEnabled(false);
-
+            AppController.getInstance().reportInternetLog(LOG_TYPE_ETHERNET_CONFIG, "Ethernet configured.", 6, "", isEthernetOn + "");
             // And then enable if applicable.
             ethManager.setEthernetEnabled(isEthernetOn);
             Log.i(TAG, "Enable ethernet =" + isEthernetOn);

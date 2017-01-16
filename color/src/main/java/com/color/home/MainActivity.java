@@ -386,6 +386,7 @@ public class MainActivity extends Activity {
     private void startProgram(File vsn){
         if (DBG)
             Log.i(TAG, "startProgram. programVsnFile=" + vsn);
+        AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_START_PLAYING, "Start playing vsn " + vsn + " .", 4, "");
 
         // Mark in the SystemProperties the time and the vsn file we are trying to playback.
         // If later the Home restart, and the interval is quite short,
