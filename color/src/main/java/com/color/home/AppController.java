@@ -196,8 +196,8 @@ public class AppController extends Application {
     public static final String LOG_TYPE_DEVICE = "log.type.device";
     public static final String LOG_TYPE_BAD_OPERATION = "log.type.operation.bad_operation";
     public static final String LOG_TYPE_START_PLAYING = "log.type.program.start_playing";
-    public static final String LOG_TYPE_ETHERNET_CONFIG = "log.type.connectivity.lan.ethernet_config";
-    public static final String LOG_TYPE_WIFI_CONFIG = "log.type.connectivity.wifi.wifi_config";
+    public static final String LOG_TYPE_ETHERNET_CONFIGURED = "log.type.connectivity.lan.ethernet_configured";
+    public static final String LOG_TYPE_WIFI_CONFIGURED = "log.type.connectivity.wifi.wifi_configured";
 
     public void reportInternetLog(String log_type, String description, int level, String others, String... args){
         Intent intent = new Intent(Constants.ACTION_LOG_REPORTING);

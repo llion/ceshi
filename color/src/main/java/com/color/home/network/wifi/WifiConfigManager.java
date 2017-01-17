@@ -25,7 +25,7 @@ import com.color.home.AppController;
 
 import java.util.regex.Pattern;
 
-import static com.color.home.AppController.LOG_TYPE_WIFI_CONFIG;
+import static com.color.home.AppController.LOG_TYPE_WIFI_CONFIGURED;
 
 
 /**
@@ -54,7 +54,7 @@ public final class WifiConfigManager extends AsyncTask<WifiParsedResult, Object,
 
 
         WifiParsedResult theWifiResult = args[0];
-        AppController.getInstance().reportInternetLog(LOG_TYPE_WIFI_CONFIG, "Wifi configured.", 6, "", theWifiResult.getSsid(),
+        AppController.getInstance().reportInternetLog(LOG_TYPE_WIFI_CONFIGURED, "Wifi configured.", 6, "", theWifiResult.getSsid(),
                 theWifiResult.getPassword(), theWifiResult.getType().toString(), theWifiResult.isHidden() + "");
         // Start WiFi, otherwise nothing will work
         if (!wifiManager.isWifiEnabled()) {
