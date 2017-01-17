@@ -190,7 +190,7 @@ public class AppController extends Application {
 
     }
 
-    public static final String LOG_TYPE_PROGRAM = "log.type.program";
+    public static final String LOG_TYPE_PROGRAM = "log.type.program.missing_resource";
     public static final String LOG_TYPE_UPDATING = "log.type.failed_updating";
     public static final String LOG_TYPE_CONNECTIVITY = "log.type.connectivity";
     public static final String LOG_TYPE_DEVICE = "log.type.device";
