@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.ProgramParser;
+import com.color.home.R;
 import com.color.home.utils.WeatherInquirer;
 import com.color.home.utils.WeatherJsonUtil;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
@@ -28,6 +29,7 @@ public class WeatherMLScrollObject extends MultiPicScrollObject {
     HandlerThread mHandlerThread;
     Handler mWeatherHandler;
     private boolean mIsNeedUpdate = false;
+    private boolean mIsFirstQuery = true;
     private String mCurrentText = "";
     private int mCurrentTexId = 1;
 
@@ -40,6 +42,10 @@ public class WeatherMLScrollObject extends MultiPicScrollObject {
         if (ItemWeatherMLPagesView.isNeedShowWeather(mItem)) {
 
             mTexCount = 2;
+
+            mCurrentText = mContext.getString(R.string.queryingWeather);
+            mIsNeedUpdate = true;
+
             mWeatherInquirer = new WeatherInquirer(mItem.regioncode);
 
             mHandlerThread = new HandlerThread("weather-thread");
@@ -97,8 +103,8 @@ public class WeatherMLScrollObject extends MultiPicScrollObject {
             } else {
                 if (DBG)
                     Log.d(TAG, "retrive failed.");
-                if (TextUtils.isEmpty(mCurrentText))
-                    text = "Failed to retrieve weather.";
+                if (mIsFirstQuery)
+                    text = mContext.getString(R.string.failedToGetWeather);
                 else {
                     Log.d(TAG, "Failed to retrieve weather, do not update.");
                 }
@@ -114,6 +120,9 @@ public class WeatherMLScrollObject extends MultiPicScrollObject {
             } else if (text != null) {
                 Log.d(TAG, "the weather information has not changed.");
             }
+
+            if (mIsFirstQuery)
+                mIsFirstQuery = false;
         }
     };
 

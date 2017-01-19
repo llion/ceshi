@@ -8,4 +8,6 @@
     <string name="failedToCopy">Copy failed on </string>
     <string name="noEnoughSpace">No available space in internal storage!</string>
     <string name="syncCompletes">Usb-sync completed.</string>
+    <string name="queryingWeather">Querying ...</string>
+    <string name="failedToGetWeather">Failed to retrieve weather.</string>
 </resources>

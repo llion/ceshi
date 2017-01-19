@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 
 import com.color.home.ProgramParser.Item;
+import com.color.home.R;
 import com.color.home.model.WeatherBean;
 import com.color.home.network.NetworkConnectReceiver;
 import com.color.home.network.NetworkObserver;
@@ -24,6 +25,7 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
     private static final boolean DBG = false;
     private final static String TAG = "ItemWeatherMLPagesView";
 
+    private boolean mIsFirstQuery = true;
     WeatherInquirer mWeatherInquirer;
     private NetworkConnectReceiver mNetworkConnectReceiver;
 
@@ -69,9 +71,11 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
             Log.d(TAG, "onLayout. mIsFirst= " + mIsFirst);
         if (mIsFirst && isNeedShowWeather(mItem)) {
 
-
             mNetworkConnectReceiver = new NetworkConnectReceiver(this);
             registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+
+            mText = mContext.getString(R.string.queryingWeather);
+            composeAandShow();
 
             try {
                 mOnePicDuration = Long.parseLong(mItem.remainTime) * 100;
@@ -172,8 +176,8 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
             } else {
                 if (DBG)
                     Log.d(TAG, "retrive failed. mText= " + mText);
-                if (TextUtils.isEmpty(mText))
-                    return "Failed to retrieve weather.";
+                if (mIsFirstQuery)
+                    return mContext.getString(R.string.failedToGetWeather);
                 else {
                     Log.d(TAG, "Failed to retrieve weather, do not update.");
                     return null;
@@ -185,6 +189,9 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
         protected void onPostExecute(String result) {
             if (DBG)
                 Log.d(TAG, "result= " + result + ", mText= " + mText);
+
+            if (mIsFirstQuery)
+                mIsFirstQuery = false;
 
             if (result != null && !result.equals(mText)) {
                 mText = result;

@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.ProgramParser.Item;
+import com.color.home.R;
 import com.color.home.utils.WeatherInquirer;
 import com.color.home.utils.WeatherJsonUtil;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
@@ -28,7 +29,7 @@ public class WeatherSLScrollObject extends TextObject {
     private WeatherInquirer mWeatherInquirer;
     private HandlerThread mHandlerThread;
     private Handler mWeatherHandler;
-
+    private boolean mIsFirstQuery = true;
     private boolean mIsNeedUpdate = false;
     private int mCurrentTexId = 0;
 
@@ -45,6 +46,9 @@ public class WeatherSLScrollObject extends TextObject {
         if (ItemWeatherMLPagesView.isNeedShowWeather(mItem)) {
             mTexCount = 2;
             genTexs();
+
+            mText = mContext.getString(R.string.queryingWeather);
+            mIsNeedUpdate = true;
 
             mWeatherInquirer = new WeatherInquirer(mItem.regioncode);
 
@@ -102,8 +106,8 @@ public class WeatherSLScrollObject extends TextObject {
             } else {
                 if (DBG)
                     Log.d(TAG, "retrive failed.");
-                if (TextUtils.isEmpty(mText))
-                    text = "Failed to retrieve weather.";
+                if (mIsFirstQuery)
+                    text = mContext.getString(R.string.failedToGetWeather);
                 else {
                     Log.d(TAG, "Failed to retrieve weather, do not update.");
                 }
@@ -121,6 +125,9 @@ public class WeatherSLScrollObject extends TextObject {
             } else if (text != null) {
                 Log.d(TAG, "the weather information has not changed.");
             }
+
+            if (mIsFirstQuery)
+                mIsFirstQuery = false;
         }
     };
 

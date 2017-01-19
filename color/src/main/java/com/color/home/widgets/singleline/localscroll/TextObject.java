@@ -52,7 +52,7 @@ public class TextObject extends SLPCTextObject {
         mContext = context;
     }
 
-    private Context mContext;
+    protected Context mContext;
 
     protected Paint mPaint = new Paint();
     protected int mLineHeight;

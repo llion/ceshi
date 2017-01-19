@@ -309,7 +309,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             Log.i(TAG, "-----------onAttachedToWindow");
         }
         mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-        ItemWeatherMLPagesView.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+        registerNetworkConnectReceiver();
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
@@ -368,5 +368,13 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
+    }
+
+    public void registerNetworkConnectReceiver() {
+        if (mNetworkConnectReceiver != null) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            mContext.registerReceiver(mNetworkConnectReceiver, filter);
+        }
     }
 }

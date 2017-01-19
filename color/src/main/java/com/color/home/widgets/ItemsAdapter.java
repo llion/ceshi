@@ -419,13 +419,12 @@ public class ItemsAdapter extends BaseAdapter {
                             itemWeatherMLPagesView.setItem(mRegionView, item);
                             return itemWeatherMLPagesView;
 
-                        } else if ("3".equals(item.moveType)){//上移
+                        } else {//上移
                             ItemWeatherMLScrollView itemWeatherMLScrollView = new ItemWeatherMLScrollView(mContext);
                             itemWeatherMLScrollView.setItem(mRegionView, item);
                             return itemWeatherMLScrollView;
 
-                        } else
-                            return unknowView(item);
+                        }
 
                     } else {//单行
                         if ("0".equals(item.moveType)) {//翻页
@@ -434,14 +433,13 @@ public class ItemsAdapter extends BaseAdapter {
                             itemWeatherSLPagesView.setItem(mRegionView, item);
                             return itemWeatherSLPagesView;
 
-                        } else if ("1".equals(item.moveType)){//左移
+                        } else {//左移
 
                             ItemWeatherSLScrollView itemWeatherSLScrollView = new ItemWeatherSLScrollView(mContext, item);
                             itemWeatherSLScrollView.setItem(mRegionView, item);
                             return itemWeatherSLScrollView;
 
-                        } else
-                            return unknowView(item);
+                        }
                     }
 
                 } else

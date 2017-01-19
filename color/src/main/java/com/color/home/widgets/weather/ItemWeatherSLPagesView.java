@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
 
+import com.color.home.R;
 import com.color.home.network.NetworkConnectReceiver;
 import com.color.home.network.NetworkObserver;
 import com.color.home.utils.WeatherInquirer;
@@ -20,6 +21,7 @@ public class ItemWeatherSLPagesView extends ItemSingleLineText implements Networ
     private static final boolean DBG = false;
     private final static String TAG = "ItemWeatherSLPagesView";
 
+    private boolean mIsFirstQuery = true;
     WeatherInquirer mWeatherInquirer;
     private NetworkConnectReceiver mNetworkConnectReceiver;
 
@@ -74,6 +76,16 @@ public class ItemWeatherSLPagesView extends ItemSingleLineText implements Networ
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
+
+            //
+            mText = mContext.getString(R.string.queryingWeather);
+            mSplitTexts = splitText(mText, mRegionView.getRegionWidth());
+
+            mIndex = 0;
+            removeCallbacks(ItemWeatherSLPagesView.this);
+            post(ItemWeatherSLPagesView.this);
+
+            //
             mWeatherInquirer = new WeatherInquirer(mItem.regioncode);
             removeCallbacks(mWeatherRunnable);
             post(mWeatherRunnable);
@@ -142,8 +154,8 @@ public class ItemWeatherSLPagesView extends ItemSingleLineText implements Networ
             } else {
                 if (DBG)
                     Log.d(TAG, "retrive failed. mText= " + mText);
-                if (TextUtils.isEmpty(mText))
-                    return "Failed to retrieve weather.";
+                if (mIsFirstQuery)
+                    return mContext.getString(R.string.failedToGetWeather);
                 else {
                     Log.d(TAG, "Failed to retrieve weather, do not update.");
                     return null;
@@ -156,6 +168,9 @@ public class ItemWeatherSLPagesView extends ItemSingleLineText implements Networ
             if (DBG)
                 Log.d(TAG, "mText= " + mText + ", result= " + result
                         + ", mRegionView.getRegionWidth()= " + mRegionView.getRegionWidth());
+
+            if (mIsFirstQuery)
+                mIsFirstQuery = false;
 
             if (result != null && !mText.equals(result)) {
                 mText = result;

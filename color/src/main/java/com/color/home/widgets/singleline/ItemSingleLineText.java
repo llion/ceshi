@@ -57,7 +57,6 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
         if ("4".equals(mItem.type)) {
             mText = item.getTexts().mText;
-            Log.d(TAG, "mText= " + mText);
             // At least a blank.
             if (TextUtils.isEmpty(mText)) {
                 mText = " ";

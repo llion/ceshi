@@ -75,7 +75,7 @@ public class MultiPicScrollObject {
     protected float mPixelPerFrame = -1f;
     private int mColor;
     protected int mCurrentRepeats = 0;
-    private Context mContext;
+    protected Context mContext;
     protected Item mItem;
     private ScrollPicInfo mScrollpicinfo;
     /**

@@ -1,5 +1,6 @@
 package com.color.home.widgets.singleline;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.ProgramParser.Item;
@@ -20,11 +21,16 @@ public class MovingTextUtils {
         float pixelPerFrame = 0.5f;
         try {
             // points/sec.
-            float mSpeed = Float.parseFloat(item.speed);
+            float mSpeed = 30.f;
+            if (!TextUtils.isEmpty(item.speed))
+                 mSpeed = Float.parseFloat(item.speed);
 
             // points/frame.
             boolean mIfSpeedByFrame = "1".equals(item.ifspeedbyframe);
-            float mSpeedByFrame = Float.parseFloat(item.speedbyframe);
+
+            float mSpeedByFrame = 1.0f;
+            if (!TextUtils.isEmpty(item.speedbyframe))
+                mSpeedByFrame = Float.parseFloat(item.speedbyframe);
 
             if (mIfSpeedByFrame) {
                 pixelPerFrame = mSpeedByFrame / 2.0f;
