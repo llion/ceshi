@@ -17,7 +17,7 @@ public class MovingTextUtils {
         // TODO: Double check whether we really need the performance switch.
         // ensureSystemPerformance();
 
-        float pixelPerFrame = 0.2f;
+        float pixelPerFrame = 0.5f;
         try {
             // points/sec.
             float mSpeed = Float.parseFloat(item.speed);

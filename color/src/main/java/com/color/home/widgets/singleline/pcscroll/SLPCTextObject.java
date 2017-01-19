@@ -45,25 +45,25 @@ public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
     static final boolean DBG = false;
     private static final boolean DBG_FPS = false;
-    private static final boolean DBG_MATRIX = false;
+    protected static final boolean DBG_MATRIX = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
     protected Context mContext;
     private ScrollPicInfo mScrollpicinfo;
-    private int[] mTexIds;
-    private int mTexCount = 1;
+    protected int[] mTexIds;
+    protected int mTexCount = 1;
 
     /* [Draw Canvas To Texture] */
     protected short[] mIndices;
     private int mQuadsCount;
     private int muMVPMatrixHandle;
     protected int muMMatrixHandle;
-    private int muTextureHandle;
+    protected int muTextureHandle;
     /**
      * Texture dimension.
      */
-    private int muTexScaleHandle;
+    protected int muTexScaleHandle;
     private float[] mMVPMatrix = new float[16];
     protected float[] mMMatrix = new float[16];
     private float[] mVMatrix = new float[16];
@@ -93,13 +93,13 @@ public class SLPCTextObject {
     protected HashCode mTextBitmapHash;
 
     protected int mPcWidth;
-    private int mPcHeight;
+    protected int mPcHeight;
     protected int mRealReadPcWidth;
 
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
 
-    private int getEvenPcHeight() {
+    protected int getEvenPcHeight() {
         return mEvenPcHeight;
     }
 
@@ -107,7 +107,7 @@ public class SLPCTextObject {
         return mEvenPcWidth;
     }
 
-    private int mTexDim = -1;
+    protected int mTexDim = -1;
 
     private static class SingleLineMeta {
         public int mWidth;
@@ -201,7 +201,7 @@ public class SLPCTextObject {
         }
     }
 
-    private void setupMVP() {
+    protected void setupMVP() {
         if (DBG)
             Log.d(TAG, "setupMVP. [mWidth=" + mEvenedWidth
                     + ", mHeight=" + mEvenedHeight);
@@ -225,12 +225,12 @@ public class SLPCTextObject {
         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
     }
 
-    private void genTexs() {
+    protected void genTexs() {
 
         if (DBG)
             Log.d(TAG, "genTexs. [");
 
-        mTexIds = new int[1];
+        mTexIds = new int[mTexCount];
 
         // Set the active texture unit to texture unit 0.
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -247,7 +247,7 @@ public class SLPCTextObject {
         }
     }
 
-    private void initTexParam(int texId) {
+    protected void initTexParam(int texId) {
         if (DBG) Log.d(TAG, "initTexParam, texId = " + texId);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         TextRenderer.checkGLError("glBindTexture");
@@ -264,7 +264,7 @@ public class SLPCTextObject {
         TextRenderer.checkGLError("glTexParameterf:GL_TEXTURE_WRAP_T");
     }
 
-    private void updatePageToTexId(int pageTexIndex, int texId) {
+    protected void updatePageToTexId(int pageTexIndex, int texId) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         TextRenderer.checkGLError("glBindTexture");
         updateImage(pageTexIndex);
@@ -447,7 +447,7 @@ public class SLPCTextObject {
     }
 
 
-    private float pixelTemp = 0.0f;
+    protected float pixelTemp = 0.0f;
     public boolean mIsGreaterThanAPixelPerFrame = false;
 
     public void render() {

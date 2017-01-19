@@ -55,8 +55,8 @@ public class MultiPicScrollObject {
     private final static String TAG = "MultiPicScrollObject";
     private static final boolean DBG = false;
     private static final boolean PNG_DBG = false;
-    private static final boolean RENDER_DBG = false;
-    private static final boolean MATRIX_DBG = false;
+    protected static final boolean RENDER_DBG = false;
+    protected static final boolean MATRIX_DBG = false;
     private static final boolean LAST_COLUM_DBG = false;
     // private static final String MNT_SDCARD_PNGS = "/mnt/sdcard/pngs";
     private static final int MAX_TEXTURE_WIDTH_HEIGHT = 4096;
@@ -76,16 +76,16 @@ public class MultiPicScrollObject {
     private int mColor;
     protected int mCurrentRepeats = 0;
     private Context mContext;
-    private Item mItem;
+    protected Item mItem;
     private ScrollPicInfo mScrollpicinfo;
     /**
      * We split the whole big bitmap into how many pieces.
      */
-    private int mTexCount;
-    private boolean mIsTallPCPic = false;
-    private boolean mIsFatPCPic = false;
-    private int mRealSegmentsPerTex;
-    private boolean isTallPCPicSurplus;// is pcheight surplus than heightConsumedPerTex
+    protected int mTexCount;
+    protected boolean mIsTallPCPic = false;
+    protected boolean mIsFatPCPic = false;
+    protected int mRealSegmentsPerTex;
+    protected boolean isTallPCPicSurplus;// is pcheight surplus than heightConsumedPerTex
 
 
 //    ETC1Util.ETC1Texture etc1Texture = null;
@@ -103,7 +103,7 @@ public class MultiPicScrollObject {
         // mPicCount = Integer.parseInt(mScrollpicinfo.picCount);
     }
 
-    void update() {
+    protected void update() {
         synchronized (AppController.sLock) {
             if (DBG)
                 Log.d(TAG, "update.");
@@ -120,7 +120,14 @@ public class MultiPicScrollObject {
                 if (!drawCanvasToTexture())
                     return;
             } else {
-                if (!getTextBitmapAndDrawToTexture())
+                String text = getText();
+                if (TextUtils.isEmpty(text)) {
+                    if (DBG)
+                        Log.d(TAG, "text is empty.");
+                    return;
+                }
+                mTexCount = 1;
+                if (!getTextBitmapAndDrawToTexture(text))
                     return;
             }
 
@@ -317,8 +324,8 @@ public class MultiPicScrollObject {
     }
 
 
-    private float pixelTemp = 0.0f;
-    private boolean mIsGreaterThanAPixelPerFrame = false;
+    protected float pixelTemp = 0.0f;
+    protected boolean mIsGreaterThanAPixelPerFrame = false;
 
     public void render() {
         float[] modelMat = mMMatrix;
@@ -400,7 +407,7 @@ public class MultiPicScrollObject {
 
     }
 
-    private void reset() {
+    protected void reset() {
 
         resetPos();
         mSr.resetPage();
@@ -412,7 +419,7 @@ public class MultiPicScrollObject {
         }
     }
 
-    private class SegRender {
+    protected class SegRender {
         int mCurQuadIndex;
         private int mWindowHeight;
 
@@ -513,7 +520,7 @@ public class MultiPicScrollObject {
          *
          * @param quadIndex
          */
-        private void drawQuad(int quadIndex) {
+        protected void drawQuad(int quadIndex) {
             int texIndex = quadIndex / mMaxSegmentsPerTexContain;
             if (RENDER_DBG)
                 Log.d(TAG, "drawQuad.quadIndex= " + quadIndex + ", texIndex= " + texIndex);
@@ -535,7 +542,7 @@ public class MultiPicScrollObject {
 
     }
 
-    private SegRender mSr;
+    protected SegRender mSr;
 
     protected void notifyFinish() {
         if (DBG)
@@ -545,7 +552,7 @@ public class MultiPicScrollObject {
     }
 
     private int mTextureWidth = MAX_TEXTURE_WIDTH_HEIGHT;
-    private int mTextureHeight = MAX_TEXTURE_WIDTH_HEIGHT;
+    protected int mTextureHeight = MAX_TEXTURE_WIDTH_HEIGHT;
 
     /* [Draw Canvas To Texture] */
     private boolean drawCanvasToTexture() {
@@ -642,7 +649,7 @@ public class MultiPicScrollObject {
     }
 
     //tall pic quadSize
-    private void generateTallPCMulpicQuads() {
+    protected void generateTallPCMulpicQuads() {
         // setImageBitmap(resultBm);
 //        final int quadSize = ceilingBlocks(mPcHeight, mTextureHeight);
         final int quadSize = mRealSegmentsPerTex;
@@ -666,7 +673,7 @@ public class MultiPicScrollObject {
     }
 
     //fat pic quadSize
-    private void generateFatPCMulpicQuads() {
+    protected void generateFatPCMulpicQuads() {
         // setImageBitmap(resultBm);
         final int quadSize = ceilingBlocks(mPcWidth, mTextureWidth);
         if (DBG)
@@ -864,15 +871,8 @@ public class MultiPicScrollObject {
     }
 
 
-    private boolean getTextBitmapAndDrawToTexture() {
+    protected boolean getTextBitmapAndDrawToTexture(String text) {
         try {
-
-            String text = getText();
-            if (TextUtils.isEmpty(text)){
-                if (DBG)
-                    Log.d(TAG, "text is empty.");
-                return false;
-            }
 
             TextView textView = new TextView(mContext);
             if (DBG)
@@ -931,6 +931,7 @@ public class MultiPicScrollObject {
             int segments;
             if (mPcWidth > mPcHeight) {
                 mIsFatPCPic = true;
+                mIsTallPCPic = false;
                 segments = mPcWidth / this.mTextureWidth;
                 if (mPcWidth % this.mTextureWidth > 0)
                     segments++;
@@ -938,6 +939,7 @@ public class MultiPicScrollObject {
 
             } else {
                 mIsTallPCPic = true;
+                mIsFatPCPic = false;
                 segments = mPcHeight / mTextureHeight;
                 if (mPcHeight % mTextureHeight > 0)
                     segments++;
@@ -945,9 +947,9 @@ public class MultiPicScrollObject {
             }
 
             if (DBG)
-                Log.d(TAG, "mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight + ", mTextureWidth= " + mTextureWidth);
+                Log.d(TAG, "mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight
+                        + ", mTextureWidth= " + mTextureWidth + ", mIsFatPCPic" + mIsFatPCPic + ", mIsTallPCPic" + mIsTallPCPic);
 
-            mTexCount = 1;
             genTexs();
             mBitmap = Bitmap.createBitmap(this.mTextureWidth, mTextureHeight, Bitmap.Config.ARGB_8888);
 
@@ -1422,7 +1424,7 @@ public class MultiPicScrollObject {
         return i == mTexCount - 1;
     }
 
-    private void updateTexIndexToTexId(int texIndex, int texIdInx) {
+    protected void updateTexIndexToTexId(int texIndex, int texIdInx) {
         if (DBG)
             Log.d(TAG, "updateTexIndexToTexId. [texIndex=" + texIndex + ", texIdInx=" + texIdInx);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texIdInx]);
@@ -1660,7 +1662,7 @@ public class MultiPicScrollObject {
     protected int mLineHeight;
     protected int mVertexcount;
     protected HashCode mTextBitmapHash;
-    private int mMaxSegmentsPerTexContain;
+    protected int mMaxSegmentsPerTexContain;
 
     public void setDimension(int width, int height) {
         mWidth = width;

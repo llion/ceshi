@@ -24,6 +24,8 @@ import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
+import com.color.home.ProgramParser;
+import com.color.home.ProgramParser.Item;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
@@ -41,7 +43,7 @@ public class TextObject extends SLPCTextObject {
     private static final boolean DBG_PNG = false;
     private static final int MAX_DRAW_TEXT_WIDTH = 33000;
 
-    private String mText = new String("Empty");
+    protected String mText = "";
     private float mTextSize = 20;
     private int mColor;
 
@@ -64,7 +66,6 @@ public class TextObject extends SLPCTextObject {
     public boolean prepareTexture() {
         if (mTextBitmapHash == null || TextUtils.isEmpty(mText)) {
             Log.e(TAG, "drawCanvasToTexture. [mTextBitmapHash should not be null and mText should not be null");
-            return false;
         }
 
         String text = mText;
@@ -268,7 +269,7 @@ public class TextObject extends SLPCTextObject {
         }
     }
 
-    private String getPngName() {
+    protected String getPngName() {
         return mTextBitmapHash.toString() + ".png";
     }
 
