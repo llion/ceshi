@@ -11,6 +11,7 @@ import android.provider.Settings.System;
 import android.util.Log;
 
 import com.color.home.AppController;
+import com.color.home.R;
 import com.color.home.netplay.Config;
 import com.color.home.netplay.ConfigAPI;
 
@@ -157,7 +158,7 @@ public class Ethernet {
             // Must bring down firstly the if, then enable if so as to validate the new config.
             // setEthernetEnabled is going to change the Secure settings.
             ethManager.setEthernetEnabled(false);
-            AppController.getInstance().reportInternetLog(LOG_TYPE_ETHERNET_CONFIGURED, "Ethernet configured.", 6, "", isEthernetOn + "");
+            AppController.getInstance().reportInternetLog(LOG_TYPE_ETHERNET_CONFIGURED, AppController.getInstance().getString(R.string.ethernet_configured), 6, "", isEthernetOn + "");
             // And then enable if applicable.
             ethManager.setEthernetEnabled(isEthernetOn);
             Log.i(TAG, "Enable ethernet =" + isEthernetOn);

@@ -77,8 +77,9 @@ public class ProgramsViewer{
             try {
 
                 if(!validateFile(mVsnFile)) {
-                    AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
-                            "VsnFile does not exist. : (" + mVsnFile + ")" , 5, "", mVsnFile.getName(), mVsnFile.getName());
+                    AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM_RES_MISSING,
+                            AppController.getInstance().getString(R.string.vsn_not_exist) + mVsnFile + AppController.getInstance().getString(R.string.dot),
+                            5, "", mVsnFile.getName(), mVsnFile.getName());
                     throw new Exception("VsnFile does not exist. : (" + mVsnFile + ")");
                 }
 
@@ -106,8 +107,8 @@ public class ProgramsViewer{
 
                     if(resFile.toString().endsWith("mulpic") ) {
                         if (!isGoodMulpic(resFile)) {
-                            AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
-                                    "Invalid asset : (" + resPath + ")" , 5, "", mVsnFile.getName(), resPath);
+                            AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM_RES_MISSING,
+                                    AppController.getInstance().getString(R.string.res_not_exist) + resPath , 5, "", mVsnFile.getName(), resPath);
                             throw new Exception("Invalid asset : (" + resPath + ")");
                         }
 
@@ -115,8 +116,8 @@ public class ProgramsViewer{
                     }
 
                     if(!validateFile(resFile)) {
-                        AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
-                                "asset does not exist. : (" + resFile + ")" , 5, "", mVsnFile.getName(), resFile.getName());
+                        AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM_RES_MISSING,
+                                AppController.getInstance().getString(R.string.res_not_exist) + resFile , 5, "", mVsnFile.getName(), resFile.getName());
                         throw new Exception("asset does not exist. : (" + resFile + ")");
                     }
 
@@ -151,8 +152,8 @@ public class ProgramsViewer{
                         }
 
                         if (resSize != resFile.length()) {
-                            AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM,
-                                    "asset does not exist. : (" + resFile + ")" , 5, "", mVsnFile.getName(), resFile.getName());
+                            AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_PROGRAM_RES_MISSING,
+                                    AppController.getInstance().getString(R.string.res_not_exist) + resFile , 5, "", mVsnFile.getName(), resFile.getName());
                             throw new Exception("Illegal asset file : (" + resPath + ")");
                         }
 

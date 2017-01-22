@@ -14,4 +14,13 @@
     <string name="failedToCopy">Copy failed on </string>
     <string name="noEnoughSpace">No available space in internal storage!</string>
     <string name="syncCompletes">Usb-sync completed.</string>
+
+    <string name="switch_program_while_screen_off">Attempt to start program while the screen is off.</string>
+    <string name="start_to_play">Start to play </string>
+    <string name="dot">. </string>
+    <string name="vsn_not_exist">VsnFile does not exist : </string>
+    <string name="res_not_exist">Res does not exist : </string>
+    <string name="ethernet_configured">Ethernet has been configured.</string>
+    <string name="wifi_configured">Wi-fi has been configured.</string>
+
 </resources>

@@ -309,7 +309,7 @@ public class MainActivity extends Activity {
                 File vsnFile = generateVsnFile(false, path, fileName);
                 if(mIsScreenOff){
                     Log.e(TAG, "Attempt to start program while the screen is off.", new Exception("Bad time to start program."));
-                    AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_BAD_OPERATION, "Attempt to start program while the screen is off.", 4, "");
+                    AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_BAD_OPERATION, getString(R.string.switch_program_while_screen_off), 4, "");
                     AppController.getInstance().getModel().setCurProgramPathFile(vsnFile);
                     AppController.getInstance().markProgram(vsnFile);
                 }else {
@@ -386,7 +386,8 @@ public class MainActivity extends Activity {
     private void startProgram(File vsn){
         if (DBG)
             Log.i(TAG, "startProgram. programVsnFile=" + vsn);
-        AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_START_PLAYING, "Start playing vsn " + vsn + " .", 4, "");
+        //TODO
+        AppController.getInstance().reportInternetLog(AppController.LOG_TYPE_START_PLAYING, getString(R.string.start_to_play) + vsn + getString(R.string.dot), 4, "");
 
         // Mark in the SystemProperties the time and the vsn file we are trying to playback.
         // If later the Home restart, and the interval is quite short,
