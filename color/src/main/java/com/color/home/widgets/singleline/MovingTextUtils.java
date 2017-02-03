@@ -33,7 +33,7 @@ public class MovingTextUtils {
                 mSpeedByFrame = Float.parseFloat(item.speedbyframe);
 
             if (mIfSpeedByFrame) {
-                pixelPerFrame = mSpeedByFrame / 2.0f;
+                pixelPerFrame = mSpeedByFrame;
             } else {
                 // 60frames/sec is assumed.
                 pixelPerFrame = mSpeed / 60.0f;
