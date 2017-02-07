@@ -191,7 +191,11 @@ public class SyncService extends CLIntentService {
             } else if (Constants.ACTION_USB_SYNCED.equals(action)) {
                 if (DBG)
                     Log.d(TAG, "onHandleIntent. [ACTION_USB_SYNCED.");
-                mStrategy.onUsbSynced();
+                if (!Constants.existUsbProgram()) {
+                    mStrategy.onUsbSynced();
+                } else
+                    Log.d(TAG, "usb source program exists, do not play synced program.");
+
             } else if (Intent.ACTION_MEDIA_MOUNTED.equals(action)) {
                 if (DBG)
                     Log.d(TAG, "onHandleIntent. [mounted getDataString=" + intent.getDataString());
@@ -220,7 +224,13 @@ public class SyncService extends CLIntentService {
                         // Parallel: the following service's thread differ from the appcontroller handler.
                         if (!new File(Constants.FOLDER_USB_0 + "/nocopy.txt").exists()) {
                             SyncUsbService.startService();
+
                         }else {
+                            if (Constants.existUsbProgram()){
+                                Log.d(TAG, "usb source program exists, do not play other programs in usb.");
+                                return;
+                            }
+
                             if(DBG)
                                 Log.d(TAG, "nocopy.txt exists. Play programs in usb..");
                             mStrategy.onUsbMounted();
