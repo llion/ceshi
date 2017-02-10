@@ -42,29 +42,29 @@ public class SinglineScrollObject {
     private final static String TAG = "SinglineScrollObject";
     private static final boolean DBG = false;
     private static final int MAX_DRAW_TEXT_WIDTH = 33000;
-    private boolean DBG_PNG = false;
+    protected boolean DBG_PNG = false;
     private static final boolean DBG_MATRIX = false;
     private boolean DBG_READ = false;
 
     private ArrayList<Item> mItems;
-    private int mBeginXinTexture = 0;
-    private int mBeginYinTexture = 0;
+    protected int mBeginXinTexture = 0;
+    protected int mBeginYinTexture = 0;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
     protected Context mContext;
-    private int[] mTexIds;
+    protected int[] mTexIds;
 
     /* [Draw Canvas To Texture] */
     protected short[] mIndices;
     private int mQuadsCount;
     private int muMVPMatrixHandle;
     protected int muMMatrixHandle;
-    private int muTextureHandle;
+    protected int muTextureHandle;
     /**
      * Texture dimension.
      */
-    private int muTexScaleHandle;
+    protected int muTexScaleHandle;
     private float[] mMVPMatrix = new float[16];
     protected float[] mMMatrix = new float[16];
     private float[] mVMatrix = new float[16];
@@ -92,14 +92,14 @@ public class SinglineScrollObject {
     protected HashCode mTextBitmapHash;
 
     protected int mPcWidth;
-    private int mPcHeight;
+    protected int mPcHeight;
     protected int mRealReadPcWidth;
 
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
     private int mTextSize;
-    private String mKey = "";
-    private int mTexDim = -1;
+    protected String mKey = "";
+    protected int mTexDim = -1;
 
 
     private int getEvenPcHeight() {
@@ -116,6 +116,9 @@ public class SinglineScrollObject {
 
     }
 
+    public SinglineScrollObject(Context context) {
+        mContext = context;
+    }
 
     public boolean update() {
         genTexs();
@@ -184,7 +187,7 @@ public class SinglineScrollObject {
         }
     }
 
-    private void setupMVP() {
+    protected void setupMVP() {
         if (DBG)
             Log.d(TAG, "setupMVP. [mWidth=" + mEvenedWidth
                     + ", mHeight=" + mEvenedHeight);
@@ -208,7 +211,7 @@ public class SinglineScrollObject {
         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
     }
 
-    private void genTexs() {
+    protected void genTexs() {
 
         if (DBG)
             Log.d(TAG, "genTexs. [");
@@ -230,7 +233,7 @@ public class SinglineScrollObject {
         }
     }
 
-    private void initTexParam(int texId) {
+    protected void initTexParam(int texId) {
         if (DBG) Log.d(TAG, "initTexParam, texId = " + texId);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         SinglelineScrollRenderer.checkGLError("glBindTexture");
@@ -247,7 +250,10 @@ public class SinglineScrollObject {
         SinglelineScrollRenderer.checkGLError("glTexParameterf:GL_TEXTURE_WRAP_T");
     }
 
-    private void updatePageToTexId(int pageTexIndex, int texId) {
+    protected void updatePageToTexId(int pageTexIndex, int texId) {
+        if (DBG)
+            Log.d(TAG, "updatePageToTexId. texId= " + texId);
+
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         SinglelineScrollRenderer.checkGLError("glBindTexture");
         updateImage();
@@ -257,9 +263,13 @@ public class SinglineScrollObject {
         AppController.MyBitmap bitmapFromMemCache = texFromMemCache();
         if (DBG)
             Log.d(TAG, "updateImage. bitmapFromMemCache= " + bitmapFromMemCache);
-        if (bitmapFromMemCache != null)
+        if (bitmapFromMemCache != null) {
             // Assigns the OpenGL texture with the Bitmap
+            if (DBG)
+                Log.d(TAG, "updateImage. bitmapFromMemCache.getBitmap()= " + bitmapFromMemCache.getBitmap());
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmapFromMemCache.getBitmap(), 0);
+
+        }
     }
 
     /**
@@ -369,7 +379,7 @@ public class SinglineScrollObject {
         }
     }
 
-    private String getKey(){
+    protected String getKey(){
         if (DBG)
             Log.d(TAG, "getKey. mKey= " + mKey);
         if (!TextUtils.isEmpty(mKey))
@@ -688,7 +698,7 @@ public class SinglineScrollObject {
     }
 
 
-    private void setupPaint(Paint paint) {
+    protected void setupPaint(Paint paint) {
         paint.setTextSize(mTextSize);
         paint.setAntiAlias(AppController.getInstance().getCfg().isAntialias());
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
@@ -828,7 +838,7 @@ public class SinglineScrollObject {
         return myw;
     }
 
-    private int getRealReadPcWidth(int pcWidth, int pcHeight, int texDim) {
+    protected int getRealReadPcWidth(int pcWidth, int pcHeight, int texDim) {
         if (DBG)
             Log.d(TAG, "getRealReadPcWidth. pcWidth= " + pcWidth + ", pcHeight= " + pcHeight + ", texDim= " + texDim);
         if (pcWidth > pcHeight) {
@@ -941,9 +951,9 @@ public class SinglineScrollObject {
 
     }
 
-    private void drawTextBitmapAndSetTexPixels(int[] content, String originalText,
-                                               int backColor, Paint paint, int maxPicWidthPerTexture,
-                                               Bitmap textureBm) {
+    protected void drawTextBitmapAndSetTexPixels(int[] content, String originalText,
+                                                 int backColor, Paint paint, int maxPicWidthPerTexture,
+                                                 Bitmap textureBm) {
 
         if (DBG)
             Log.d(TAG, "drawTextBitmapAndSetTexPixels. "+ "backColor= " + backColor);

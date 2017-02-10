@@ -26,7 +26,7 @@ public class SinglelineScrollSurfaceView extends GLSurfaceView implements Runnab
     private ArrayList<ProgramParser.Item> mItems;
     private SinglineScrollObject mScrollObject;
     private SinglelineScrollRenderer mScrollRenderer;
-    private OnPlayFinishedListener mListener;
+    protected OnPlayFinishedListener mListener;
 
     public SinglelineScrollSurfaceView(Context context, SinglelineScrollRegionView singlelineScrollRegionView, SinglineScrollObject scrollObject) {
         super(context);
@@ -39,6 +39,11 @@ public class SinglelineScrollSurfaceView extends GLSurfaceView implements Runnab
     public SinglelineScrollSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
+
+    public SinglelineScrollSurfaceView(Context context) {
+        super(context);
+    }
+
 
 
     @Override

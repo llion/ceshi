@@ -22,7 +22,7 @@ import java.net.URL;
 
 public class ItemWeatherView extends LinearLayout implements ItemData {
     private final static String TAG = "ItemWeatherView";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     private Item mItem;
     private Region mRegion;

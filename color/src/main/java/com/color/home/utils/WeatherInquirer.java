@@ -15,7 +15,7 @@ import okhttp3.Response;
 
 public class WeatherInquirer {
     private static final String TAG = "WeatherInquirer";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     private boolean isCompleted = false;
     private String weatherJson = "";

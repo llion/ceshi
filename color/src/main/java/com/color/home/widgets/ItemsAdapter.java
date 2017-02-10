@@ -33,6 +33,7 @@ import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+import com.color.home.widgets.singleline_scroll.ScrollRSSSurfaceview;
 import com.color.home.widgets.timer.ItemTimer;
 import com.color.home.widgets.weather.ItemWeatherView;
 
@@ -439,6 +440,8 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "httpUrl.encodedPath()= " + httpUrl.encodedPath());
                 }
 
+                String type = httpUrl.queryParameter("type");
+
                 if (httpUrl != null
                         && (!TextUtils.isEmpty(httpUrl.encodedPath())
                         && (httpUrl.encodedPath().endsWith(".png") || httpUrl.encodedPath().endsWith(".jpg")
@@ -452,6 +455,12 @@ public class ItemsAdapter extends BaseAdapter {
 
                     return itemImageView;
 
+                } else if (httpUrl != null
+                        && (!TextUtils.isEmpty(type) && type.toLowerCase().equals("rss"))) {
+                    ScrollRSSSurfaceview scrollRSSSurfaceview = new ScrollRSSSurfaceview(mContext, mRegion, mRegionView);
+                    scrollRSSSurfaceview.setRssItems(item, httpUrl);
+
+                    return scrollRSSSurfaceview;
                 } else {
                     ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
                     // String filePath = getAbsFilePath(item);
