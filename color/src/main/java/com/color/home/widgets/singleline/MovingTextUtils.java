@@ -24,7 +24,12 @@ public class MovingTextUtils {
 
             // points/frame.
             boolean mIfSpeedByFrame = "1".equals(item.ifspeedbyframe);
-            float mSpeedByFrame = Float.parseFloat(item.speedbyframe);
+            float mSpeedByFrame = 1;
+            try {
+                mSpeedByFrame= Float.parseFloat(item.speedbyframe);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
 
             if (mIfSpeedByFrame) {
                 pixelPerFrame = mSpeedByFrame / 2.0f;

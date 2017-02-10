@@ -129,7 +129,7 @@ public class CltJsonUtils {
         return url;
     }
 
-    private String getContentFromNet(String url, String filter, CacheControl cacheControl) {
+    public String getContentFromNet(String url, String filter, CacheControl cacheControl) {
 
         Response response = null;
         String content = "";
@@ -159,7 +159,10 @@ public class CltJsonUtils {
             if (response.isSuccessful()) {
                 if (DBG)
                     Log.d(TAG, "getContentFromNet. response.isSuccessful. cacheResponse= " + response.cacheResponse());
-                content = JsonPath.parse(response.body().string()).read(filter);
+                if (!TextUtils.isEmpty(filter))
+                    content = JsonPath.parse(response.body().string()).read(filter);
+                else
+                    content = response.body().string();
             }
 
 
