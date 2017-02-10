@@ -253,6 +253,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
             if (!TextUtils.isEmpty(rssItem.description)) {
                 text += ("Description:" + rssItem.description);
             }
+            
         }
 
         return text;
@@ -295,7 +296,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
     protected String getKey() {
 
         if (DBG)
-            Log.d(TAG, "getKey.mKey= " + mKey);
+            Log.d(TAG, "getKey. mKey= " + mKey);
         if (!TextUtils.isEmpty(mKey))
             return mKey;
 
