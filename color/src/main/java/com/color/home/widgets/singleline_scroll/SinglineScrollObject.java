@@ -97,7 +97,7 @@ public class SinglineScrollObject {
 
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
-    private int mTextSize;
+    protected int mTextSize;
     protected String mKey = "";
     protected int mTexDim = -1;
 

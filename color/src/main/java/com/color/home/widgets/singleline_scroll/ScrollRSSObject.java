@@ -302,8 +302,8 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
         int length = mText.length();
 
-        final StringBuilder sb = new StringBuilder(length + mBackColor.length() + mTextColor.length());
-        sb.append(mText).append(mBackColor).append(mTextColor);
+        final StringBuilder sb = new StringBuilder(length + mBackColor.length() + mTextColor.length() + 8);
+        sb.append(mText).append(mBackColor).append(mTextColor).append(mTextSize);
         HashCode hashCode = Hashing.sha1().hashString(sb.toString(), Charset.forName("UTF-16"));
 
         mKey = hashCode.toString();
