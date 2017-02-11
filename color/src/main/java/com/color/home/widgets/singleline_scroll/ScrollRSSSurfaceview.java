@@ -24,7 +24,7 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
     private final ProgramParser.Region mRegion;
 
     private ScrollRSSObject mScrollRSSObject;
-    private ScrollRSSRenderer mScrollRSSRenderer;
+//    private ScrollRSSRenderer mScrollRSSRenderer;
 
     private NetworkConnectReceiver mNetworkConnectReceiver;
 
@@ -91,18 +91,14 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
         removeCallbacks(this);
         postDelayed(this, mPlayLength);
 
-        mScrollRSSRenderer = new ScrollRSSRenderer(mScrollRSSObject);
+        mScrollRenderer = new ScrollRSSRenderer(mScrollRSSObject);
         // Set the Renderer for drawing on the GLSurfaceView
-        setRenderer(mScrollRSSRenderer);
+        setRenderer(mScrollRenderer);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         mNetworkConnectReceiver = new NetworkConnectReceiver(this);
         ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
 
-    }
-
-    public ScrollRSSRenderer getRenderer() {
-        return mScrollRSSRenderer;
     }
 
     @Override
@@ -116,7 +112,6 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
             mScrollRSSObject.removeCltRunnable();
             mScrollRSSObject = null;
         }
-
 
         if (mNetworkConnectReceiver != null) {
             mContext.unregisterReceiver(mNetworkConnectReceiver);

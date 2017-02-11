@@ -34,6 +34,7 @@ import com.color.home.widgets.singleline.PCItemSingleLineText;
 import com.color.home.widgets.singleline.SLPCHTSurfaceView;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+import com.color.home.widgets.singleline_scroll.ScrollRSSSurfaceview;
 import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
@@ -458,6 +459,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof SLPCSurfaceView
                 || getChildAt(0) instanceof SLPCHTSurfaceView
                 || getChildAt(0) instanceof PCItemSingleLineText
+                || getChildAt(0) instanceof ScrollRSSSurfaceview
                 || getChildAt(0) instanceof ItemExternalVideoView)
                 || (getChildAt(0) instanceof ItemImageView && !TextUtils.isEmpty( mRegion.items.get(0).url))
                 ) {
@@ -482,6 +484,11 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             //SLPCHTSurfaceView
             if (getChildAt(0) instanceof SLPCHTSurfaceView) {
                 ((SLPCHTSurfaceView) getChildAt(0)).getmRenderer().notFinish();
+            }
+
+            //ScrollRSSSurfaceview
+            if (getChildAt(0) instanceof ScrollRSSSurfaceview) {
+                ((ScrollRSSSurfaceview) getChildAt(0)).getRenderer().notFinish();
             }
 
 

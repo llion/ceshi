@@ -25,7 +25,7 @@ public class SinglelineScrollSurfaceView extends GLSurfaceView implements Runnab
 
     private ArrayList<ProgramParser.Item> mItems;
     private SinglineScrollObject mScrollObject;
-    private SinglelineScrollRenderer mScrollRenderer;
+    protected SinglelineScrollRenderer mScrollRenderer;
     protected OnPlayFinishedListener mListener;
 
     public SinglelineScrollSurfaceView(Context context, SinglelineScrollRegionView singlelineScrollRegionView, SinglineScrollObject scrollObject) {

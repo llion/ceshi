@@ -253,7 +253,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
             if (!TextUtils.isEmpty(rssItem.description)) {
                 text += ("Description:" + rssItem.description);
             }
-            
+
         }
 
         return text;
