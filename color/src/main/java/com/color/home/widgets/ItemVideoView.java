@@ -14,9 +14,11 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnVideoSizeChangedListener;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout;
 
 import com.color.home.Constants;
 import com.color.home.ProgramParser;
@@ -345,6 +347,9 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
         if (mKeepAsp) {
             int width = getDefaultSize(mVideoWidth, widthMeasureSpec);
             int height = getDefaultSize(mVideoHeight, heightMeasureSpec);
+            if (DBG)
+                Log.d(TAG, "onMeasure. mVideoWidth= " + mVideoWidth + ", mVideoHeight= " + mVideoHeight);
+
             if (mVideoWidth > 0 && mVideoHeight > 0) {
                 if (mVideoWidth * height > width * mVideoHeight) {
                     // Log.i("@@@", "image too tall, correcting");
@@ -359,7 +364,14 @@ public class ItemVideoView extends SurfaceView implements OnPlayFinishObserverab
                 }
             }
             // Log.i("@@@@@@@@@@", "setting size: " + width + 'x' + height);
+
+            if (DBG)
+                Log.d(TAG, "setMeasuredDimension. width= " + width + ", height= " + height);
             setMeasuredDimension(width, height);
+
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height, Gravity.CENTER);
+            this.setLayoutParams(layoutParams);
+
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
