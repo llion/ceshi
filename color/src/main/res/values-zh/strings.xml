@@ -8,4 +8,5 @@
     <string name="failedToCopy">拷贝失败 </string>
     <string name="noEnoughSpace">磁盘空间不足！</string>
     <string name="syncCompletes">U盘同步完成</string>
+    <string name="netException">错误: 请检查网络和网址</string>
 </resources>

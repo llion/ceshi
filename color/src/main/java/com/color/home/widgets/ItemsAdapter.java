@@ -440,8 +440,6 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "httpUrl.encodedPath()= " + httpUrl.encodedPath());
                 }
 
-                String type = httpUrl.queryParameter("type");
-
                 if (httpUrl != null
                         && (!TextUtils.isEmpty(httpUrl.encodedPath())
                         && (httpUrl.encodedPath().endsWith(".png") || httpUrl.encodedPath().endsWith(".jpg")
@@ -456,7 +454,7 @@ public class ItemsAdapter extends BaseAdapter {
                     return itemImageView;
 
                 } else if (httpUrl != null
-                        && (!TextUtils.isEmpty(type) && type.toLowerCase().equals("rss"))) {
+                        && (!TextUtils.isEmpty(httpUrl.queryParameter("type")) && httpUrl.queryParameter("type").toLowerCase().equals("rss"))) {
                     ScrollRSSSurfaceview scrollRSSSurfaceview = new ScrollRSSSurfaceview(mContext, mRegion, mRegionView);
                     scrollRSSSurfaceview.setRssItems(item, httpUrl);
 

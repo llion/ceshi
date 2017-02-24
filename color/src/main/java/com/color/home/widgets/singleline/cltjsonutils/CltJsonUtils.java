@@ -1,6 +1,8 @@
 package com.color.home.widgets.singleline.cltjsonutils;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.provider.Settings;
@@ -11,6 +13,7 @@ import com.color.home.Constants;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.internal.Utils;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -18,11 +21,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +33,6 @@ import okhttp3.Cache;
 import okhttp3.CacheControl;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -78,15 +80,13 @@ public class CltJsonUtils {
     }
 
     public String getCltText() {
-        CacheControl cacheControl = new CacheControl.Builder().noCache().build();
         String str = "", content;
         try {
             if (mCltContentList != null && mCltContentList.size() > 0) {
                 for (CltContent cltContent : mCltContentList) {
                     str += cltContent.getPrefix();
                     content = getContentFromNet(getUrl(cltContent.getJsonObject().getString("url")),
-                            cltContent.getJsonObject().getString("filter"),
-                            cacheControl);
+                            cltContent.getJsonObject().getString("filter"));
 
                     if (DBG)
                         Log.d(TAG, "content= " + content);
@@ -129,8 +129,10 @@ public class CltJsonUtils {
         return url;
     }
 
-    public String getContentFromNet(String url, String filter, CacheControl cacheControl) {
+    public String getContentFromNet(String url, String filter) {
 
+        if (DBG)
+            Log.d(TAG, "getContentFromNet. url= " + url);
         Response response = null;
         String content = "";
 
@@ -148,14 +150,15 @@ public class CltJsonUtils {
 
                 ensureTargetDirRoom();
                 request = builder
-                        .cacheControl(cacheControl)
+                        .cacheControl(CacheControl.FORCE_NETWORK)
                         .build();
             }
 
             response = mClient.newCall(request).execute();
 
             if (DBG)
-                Log.d(TAG, "getContentFromNet. mClient= " + mClient + ", Thread= " + Thread.currentThread());
+                Log.d(TAG, "getContentFromNet. mClient= " + mClient + ", cacheResponse= " + response.cacheResponse()
+                         + ", cacheControl= " + response.cacheControl() + ", Thread= " + Thread.currentThread());
             if (response.isSuccessful()) {
                 if (DBG)
                     Log.d(TAG, "getContentFromNet. response.isSuccessful. cacheResponse= " + response.cacheResponse());
@@ -163,8 +166,9 @@ public class CltJsonUtils {
                     content = JsonPath.parse(response.body().string()).read(filter);
                 else
                     content = response.body().string();
+            } else if (DBG) {
+                Log.d(TAG, "response failed. code= " + response.code() + ", message= " + response.message());
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -223,7 +227,7 @@ public class CltJsonUtils {
 
     }
 
-    public byte[] getBitmapBytes(String originUrl) {
+    public byte[] getBitmapBytesWithEtag(String originUrl) {
         if (DBG)
             Log.d(TAG, "originUrl= " + originUrl);
 
@@ -252,7 +256,7 @@ public class CltJsonUtils {
                         + ":" + httpUrl.port()
                         + (TextUtils.isEmpty(httpUrl.encodedPath()) ? "" : httpUrl.encodedPath());
                 if (DBG)
-                    Log.d(TAG, "getBitmapBytes. url= " + url);
+                    Log.d(TAG, "getBitmapBytesWithEtag. url= " + url);
 
                 Request.Builder builder = new Request.Builder()
                         .url(url)
@@ -300,7 +304,7 @@ public class CltJsonUtils {
                 }
 
                 if (DBG)
-                    Log.d(TAG, "getBitmapBytes. mClient= " + mClient + ", Thread= " + Thread.currentThread()
+                    Log.d(TAG, "getBitmapBytesWithEtag. mClient= " + mClient + ", Thread= " + Thread.currentThread()
                             + ",  response.cacheResponse()= " + response.cacheResponse()
                             + ", response.networkResponse= " + response.networkResponse());
             }
@@ -316,6 +320,47 @@ public class CltJsonUtils {
             return bytes;
         }
     }
+
+    public byte[] getBitmapBytes(String url) {
+
+        Response response = null;
+        byte[] bytes = null;
+        Request.Builder builder = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .get();
+        Request request;
+        if (!isNetworkAvailable()) {
+            request = builder
+                    .cacheControl(CacheControl.FORCE_CACHE)
+                    .build();
+        } else {
+
+            ensureTargetDirRoom();
+            request = builder
+                    .cacheControl(CacheControl.FORCE_NETWORK)
+                    .build();
+        }
+
+        try {
+            if (DBG)
+                Log.d(TAG, "getBitmapBytes. Thread= " + Thread.currentThread());
+            response = mClient.newCall(request).execute();
+            if (response.isSuccessful()) {
+                bytes = response.body().bytes();
+
+            } else if (DBG)
+                Log.d(TAG, "response faild. code= " + response.code() + ", message= " + response.message());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (response != null)
+                Utils.closeQuietly(response.body());
+        }
+        return bytes;
+    }
+
 
     public static class CltContent {
         String prefix;

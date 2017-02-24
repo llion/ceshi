@@ -19,6 +19,7 @@ public class QuadGenerator {
     private int mItemWidth;
 
     private int mLastQuadWidth;
+    private int mLastQuadHeight;
 
     private int mRepeatedQuadsSize;
     private int mWholeTexQuadsCount;
@@ -63,6 +64,49 @@ public class QuadGenerator {
         }
         repeat++;
         mRepeatedQuadsSize = mWholeTexQuadsCount * repeat;
+    }
+
+    public QuadGenerator(int pcWidth, int pcHeight, int texWidth, int itemWidth, boolean tall) {
+        int maxPicHeightPerTexture = 0;
+        try {
+            maxPicHeightPerTexture = texWidth / pcWidth * texWidth;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        int displayHeight = Math.min(maxPicHeightPerTexture, pcHeight);
+        if (DBG)
+            Log.d(TAG, "maxPicHeightPerTexture= " + maxPicHeightPerTexture + ", displayHeight= " + displayHeight);
+        mPcWidth = pcWidth; //maybe an uneven number
+        mPcHeight = displayHeight;
+        mTexWidth = texWidth;
+        mItemWidth = itemWidth;
+
+        int heightRemaining = 0;
+        try {
+            heightRemaining = mPcHeight % mTexWidth;
+            mWholeTexQuadsCount = mPcHeight / mTexWidth + (heightRemaining == 0 ? 0 : 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        mLastQuadHeight = (heightRemaining == 0 ? mTexWidth : heightRemaining );
+
+        final float askingForModelWholeWidth = mPcWidth + mItemWidth + 2.0f;
+        // final float askingForModelWholeWidth = Math.max(mTotalTextWidth, mWidth) + Math.min(mTotalTextWidth, mWidth) + 2.0f;
+        if (DBG)
+            Log.d(TAG, "initShapes. [askingForModelWholeWidth=" + askingForModelWholeWidth + ", mPcWidth=" + mPcWidth
+                    + ", mItemWidth=" + mItemWidth + ", mTexWidth=" + mTexWidth + ", mLastQuadWidth=" + mLastQuadWidth);
+
+        int repeat = 1; // At least 1.
+        try {
+            repeat = (int) askingForModelWholeWidth / (int) mPcWidth;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        repeat++;
+        mRepeatedQuadsSize = mWholeTexQuadsCount * repeat;
+        if (DBG)
+            Log.d(TAG, "repeat= " + repeat + ", mWholeTexQuadsCount= " + mWholeTexQuadsCount
+                    + ", mRepeatedQuadsSize= " + mRepeatedQuadsSize) ;
     }
 
     public QuadSegment getQuad(int i) {
@@ -160,4 +204,37 @@ public class QuadGenerator {
         return 4096;
     }
 
+    public QuadSegment getQuad(int i, boolean tall) {
+        if (i >= mRepeatedQuadsSize) {
+            Log.e(TAG, "getQuad. [Out of index. i=" + i + ", mRepeatedQuadsSize=" + mRepeatedQuadsSize);
+            return null;
+        }
+
+        int whichRepeat = (i / mWholeTexQuadsCount);
+        int whichIndexInRepeat = i % mWholeTexQuadsCount;
+        int top = -whichIndexInRepeat * mTexWidth;
+        int left = whichRepeat * mPcWidth;
+
+        int texLeft = whichIndexInRepeat * mPcWidth;
+        // The last quad.
+        boolean isLastQuadInRepeat = (whichIndexInRepeat == mWholeTexQuadsCount - 1);
+        if (DBG)
+            Log.d(TAG, "getQuad. [i=" + whichRepeat
+                    + ", whichRepeat=" + whichRepeat
+                    + ", whichIndexInRepeat=" + whichIndexInRepeat
+                    + ", top= " + top
+                    + ", left=" + left
+                    + ", texLeft=" + texLeft
+                    + ", isLastQuadInRepeat=" + isLastQuadInRepeat
+                    + ", mLastQuadHeight= " + mLastQuadHeight
+                    + ", this=" + this
+            );
+        if (isLastQuadInRepeat) {
+            return new QuadSegment(top, left, mPcWidth, mLastQuadHeight, 0, texLeft);
+        } else {
+            return new QuadSegment(top, left, mPcWidth, mTexWidth, 0, texLeft);
+
+        }
+
+    }
 }

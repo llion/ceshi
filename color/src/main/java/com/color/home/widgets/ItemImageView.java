@@ -176,7 +176,7 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
 
             if (!TextUtils.isEmpty(mItem.url)) {
 
-                return getArtworkQuick(mCltJsonUtils.getBitmapBytes(info.file), null, info.width, info.height);
+                return getArtworkQuick(mCltJsonUtils.getBitmapBytesWithEtag(info.file), null, info.width, info.height);
 
             } else {
 

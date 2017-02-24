@@ -8,4 +8,5 @@
     <string name="failedToCopy">Copy failed on </string>
     <string name="noEnoughSpace">No available space in internal storage!</string>
     <string name="syncCompletes">Usb-sync completed.</string>
+    <string name="netException">Error: Please check network and URL</string>
 </resources>

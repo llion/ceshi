@@ -58,4 +58,7 @@ dependencies {
     //    compile files('libs/temp_android_full.jar')
     compile files('libs/okhttp-3.5.0.jar')
     compile files('libs/okio-1.11.0.jar')
+    compile 'org.apache.commons:commons-lang3:3.3.2'
+    compile files('libs/android-rome-feed-reader-1.0.0.jar')
+    compile files('libs/jdom-1.1.1-android-fork.jar')
 }

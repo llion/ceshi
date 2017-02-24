@@ -17,7 +17,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.AppController;
-import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
 import com.color.home.Texts;
 import com.color.home.utils.GraphUtils;
@@ -44,7 +43,7 @@ public class SinglineScrollObject {
     private static final int MAX_DRAW_TEXT_WIDTH = 33000;
     protected boolean DBG_PNG = false;
     private static final boolean DBG_MATRIX = false;
-    private boolean DBG_READ = false;
+    protected boolean DBG_READ = false;
 
     private ArrayList<Item> mItems;
     protected int mBeginXinTexture = 0;
@@ -316,10 +315,10 @@ public class SinglineScrollObject {
                             Log.d(TAG, "bitmap= " + bitmap);
                         //
                         if (bitmap != null) {
-                            setTextureBmPixels(bitmap, -1, content, maxPicWidthPerTexture, textureBm);
+                            setTextureBmPixelsOfFatPic(bitmap, -1, (mPcHeight - bitmap.getHeight()) / 2, content, maxPicWidthPerTexture, textureBm);
 
                             if (DBG)
-                                Log.d(TAG, "after setTextureBmPixels, mBeginXinTexture= " + mBeginXinTexture
+                                Log.d(TAG, "after setTextureBmPixelsOfFatPic, mBeginXinTexture= " + mBeginXinTexture
                                         + ", mBeginYinTexture= " + mBeginYinTexture);
                         }
 
@@ -416,17 +415,7 @@ public class SinglineScrollObject {
 
     // Load shaders, create vertices, texture coordinates etc.
     public void init() {
-        // R G B A.
-        // GLES20.glClearColor(1.0f, 0.5f, 0.5f, 1.0f);
-        //TODO::背景颜色(透明)
-        int backgroundColor = GraphUtils.parseColor("0x00000000");//
-        final float red = Color.red(backgroundColor) / 255.0f;
-        final float green = Color.green(backgroundColor) / 255.0f;
-        final float blue = Color.blue(backgroundColor) / 255.0f;
-        final float alpha = Color.alpha(backgroundColor) / 255.0f;
-        if (DBG)
-            Log.d(TAG, "init. [r=" + red + ", g=" + green + ", b=" + blue + ", alpha=" + alpha);
-        GLES20.glClearColor(red, green, blue, alpha);
+        setGLColor();
 
         // Initialize the triangle vertex array
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
@@ -461,6 +450,20 @@ public class SinglineScrollObject {
         SinglelineScrollRenderer.checkGLError("glGetUniformLocation:u_s2dTexture");
         muTexScaleHandle = GLES20.glGetUniformLocation(mProgram, "uTexScale");
         SinglelineScrollRenderer.checkGLError("glGetUniformLocation:muTexScaleHandle");
+    }
+
+    protected void setGLColor() {
+        // R G B A.
+        // GLES20.glClearColor(1.0f, 0.5f, 0.5f, 1.0f);
+        //TODO::背景颜色(透明)
+        int backgroundColor = GraphUtils.parseColor("0x00000000");//
+        final float red = Color.red(backgroundColor) / 255.0f;
+        final float green = Color.green(backgroundColor) / 255.0f;
+        final float blue = Color.blue(backgroundColor) / 255.0f;
+        final float alpha = Color.alpha(backgroundColor) / 255.0f;
+        if (DBG)
+            Log.d(TAG, "init. [r=" + red + ", g=" + green + ", b=" + blue + ", alpha=" + alpha);
+        GLES20.glClearColor(red, green, blue, alpha);
     }
 
 
@@ -852,11 +855,17 @@ public class SinglineScrollObject {
     }
 
 
-    private void setTextureBmPixels(Bitmap bitmap, int textWidth, int[] content, int maxPicWidthPerTexture, Bitmap textureBm) {
+    protected void setTextureBmPixelsOfFatPic(Bitmap bitmap, int textWidth, int bitmapTopToBeginY, int[] content, int maxPicWidthPerTexture, Bitmap textureBm) {
 
         if (DBG)
-            Log.d(TAG, "setTextureBmPixels. bitmap.width= " + bitmap.getWidth() + ", bitmap.height= " + bitmap.getHeight()
+            Log.d(TAG, "setTextureBmPixelsOfFatPic. bitmap.width= " + bitmap.getWidth() + ", bitmap.height= " + bitmap.getHeight()
                     + ", textWidth= " + textWidth + ", mBeginXinTexture= " + mBeginXinTexture + ", mBeginYinTexture= " + mBeginYinTexture);
+
+        if (mBeginYinTexture > (getTexDim() - getPcHeight())) {
+            if (DBG)
+                Log.d(TAG, "texture is not enough.");
+            return;
+        }
 
         int remainAvailableWidthPerLine = getTexDim() - mBeginXinTexture;
         int realDrawWidth = bitmap.getWidth();
@@ -865,21 +874,17 @@ public class SinglineScrollObject {
             realDrawWidth = textWidth;//draw text bitmap
         }
 
-        int tempBeginYinTexture;
-        if (bitmap.getHeight() < mPcHeight)
-            tempBeginYinTexture = mBeginYinTexture + (mPcHeight - bitmap.getHeight()) / 2;//居中
-        else
-            tempBeginYinTexture = mBeginYinTexture;
+        int tempBeginYinTexture = mBeginYinTexture + bitmapTopToBeginY;
 
         if (remainAvailableWidthPerLine > 0) {//setpixels in remain space
 
             if (DBG)
-                Log.d(TAG, "setTextureBmPixels. realDrawWidth= " + realDrawWidth
+                Log.d(TAG, "setTextureBmPixelsOfFatPic. realDrawWidth= " + realDrawWidth
                         + ", remainAvailableWidthPerLine= " + remainAvailableWidthPerLine
                         + ", tempBeginYinTexture= " + tempBeginYinTexture);
             if (realDrawWidth >= remainAvailableWidthPerLine) {
                 if (DBG)
-                    Log.d(TAG, "setTextureBmPixels. realDrawWidth >= remainAvailableWidthPerLine.");
+                    Log.d(TAG, "setTextureBmPixelsOfFatPic. realDrawWidth >= remainAvailableWidthPerLine.");
 
                 for (int k = 0; k < bitmap.getHeight(); k++) {
                     bitmap.getPixels(content, 0, bitmap.getWidth(), 0, k, remainAvailableWidthPerLine, 1);
@@ -892,7 +897,7 @@ public class SinglineScrollObject {
 
             } else {//realDrawWidth < remainAvailableWidthPerLine
                 if (DBG)
-                    Log.d(TAG, "setTextureBmPixels. realDrawWidth < remainAvailableWidthPerLine.");
+                    Log.d(TAG, "setTextureBmPixelsOfFatPic. realDrawWidth < remainAvailableWidthPerLine.");
                 for (int k = 0; k < bitmap.getHeight(); k++) {
                     bitmap.getPixels(content, 0, bitmap.getWidth(), 0, k, realDrawWidth, 1);
                     textureBm.setPixels(content, 0, getTexDim(), mBeginXinTexture, tempBeginYinTexture + k, realDrawWidth, 1);
@@ -904,10 +909,10 @@ public class SinglineScrollObject {
         }
 
         if (DBG)
-            Log.d(TAG, "setTextureBmPixels." + ", realDrawWidth= " + realDrawWidth);
+            Log.d(TAG, "setTextureBmPixelsOfFatPic." + ", realDrawWidth= " + realDrawWidth);
         if (realDrawWidth == 0) {
             if (DBG)
-                Log.d(TAG, "setTextureBmPixels. all bitmap pixels always set into textureBm.");
+                Log.d(TAG, "setTextureBmPixelsOfFatPic. all bitmap pixels always set into textureBm.");
             return;
         }
 
@@ -932,7 +937,7 @@ public class SinglineScrollObject {
         int readSize = 0;
         for (int j = 0; j < segments; j++) {
             readSize = Math.min(readWidth - j * getTexDim(), getTexDim());
-            tempBeginYinTexture = mBeginYinTexture + (mPcHeight - bitmap.getHeight()) / 2;
+            tempBeginYinTexture = mBeginYinTexture + bitmapTopToBeginY;
 
             if (DBG)
                 Log.d(TAG, " tempBeginYinTexture= " + tempBeginYinTexture);
@@ -943,11 +948,10 @@ public class SinglineScrollObject {
                 textureBm.setPixels(content, 0, getTexDim(), 0, tempBeginYinTexture + k, readSize, 1);
             }
             if ((j < segments - 1) || (j == (segments - 1) && readSize == getTexDim()))
-                mBeginYinTexture += bitmap.getHeight();
+                mBeginYinTexture += getPcHeight();
         }
 
         mBeginXinTexture = readSize % getTexDim();
-
 
     }
 
@@ -1012,7 +1016,7 @@ public class SinglineScrollObject {
                 new File("/mnt/sdcard/mul").mkdir();
                 QuadGenerator.toPng(savedBitmap, new File("/mnt/sdcard/mul/" + "singleline_scroll_text_" + i + ".png"));
             }
-            setTextureBmPixels(savedBitmap, drawTextWidth, content, maxPicWidthPerTexture, textureBm);
+            setTextureBmPixelsOfFatPic(savedBitmap, drawTextWidth, (mPcHeight - savedBitmap.getHeight()) / 2, content, maxPicWidthPerTexture, textureBm);
         }
 
     }
