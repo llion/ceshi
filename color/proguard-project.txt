@@ -28,3 +28,10 @@
 
 -dontwarn com.google.common.**
 -dontwarn okio.*
+-dontwarn com.google.code.rome.android.repackaged.com.sun.syndication.fetcher.impl.**
+-dontwarn com.google.code.rome.android.repackaged.java.beans.**
+-dontwarn com.google.code.rome.android.repackaged.org.apache.harmony.beans.editors.**
+-dontwarn com.google.code.rome.android.repackaged.org.apache.harmony.beans.internal.nls.**
+-dontwarn org.jdom.xpath.**
+-dontwarn com.jayway.jsonpath.spi.**
+-dontwarn org.slf4j.**
