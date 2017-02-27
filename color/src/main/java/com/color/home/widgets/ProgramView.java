@@ -18,7 +18,7 @@ import com.color.home.ProgramParser.Program;
 
 public class ProgramView extends FrameLayout implements AdaptedProgram {
     private static final String TAG = "ProgramView";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
 
     private final int FLIP_MSG = 1;
     private int mFlipInterval = Integer.MAX_VALUE;

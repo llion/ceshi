@@ -258,7 +258,7 @@ public class SinglineScrollObject {
         updateImage();
     }
 
-    private void updateImage() {
+    protected void updateImage() {
         AppController.MyBitmap bitmapFromMemCache = texFromMemCache();
         if (DBG)
             Log.d(TAG, "updateImage. bitmapFromMemCache= " + bitmapFromMemCache);

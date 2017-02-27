@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -34,15 +35,12 @@ import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.Syn
 import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndFeed;
 import com.google.code.rome.android.repackaged.com.sun.syndication.io.FeedException;
 import com.google.code.rome.android.repackaged.com.sun.syndication.io.SyndFeedInput;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
@@ -72,6 +70,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
     private List<String> mFilters;
     private SyndFeed mFeed;
+    private Bitmap mTextureBm;
 
     public ScrollRSSObject(Context context, String url) {
         super(context);
@@ -93,12 +92,15 @@ public class ScrollRSSObject extends SinglineScrollObject {
             mText = mContext.getString(R.string.netException) + " ";
         }
 
-        if (mCltHandler == null) {
-            mCltHandlerThread = new HandlerThread("color-net-thread");
-            mCltHandlerThread.start();
-            mCltHandler = new Handler(mCltHandlerThread.getLooper());
+        mCltHandlerThread = new HandlerThread("color-net-thread");
+        mCltHandlerThread.start();
+        mCltHandler = new Handler(mCltHandlerThread.getLooper());
+
+        initCltRunnable();
+        if (mUpdateInterval > 0) {
+            mCltHandler.removeCallbacks(mCltRunnable);
+            mCltHandler.postDelayed(mCltRunnable, mUpdateInterval);
         }
-        prepareThread(mUpdateInterval);
 
         if (!prepareTexture()) {
             return false;
@@ -109,6 +111,60 @@ public class ScrollRSSObject extends SinglineScrollObject {
         return true;
 
 
+    }
+
+    private void initCltRunnable() {
+        mCltRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (DBG)
+                        Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
+
+                    String rssContent = mCltJsonUtils.getContentFromNet(mUrl, null);
+                    if (!TextUtils.isEmpty(rssContent) && !Constants.NETWORK_EXCEPTION.equals(rssContent)) {
+
+                        initFeed(rssContent);
+                        String resultText = getText();
+                        if (DBG)
+                            Log.d(TAG, "(resultText == null)? " + (resultText == null)
+                                    + ", mText.equals(resultText))? " + (mText.equals(resultText)));
+
+                        if (resultText != null && !resultText.equals(mText)) {
+                            Log.d(TAG, "the text had updated, need to change texture.");
+
+                            mText = resultText;
+                            mNeedChangeTexture = true;
+
+                        } else {
+                            if (mFilters.contains("image") && (mFeed != null && mFeed.getImage() != null && !TextUtils.isEmpty(mFeed.getImage().getUrl()))) {
+
+                                byte[] bytes = mCltJsonUtils.getBitmapBytes(mFeed.getImage().getUrl());
+                                if (bytes != null && !mImageMd5.equals(getMd5FromByte(bytes))) {
+                                        Log.d(TAG, "the image had updated, need to change texture.");
+                                    mNeedChangeTexture = true;
+
+                                } else
+                                    Log.d(TAG, "the text and image had not updated, needn't change texture.");
+
+                            } else
+                                Log.d(TAG, "the data had not updated, needn't change texture.");
+
+                        }
+                    } else {
+                        Log.d(TAG, "the rss content is null or the network had exception, needn't change texture.");
+                    }
+
+                    if (mCltHandler != null && mCltHandlerThread != null && mUpdateInterval > 0) {
+                        mCltHandler.removeCallbacks(this);
+                        mCltHandler.postDelayed(this, mUpdateInterval);
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
     }
 
     private void initFeed(String rssContent) {
@@ -140,7 +196,6 @@ public class ScrollRSSObject extends SinglineScrollObject {
     @Override
     protected boolean prepareTexture() {
 
-        mKey = "";
         mTexDim = -1;
         mBeginXinTexture = 0;
         mBeginYinTexture = 0;
@@ -241,18 +296,8 @@ public class ScrollRSSObject extends SinglineScrollObject {
         if (!MultiPicScrollObject.isMemoryEnough(getTexDim()))
             return false;
 
-        setMemoryCacheKey();
-
-        AppController.MyBitmap texFromMemCache = AppController.getInstance().getBitmapFromMemCache(mKey);
-        if (texFromMemCache != null) {
-            if (DBG)
-                Log.d(TAG, "texFromMemCache is exist.");
-            setSize(texFromMemCache);
-            return true;
-        }
-
         //draw image, text to texture
-        Bitmap textureBm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
+        mTextureBm = Bitmap.createBitmap(getTexDim(), getTexDim(), Bitmap.Config.ARGB_8888);
         int maxPicWidthPerTexture = mPcWidth, maxPicHeightPerTexture = mPcHeight;
         int[] content;
 
@@ -264,7 +309,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
                         + ", " + textView.getLineSpacingExtra()
                         + ", " + textView.getLineSpacingMultiplier());
 
-            content = new int[textureBm.getWidth()];
+            content = new int[mTextureBm.getWidth()];
             maxPicWidthPerTexture = getTexDim() / mPcHeight * getTexDim();
 
         } else {
@@ -276,7 +321,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
         if (image != null) {
 
             if (mPcWidth >= mPcHeight)
-                setTextureBmPixelsOfFatPic(image, -1, (mPcHeight - image.getHeight()) / 2, content, maxPicWidthPerTexture, textureBm);
+                setTextureBmPixelsOfFatPic(image, -1, (mPcHeight - image.getHeight()) / 2, content, maxPicWidthPerTexture, mTextureBm);
 
             else {
                 if (image.getHeight() < mPcHeight)
@@ -284,11 +329,20 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
                 if (image.getHeight() > 4096) {
                     Bitmap bitmap = Bitmap.createBitmap(image, 0, 0, image.getWidth(), (4096 - mBeginYinTexture));
-                    setTextureBmPixelsOfTallPic(bitmap, content, maxPicHeightPerTexture, textureBm);
+                    if (bitmap != null) {
+                        setTextureBmPixelsOfTallPic(bitmap, content, maxPicHeightPerTexture, mTextureBm);
+                        bitmap.recycle();
+                    }
+
                 } else {
-                    setTextureBmPixelsOfTallPic(image, content, maxPicHeightPerTexture, textureBm);
+                    setTextureBmPixelsOfTallPic(image, content, maxPicHeightPerTexture, mTextureBm);
                 }
+
+                mBeginXinTexture = image.getWidth();
+                mBeginYinTexture = 0;
             }
+
+            image.recycle();
 
         }
 
@@ -311,14 +365,10 @@ public class ScrollRSSObject extends SinglineScrollObject {
         if (mPcWidth >= mPcHeight) {
             //keep the distance between picTop and baseline of all lines in layout are equal
             int baselineToPicTop = (mPcHeight - maxTextHeight) / 2 + maxTextTopToBaseline;
-            getFatPicAndDrawToTexture(textView, layout, lineCount, baselineToPicTop, lineBounds, textureBm, maxPicWidthPerTexture, content);
+            getFatPicAndDrawToTexture(textView, layout, lineCount, baselineToPicTop, lineBounds, mTextureBm, maxPicWidthPerTexture, content);
 
         } else {
-            if (image != null) {
-                mBeginXinTexture = image.getWidth();
-                mBeginYinTexture = 0;
-            }
-            getTallPicAndDrawToTexture(textView, layout, lineBounds, textureBm, maxPicHeightPerTexture, content);
+            getTallPicAndDrawToTexture(textView, layout, lineBounds, mTextureBm, maxPicHeightPerTexture, content);
 
         }
         if (DBG)
@@ -328,15 +378,12 @@ public class ScrollRSSObject extends SinglineScrollObject {
         textView.setDrawingCacheEnabled(false);
 
         if (DBG_PNG) {
-            Log.d(TAG, "textureBm= " + textureBm);
-            if (textureBm != null) {
+            Log.d(TAG, "mTextureBm= " + mTextureBm);
+            if (mTextureBm != null) {
                 new File("/mnt/sdcard/mul").mkdir();
-                QuadGenerator.toPng(textureBm, new File("/mnt/sdcard/mul/" + "textureBm.png"));
+                QuadGenerator.toPng(mTextureBm, new File("/mnt/sdcard/mul/" + "textureBm.png"));
             }
         }
-
-        //save bitmap to cache
-        AppController.getInstance().addBitmapToMemoryCache(getKey(), new AppController.MyBitmap(textureBm, mPcWidth, getPcHeight()));
 
         return true;
     }
@@ -603,15 +650,6 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
     }
 
-    private void setSize(AppController.MyBitmap texFromMemCache) {
-        setPcWidth(texFromMemCache.mSingleLineWidth);
-        setPcHeight(texFromMemCache.mSingleLineHeight);
-        mTexDim = QuadGenerator.findClosestPOT(mPcWidth, mPcHeight);
-        if (DBG)
-            Log.d(TAG, "setSize. mPcWidth= " + mPcWidth + ", mPcHeight= " + mPcHeight + ", mTexDim= " + mTexDim);
-    }
-
-
     private void initTextView(int width, TextView textView) {
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(-2, -2);
         textView.setLayoutParams(params);
@@ -703,67 +741,16 @@ public class ScrollRSSObject extends SinglineScrollObject {
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    private void prepareThread(long delayMillis) {
-
+    @Override
+    protected void updateImage() {
         if (DBG)
-            Log.d(TAG, "prepareThread. mCltHandler= " + mCltHandler + ", delayMillis= " + delayMillis);
-
-        mCltRunnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (DBG)
-                        Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
-
-                    String rssContent = mCltJsonUtils.getContentFromNet(mUrl, null);
-                    if (!TextUtils.isEmpty(rssContent) && !Constants.NETWORK_EXCEPTION.equals(rssContent)) {
-
-                        initFeed(rssContent);
-                        String resultText = getText();
-                        if (DBG)
-                            Log.d(TAG, "(resultText == null)? " + (resultText == null)
-                             + ", mText.equals(resultText))? " + (mText.equals(resultText)));
-
-                        if (resultText != null && !resultText.equals(mText)) {
-                            if (DBG)
-                                Log.d(TAG, "the text had updated.");
-
-                            mText = resultText;
-                            mNeedChangeTexture = true;
-
-                        } else {
-                            if (mFilters.contains("image") && (mFeed != null && mFeed.getImage() != null && !TextUtils.isEmpty(mFeed.getImage().getUrl()))) {
-
-                                byte[] bytes = mCltJsonUtils.getBitmapBytes(mFeed.getImage().getUrl());
-                                if (bytes != null && !mImageMd5.equals(getMd5FromByte(bytes))) {
-                                    if (DBG)
-                                        Log.d(TAG, "the image had updated.");
-                                    mNeedChangeTexture = true;
-
-                                } else
-                                    Log.d(TAG, "the text and image had not updated, needn't change texture.");
-
-                            } else
-                                Log.d(TAG, "the data had not updated, needn't change texture.");
-
-                        }
-                    } else {
-                        Log.d(TAG, "the rss content is null or the network had exception, needn't change texture.");
-                    }
-
-                    if (mCltHandler != null && mCltHandlerThread != null && mUpdateInterval > 0) {
-                        mCltHandler.removeCallbacks(this);
-                        mCltHandler.postDelayed(this, mUpdateInterval);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        mCltHandler.removeCallbacks(mCltRunnable);
-        mCltHandler.postDelayed(mCltRunnable, delayMillis);
+            Log.d(TAG, "updateImage. mTextureBm= " + mTextureBm);
+        if (mTextureBm != null){
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mTextureBm, 0);
+            mTextureBm.recycle();
+            mTextureBm = null;
+            System.gc();
+        }
     }
 
     private String getText() {
@@ -818,28 +805,6 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
         return StringEscapeUtils.unescapeXml(stringBuilder.toString().replaceAll("<[^>]*>", ""));
 
-    }
-
-    @Override
-    protected String getKey() {
-        return mKey;
-    }
-
-    public void setMemoryCacheKey() {
-
-        int length = mText.length();
-        if (mImageMd5 != null)
-            length += mImageMd5.length();
-
-        StringBuilder sb = new StringBuilder(length + mBackColor.length() + mTextColor.length() + 8);
-
-        if (mImageMd5 != null)
-            sb.append(mImageMd5);
-
-        sb.append(mText).append(mBackColor).append(mTextColor).append(mTextSize);
-        HashCode hashCode = Hashing.sha1().hashString(sb.toString(), Charset.forName("UTF-16"));
-
-        mKey = hashCode.toString();
     }
 
     @Override
@@ -947,7 +912,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
             Log.d(TAG, "options=[" + options.outWidth + ", " + options.outHeight);
 
         int sampleSize = 1;
-        int newHeight = options.outHeight;
+        int newHeight = options.outHeight >> 1;
         while (newHeight > height) {
             sampleSize <<= 1;
             newHeight >>= 1;
@@ -975,6 +940,8 @@ public class ScrollRSSObject extends SinglineScrollObject {
             Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             if (DBG)
                 Log.d(TAG, "getBitmap. newBitmap width= " + newBitmap.getWidth() + ", height= " + newBitmap.getHeight());
+
+            bitmap.recycle();
             return newBitmap;
         }
         return bitmap;
@@ -986,8 +953,10 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
             if (DBG)
                 Log.d(TAG, "reloadRSSContent. mCltHandler= " + mCltHandler);
-            if (mCltHandler != null)
-                prepareThread(0);
+            if (mCltHandler != null && mCltRunnable != null) {
+                mCltHandler.removeCallbacks(mCltRunnable);
+                mCltHandler.post(mCltRunnable);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
