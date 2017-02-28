@@ -2,6 +2,7 @@ package com.color.home.widgets;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,6 +33,7 @@ import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+import com.color.home.widgets.sync_playing.ItemTextureVideoView;
 import com.color.home.widgets.timer.ItemTimer;
 import com.color.home.widgets.weather.ItemWeatherMLPagesView;
 import com.color.home.widgets.weather.ItemWeatherMLScrollView;
@@ -453,6 +455,17 @@ public class ItemsAdapter extends BaseAdapter {
              */
                 web.setItem(mContext, mRegionView, item);
                 return web;
+            } else if ("30".equals(item.type)) {
+//                return null;
+
+                //TODO sendBroadcast to start udp listening thread.
+                //mContext.sendBroadcast(new Intent("com.clt.intent.syncProgramStop"));
+                mContext.sendStickyBroadcast(new Intent("com.clt.intent.syncProgramStart"));
+                ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
+
+                syncView.setItem(mRegionView, item);
+
+                return syncView;
             } else {
                 return unknowView(item);
             }

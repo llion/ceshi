@@ -12,6 +12,9 @@
 bin/
 gen/
 
+# Script files
+*.bat
+
 # Gradle files
 .gradle/
 build/
