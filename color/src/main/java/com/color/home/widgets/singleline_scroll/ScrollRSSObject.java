@@ -995,14 +995,4 @@ public class ScrollRSSObject extends SinglineScrollObject {
     public void setInterval(long interval) {
         mUpdateInterval = interval;
     }
-    private int getAppVersion() {
-
-        try {
-            PackageInfo info = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
-            return info.versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        return 1;
-    }
 }

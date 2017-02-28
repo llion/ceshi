@@ -25,6 +25,8 @@
 # And subpackage.
 # http://stackoverflow.com/questions/7464035/how-to-tell-proguard-to-keep-everything
 -keep public class com.google.common.**
+-keep class com.google.code.rome.**
+-keep class org.jdom.**{*;}
 
 -dontwarn com.google.common.**
 -dontwarn okio.*
