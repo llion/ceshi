@@ -217,7 +217,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
             Log.d(TAG, "layout= " + layout + ", textView.getLineCount()= " + textView.getLineCount()
                     + ", textView.getText()= " + textView.getText());
         int lineCount = textView.getLineCount();
-        int maxTextHeight = 0, maxTextTopToBaseline = 0;
+        int maxTextTopToBaseline = 0, maxTextBottomToBaseline = 0;
         Rect lineBounds = new Rect();
         int height;
         for (int i = 0; i < lineCount; i++) {
@@ -237,15 +237,21 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
             height = layout.getLineDescent(i) - layout.getLineAscent(i);
             if (lineBounds.height() <= height) {
-                if (lineBounds.height() > maxTextHeight) {
-                    maxTextHeight = lineBounds.height();
+
+                if ((-lineBounds.top) > maxTextTopToBaseline)
                     maxTextTopToBaseline = -lineBounds.top;
-                }
+
+                if (lineBounds.bottom > maxTextBottomToBaseline)
+                    maxTextBottomToBaseline = lineBounds.bottom;
+
             } else {
-                if (height > maxTextHeight) {
-                    maxTextHeight = height;
+
+                if ((-layout.getLineAscent(i)) > maxTextTopToBaseline)
                     maxTextTopToBaseline = -layout.getLineAscent(i);
-                }
+
+                if (layout.getLineDescent(i) > maxTextBottomToBaseline)
+                    maxTextBottomToBaseline = layout.getLineDescent(i);
+
             }
         }
 
@@ -255,7 +261,11 @@ public class ScrollRSSObject extends SinglineScrollObject {
                     + ", top= " + fm.top + ", bottom= " + fm.bottom
                     + ", " + textView.getScaleX());
         }
-        mPcHeight = (maxTextHeight % 2 == 0) ? maxTextHeight : (maxTextHeight + 1);
+
+        if (DBG)
+            Log.d(TAG, "maxTextTopToBaseline= " + maxTextTopToBaseline
+             + ", maxTextBottomToBaseline= " + maxTextBottomToBaseline);
+        mPcHeight = ((maxTextTopToBaseline + maxTextBottomToBaseline) % 2 == 0) ? (maxTextTopToBaseline + maxTextBottomToBaseline) : (maxTextTopToBaseline + maxTextBottomToBaseline + 1);
 
         Bitmap image = null;
         if (mFilters.contains("image") && (mFeed != null && mFeed.getImage() != null && !TextUtils.isEmpty(mFeed.getImage().getUrl()))) {
@@ -364,8 +374,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
         if (mPcWidth >= mPcHeight) {
             //keep the distance between picTop and baseline of all lines in layout are equal
-            int baselineToPicTop = (mPcHeight - maxTextHeight) / 2 + maxTextTopToBaseline;
-            getFatPicAndDrawToTexture(textView, layout, lineCount, baselineToPicTop, lineBounds, mTextureBm, maxPicWidthPerTexture, content);
+            getFatPicAndDrawToTexture(textView, layout, lineCount, maxTextTopToBaseline, lineBounds, mTextureBm, maxPicWidthPerTexture, content);
 
         } else {
             getTallPicAndDrawToTexture(textView, layout, lineBounds, mTextureBm, maxPicHeightPerTexture, content);
@@ -503,6 +512,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
                         + ", getLineWidth= " + layout.getLineWidth(j)
                         + ", mBeginXinTexture= " + mBeginXinTexture
                         + ", mBeginYinTexture= " + mBeginYinTexture
+                         + ", baselineToPicTop= " + baselineToPicTop
                         + ", getLineTop= " + layout.getLineTop(j)
                         + ", getLineAscent= " + layout.getLineAscent(j)
                         + ", getLineBaseline= " + layout.getLineBaseline(j)
@@ -657,7 +667,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
         textView.setHeight(getPcHeight());
         textView.setGravity(Gravity.CENTER_VERTICAL);
         textView.getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
-        textView.setBackgroundColor(GraphUtils.parseColor(mBackColor));
+        textView.setBackgroundColor(GraphUtils.parseColor("0x00000000"));
         textView.setTextColor(GraphUtils.parseColor(mTextColor));
         textView.setTextSize(mTextSize);
     }
