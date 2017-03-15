@@ -51,23 +51,24 @@ import java.nio.FloatBuffer;
 public class SLPCTextObject {
     final static String TAG = "SLPCTextObject";
     static final boolean DBG = false;
+    static final boolean DBG_PNG = false;
     private static final boolean DBG_FPS = false;
-    private static final boolean DBG_MATRIX = false;
     protected Item mItem;
+    protected static final boolean DBG_MATRIX = false;
 
     protected float mPixelPerFrame = -4.0f;
     protected int mCurrentRepeats = 0;
     protected Context mContext;
     private ScrollPicInfo mScrollpicinfo;
-    private int[] mTexIds;
-    private int mTexCount = 1;
+    protected int[] mTexIds;
+    protected int mTexCount = 1;
 
     /* [Draw Canvas To Texture] */
     protected short[] mIndices;
     private int mQuadsCount;
     private int muMVPMatrixHandle;
     protected int muMMatrixHandle;
-    private int muTextureHandle;
+    protected int muTextureHandle;
     /**
      * Texture dimension.
      */
@@ -101,20 +102,12 @@ public class SLPCTextObject {
     protected HashCode mTextBitmapHash;
 
     protected int mPcWidth;
-    private int mPcHeight;
+    protected int mPcHeight;
     protected int mRealReadPcWidth;
 
     protected int mEvenPcHeight;
     protected int mEvenPcWidth;
 
-    protected String mText = "";
-    protected boolean mIsCltJson = false;
-    protected int mCurTextId = 0;
-    protected boolean mNeedChangeTexture = false;
-    private Handler mCltHandler;
-    private HandlerThread mCltHandlerThread;
-    private Runnable mCltRunnable;
-    private CltJsonUtils mCltJsonUtils;
 
     protected int getEvenPcHeight() {
         return mEvenPcHeight;
@@ -124,7 +117,7 @@ public class SLPCTextObject {
         return mEvenPcWidth;
     }
 
-    private int mTexDim = -1;
+    protected int mTexDim = -1;
 
     private static class SingleLineMeta {
         public int mWidth;
@@ -166,32 +159,19 @@ public class SLPCTextObject {
 
             MyBitmap texFromMemCache;
 
-            String originText = Texts.getText(mItem);
-            if (Texts.isFontLocallyAvailable(mItem) && Texts.isCltJsonText(originText)) {
-                if (DBG)
-                    Log.d(TAG, "this is CLT_JSON.");
+            texFromMemCache = texFromMemCache();
+            if (DBG)
+                Log.d(TAG, "texFromMemCache= " + texFromMemCache);
 
-                if (!prepareCltJson(originText))
+            if (texFromMemCache == null) {
+                if (!prepareTexture()) {
+                    if (DBG)
+                        Log.d(TAG, "prepare Texture failed.");
                     return;
-
-            }
-
-            if (!mIsCltJson){
-                if (DBG)
-                    Log.d(TAG, "this is not CLT_JSON.");
-
-                texFromMemCache = texFromMemCache();
-                if (DBG)
-                    Log.d(TAG, "this is not CLT_JSON. texFromMemCache= " + texFromMemCache);
-
-                if (texFromMemCache == null) {
-                    if (!prepareTexture())
-                        return;
-
-                } else {
-                    setSize(texFromMemCache);
                 }
 
+            } else {
+                setSize(texFromMemCache);
             }
 
             updatePageToTexId(0, 0);
@@ -208,103 +188,18 @@ public class SLPCTextObject {
 
     }
 
-    private boolean prepareCltJson(String originText) {
-        MyBitmap texFromMemCache;
-
-        mCltJsonUtils = new CltJsonUtils(mContext);
-
-        if (!mCltJsonUtils.initMapList(originText)) {
-            if (DBG)
-                Log.d(TAG, " it is not correct CLT_JSON.");
-            return false;
-        }
-
-        mIsCltJson = true;
-        String resultText = mCltJsonUtils.getCltText();
-        if (Constants.NETWORK_EXCEPTION.equals(resultText))
-            setText("");
-        else setText(resultText);
-
+    protected void setSize(MyBitmap texFromMemCache) {
         if (DBG)
-            Log.d(TAG, "update. isNeedUpdate= " + mItem.isNeedUpdate + ", updateInterval= " + mItem.updateInterval);
-        if ("1".equals(mItem.isNeedUpdate)) {
-            long updateInterval = 0;
-            try {
-                updateInterval = Long.parseLong(mItem.updateInterval);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-
-            if (updateInterval > 0) {
-                mCltHandlerThread = new HandlerThread("another-thread");
-                mCltHandlerThread.start();
-                mCltHandler = new Handler(mCltHandlerThread.getLooper());
-                prepareThread(updateInterval, updateInterval);
-            }
-        }
-
-        if (TextUtils.isEmpty(mText))
-            return false;
-        //
-        texFromMemCache = texFromMemCache();
-
-        if (DBG)
-            Log.d(TAG, "this is CLT_JSON. texFromMemCache= " + texFromMemCache);
-        if (texFromMemCache == null) {
-            if (!prepareTexture())
-                return false;
-
-        } else {
-            setSize(texFromMemCache);
-
-        }
-        return true;
-    }
-
-    private void prepareThread(long delayMillis, final long updateInterval) {
-
-        mCltRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (DBG)
-                    Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
-
-                String resultText = mCltJsonUtils.getCltText();
-                MyBitmap texFromMemCache;
-
-                if (!Constants.NETWORK_EXCEPTION.equals(resultText) && !mText.equals(resultText)) {
-                    if (DBG)
-                        Log.d(TAG, "the data had updated.");
-
-                    setText(resultText);
-
-                    mNeedChangeTexture = true;
-
-                } else {
-                    if (DBG)
-                        Log.d(TAG, "the data had not updated, needn't change texture.");
-                }
-
-                if (mCltHandler != null && mCltHandlerThread != null && updateInterval > 0) {
-                    mCltHandler.removeCallbacks(this);
-                    mCltHandler.postDelayed(this, updateInterval);
-                }
-            }
-        };
-
-        if (mCltHandler != null && mCltHandlerThread != null) {
-            mCltHandler.removeCallbacks(mCltRunnable);
-            mCltHandler.postDelayed(mCltRunnable, delayMillis);
-        }
-    }
-
-
-    private void setSize(MyBitmap texFromMemCache) {
+            Log.d(TAG, "setSize. pcWidth= " + texFromMemCache.mSingleLineWidth
+             + ", pcHeight= " + texFromMemCache.mSingleLineHeight
+             + ", TexDim= " + texFromMemCache.getBitmap().getWidth());
         setPcWidth(texFromMemCache.mSingleLineWidth);
         setPcHeight(texFromMemCache.mSingleLineHeight);
         setTexDim(texFromMemCache.getBitmap().getWidth());
 
         mRealReadPcWidth = getRealReadPcWidth(mPcWidth, mPcHeight, mTexDim);
+        if (DBG)
+            Log.d(TAG, "setSize. mRealReadPcWidth= " + mRealReadPcWidth);
     }
 
     protected void setupGL() {
@@ -363,13 +258,13 @@ public class SLPCTextObject {
         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
     }
 
-    private void genTexs() {
+    protected void genTexs() {
 
         if (DBG)
             Log.d(TAG, "genTexs. [");
 
-//        mTexIds = new int[1];
-        mTexIds = new int[2];
+        mTexIds = new int[mTexCount];
+
         // Set the active texture unit to texture unit 0.
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         TextRenderer.checkGLError("glActiveTexture");
@@ -385,7 +280,7 @@ public class SLPCTextObject {
         }
     }
 
-    private void initTexParam(int texId) {
+    protected void initTexParam(int texId) {
         if (DBG) Log.d(TAG, "initTexParam, texId = " + texId);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexIds[texId]);
         TextRenderer.checkGLError("glBindTexture");
@@ -519,7 +414,7 @@ public class SLPCTextObject {
 //            bm.copyPixelsFromBuffer(ByteBuffer.wrap(content, 0, getTexDim() * getTexDim() * 4));
             AppController.getInstance().addBitmapToMemoryCache(getKeyImgId(0), new MyBitmap(bm, mPcWidth, getPcHeight()));
 
-            if (DBG) {
+            if (DBG_PNG) {
                 new File("/mnt/sdcard/mul").mkdir();
                 QuadGenerator.toPng(bm, new File("/mnt/sdcard/mul/" + getKeyImgId(0) + ".png"));
             }
@@ -532,33 +427,11 @@ public class SLPCTextObject {
                 streamResolver.close();
             }
         }
-        return false;
+        return true;
     }
 
     public MyBitmap texFromMemCache() {
-
-        if (mIsCltJson) {
-            if (DBG)
-                Log.d(TAG, "texFromMemCache. this is CLT_JSON cache mText= " + mText
-                        + ", key= " + String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText)));
-            if (DBG) {
-                MyBitmap myBitmapCache = AppController.getInstance().getBitmapFromMemCache(String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText)));
-                if (myBitmapCache != null) {
-                    String key = String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText));
-                    Log.d(TAG, "save textureBm. key= " + key
-                     + ", width= " + myBitmapCache.mSingleLineWidth + ", height= " + myBitmapCache.mSingleLineHeight
-                     + ", texture height= " + myBitmapCache.getBitmap().getHeight());
-                    new File("/mnt/sdcard/mul").mkdir();
-                    QuadGenerator.toPng(myBitmapCache.getBitmap(), new File("/mnt/sdcard/mul/" + key + ".png"));
-                }
-            }
-            return AppController.getInstance().getBitmapFromMemCache(String.valueOf(mItem.getSinglelineScrollTextBitmapHash(mText)));
-
-        } else {
-            if (DBG)
-                Log.d(TAG, "texFromMemCache. this is not CLT_JSON cache key= " + getKeyImgId(0));
-            return AppController.getInstance().getBitmapFromMemCache(getKeyImgId(0));
-        }
+        return AppController.getInstance().getBitmapFromMemCache(getKeyImgId(0));
     }
 
     protected String getKeyImgId(int picIndex) {
@@ -614,7 +487,7 @@ public class SLPCTextObject {
     }
 
 
-    private float pixelTemp = 0.0f;
+    protected float pixelTemp = 0.0f;
     public boolean mIsGreaterThanAPixelPerFrame = false;
 
     public void render() {
@@ -640,35 +513,6 @@ public class SLPCTextObject {
 //            Matrix.translateM(mMMatrix, 0, (int)pixelTemp, 0.f, 0.f);
 //            pixelTemp += Math.abs((int)pixelTemp);
 //        }
-
-        if (mNeedChangeTexture) {
-
-            if (DBG)
-                Log.d(TAG, "need change texture.");
-
-            mNeedChangeTexture = false;
-            prepare();
-
-            if (mCurTextId == 0) {
-                mCurTextId = 1;
-            } else
-                mCurTextId = 0;
-
-            updatePageToTexId(1, mCurTextId);
-            initShapes();
-            setupMVP();
-
-            Matrix.setIdentityM(mMMatrix, 0);
-            GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
-
-            // Prepare the triangle data
-            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-            GLES20.glEnableVertexAttribArray(maPositionHandle);
-
-            // Prepare the triangle data
-            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
-        }
 
         if (mIsGreaterThanAPixelPerFrame)
             Matrix.translateM(mMMatrix, 0, mPixelPerFrame, 0.f, 0.f);
@@ -701,19 +545,6 @@ public class SLPCTextObject {
         // if (DBG)
         // Log.d(TAG, "render. [mIndices.length=" + mIndices.length);
         GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, mVertexcount, GLES20.GL_UNSIGNED_SHORT, 0);
-    }
-
-    private void prepare() {
-        MyBitmap texFromMemCache = texFromMemCache();
-        if (DBG)
-            Log.d(TAG, "texFromMemCache= " + texFromMemCache);
-
-        if (texFromMemCache == null) {
-           prepareTexture();
-
-        } else {
-            setSize(texFromMemCache);
-        }
     }
 
     protected void notifyFinish() {
@@ -1044,41 +875,5 @@ public class SLPCTextObject {
         } else
             return pcWidth;
     }
-
-    public void setText(String aText) {
-        mText = aText;
-    }
-
-    public void removeCltRunnable() {
-
-        if (DBG)
-            Log.d(TAG, "removeCltRunnable. mCltHandler= " + mCltHandler + ", mCltHandlerThread= " + mCltHandlerThread);
-
-        if (mCltHandler != null){
-            mCltHandler.removeCallbacks(mCltRunnable);
-            mCltHandler = null;
-        }
-        if (mCltHandlerThread != null){
-            mCltHandlerThread.quit();
-            mCltHandlerThread = null;
-        }
-    }
-
-    public void setCltJsonText() {
-        if (mIsCltJson){
-            if (mCltHandler == null) {
-                mCltHandlerThread = new HandlerThread("another-thread");
-                mCltHandlerThread.start();
-                mCltHandler = new Handler(mCltHandlerThread.getLooper());
-            }
-            int updateInterval = 0;
-            if ("1".equals(mItem.isNeedUpdate))
-                updateInterval = Integer.parseInt(mItem.updateInterval);
-
-            prepareThread(0, updateInterval);
-        }
-
-    }
-
 
 }

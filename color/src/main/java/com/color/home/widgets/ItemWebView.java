@@ -21,7 +21,6 @@ import android.webkit.WebViewClient;
 import com.color.home.ProgramParser.Item;
 import com.color.home.network.NetworkConnectReceiver;
 import com.color.home.network.NetworkObserver;
-import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 
 import java.util.Map;
 
@@ -79,6 +78,7 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             Log.i(TAG, "setItem. url=" + url);
 
         if (!TextUtils.isEmpty(url)) {
+            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
 
             //replace "$(account)" to username
             if (url.contains("$(account)")) {
@@ -308,8 +308,8 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
             Log.i(TAG, "-----------onAttachedToWindow");
         }
 
-        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-        ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+        if (mNetworkConnectReceiver != null)
+            registerNetworkConnectReceiver();
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
@@ -368,5 +368,13 @@ public class ItemWebView extends WebView implements OnPlayFinishObserverable, Ru
 
         removeCallbacks(this);
         postDelayed(this, mDuration);
+    }
+
+    public void registerNetworkConnectReceiver() {
+        if (mNetworkConnectReceiver != null) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            mContext.registerReceiver(mNetworkConnectReceiver, filter);
+        }
     }
 }

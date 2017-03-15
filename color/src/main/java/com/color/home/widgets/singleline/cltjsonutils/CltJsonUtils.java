@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.Constants;
+import com.color.home.model.CltContent;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.internal.Utils;
 
@@ -57,10 +58,10 @@ public class CltJsonUtils {
 
     public CltJsonUtils(Context context) {
         this.mContext = context;
-        setClient();
+        initClient();
     }
 
-    private void setClient() {
+    private void initClient() {
 
         mCacheDir = getCacheDir("Okcache");
         if (!mCacheDir.exists())
@@ -103,7 +104,9 @@ public class CltJsonUtils {
                         Log.d(TAG, "str= " + str);
                 }
 
-            }
+            } else if (DBG)
+                Log.d(TAG, "mCltContentList is null? " + (mCltContentList == null) +
+                        ((mCltContentList != null)? ", mCltContentList.size= " + mCltContentList.size() : ""));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -187,7 +190,7 @@ public class CltJsonUtils {
 
     }
 
-    public boolean initMapList(String text) {
+    public void initMapList(String text) {
 
         mCltContentList = new ArrayList<CltContent>();
         String prefix, subStr;
@@ -219,11 +222,6 @@ public class CltJsonUtils {
                 text = subStr.substring(subStr.indexOf("CLT_JSON"));
 
         }
-
-        if (mCltContentList != null && mCltContentList.size() > 0)
-            return true;
-        else
-            return false;
 
     }
 
@@ -361,33 +359,6 @@ public class CltJsonUtils {
         return bytes;
     }
 
-
-    public static class CltContent {
-        String prefix;
-        JSONObject jsonObject;
-
-        public CltContent(String prefix, JSONObject jsonObject) {
-            this.prefix = prefix;
-            this.jsonObject = jsonObject;
-        }
-
-        public String getPrefix() {
-            return prefix;
-        }
-
-        public void setPrefix(String prefix) {
-            this.prefix = prefix;
-        }
-
-        public JSONObject getJsonObject() {
-            return jsonObject;
-        }
-
-        public void setJsonObject(JSONObject jsonObject) {
-            this.jsonObject = jsonObject;
-        }
-
-    }
 
     private boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);

@@ -35,7 +35,10 @@ import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
 import com.color.home.widgets.singleline_scroll.ScrollRSSSurfaceview;
 import com.color.home.widgets.timer.ItemTimer;
-import com.color.home.widgets.weather.ItemWeatherView;
+import com.color.home.widgets.weather.ItemWeatherMLPagesView;
+import com.color.home.widgets.weather.ItemWeatherMLScrollView;
+import com.color.home.widgets.weather.ItemWeatherSLPagesView;
+import com.color.home.widgets.weather.ItemWeatherSLScrollView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -284,13 +287,15 @@ public class ItemsAdapter extends BaseAdapter {
                 } else {
                     final MultiPicInfo multipicinfo = item.multipicinfo;
                     // if we have multipic and it's correctly packed into relative path.
-                    if ((!Texts.isCltJsonText(Texts.getText(item))) && multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
+                    if (!Texts.isValidCltJsonText(Texts.getText(item)) &&
+                            multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
                             && "1".equals(multipicinfo.filePath.isrelative)) {
                         PCItemSingleLineText view = new PCItemSingleLineText(mContext);
                         view.setItem(mRegionView, mRegion, item);
                         if (DBG)
                             Log.d(TAG, "PC single line paged. getView. [view=" + view);
                         return view;
+
                     } else {
                         ItemSingleLineText view = (ItemSingleLineText) mInflater.inflate(R.layout.layout_singleline_text, null);
                         // String filePath = getAbsFilePath(item);
@@ -342,9 +347,18 @@ public class ItemsAdapter extends BaseAdapter {
                     if (DBG)
                         Log.d(TAG, "multipicinfo= " + multipicinfo);
 
+                    if ("0".equals(item.sourceType) && Texts.isValidCltJsonText(Texts.getText(item))){
+                        ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
+                                R.layout.layout_multilines_paged_text, null);
+                        view.setItem(mRegionView, item);
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+                        return view;
+
+                    }
+
                     // if we have multipic and it's correctly packed into relative path.
-                    if (!("0".equals(item.sourceType) && Texts.isCltJsonText(Texts.getText(item)))
-                         && multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
+                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {
                         // Multi lines text?  multi page, not scroll
                         ItemMultiLinesMultipic view = new ItemMultiLinesMultipic(mContext);
                         if (DBG)
@@ -414,15 +428,40 @@ public class ItemsAdapter extends BaseAdapter {
                         return unknowView(item);
                     }
                 }
-            } else if ("14".equals(item.type)) {// web
-                ItemWeatherView weather = new ItemWeatherView(mContext);
-                // String filePath = getAbsFilePath(item);
-            /*
-             * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-             */
-                weather.setRegion(mRegion);
-                weather.setItem(mRegionView, item);
-                return weather;
+            } else if ("14".equals(item.type)) {// weather
+                if ("0".equals(item.showstyle)){//一般风格
+                    if ("1".equals(item.isMultiLine)){//多行
+                        if ("0".equals(item.moveType)) {//翻页
+                            ItemWeatherMLPagesView itemWeatherMLPagesView = new ItemWeatherMLPagesView(mContext);
+                            itemWeatherMLPagesView.setItem(mRegionView, item);
+                            return itemWeatherMLPagesView;
+
+                        } else {//上移
+                            ItemWeatherMLScrollView itemWeatherMLScrollView = new ItemWeatherMLScrollView(mContext);
+                            itemWeatherMLScrollView.setItem(mRegionView, item);
+                            return itemWeatherMLScrollView;
+
+                        }
+
+                    } else {//单行
+                        if ("0".equals(item.moveType)) {//翻页
+
+                            ItemWeatherSLPagesView itemWeatherSLPagesView = new ItemWeatherSLPagesView(mContext);
+                            itemWeatherSLPagesView.setItem(mRegionView, item);
+                            return itemWeatherSLPagesView;
+
+                        } else {//左移
+
+                            ItemWeatherSLScrollView itemWeatherSLScrollView = new ItemWeatherSLScrollView(mContext, item);
+                            itemWeatherSLScrollView.setItem(mRegionView, item);
+                            return itemWeatherSLScrollView;
+
+                        }
+                    }
+
+                } else
+                    return unknowView(item);
+
             } else if ("27".equals(item.type)) {// web
 
                 if (DBG)

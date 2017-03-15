@@ -46,10 +46,11 @@ public class Constants {
     public static final int TYPE_SYNCED_USB = 1;
     public static final int TYPE_NET = 2;
     public static final int TYPE_FTP = 3;
+    public static final long WEATHER_UPDATE_INTERVAL = 3 * 60 * 60 * 1000;
 
-    public static String getRemoteFileUri(String relativeFilepath) {
-        return AppController.getInstance().getConnectivity().getProgramFolderUri() + relativeFilepath;
-    }
+//    public static String getRemoteFileUri(String relativeFilepath) {
+//        return AppController.getInstance().getConnectivity().getProgramFolderUri() + relativeFilepath;
+//    }
 
     public static String getAbsPath(String fileName) {
         return AppController.getInstance().getDownloadDataDir() +
@@ -99,7 +100,12 @@ public class Constants {
     public static File[] listVsns(File dir) {
         File[] files = dir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(VSN_EXT);
+
+                if (dir.getAbsolutePath().equals(FOLDER_USB_0)){
+                    return name.toLowerCase().endsWith(VSN_EXT) && !isUsbSourceProgram(name);
+
+                } else
+                    return name.toLowerCase().endsWith(VSN_EXT);
             }
         });
 
@@ -110,14 +116,19 @@ public class Constants {
         return files;
     }
 
-    public static File[] listVsnAndFilesFolders(String folder) {
+    public static File[] listVsnAndFilesFolders(final String folder) {
         File dir = new File(folder);
         if (DBG)
             Log.d(MainActivity.TAG, "listVsnAndFilesFolders. [dir.isDirectory()=" + dir.isDirectory());
         // If the dir is not a dir, null.
         File[] files = dir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(VSN_EXT) || name.toLowerCase().endsWith(".files");
+
+                if (FOLDER_USB_0.equals(folder)){
+                    return ((name.toLowerCase().endsWith(VSN_EXT) || name.toLowerCase().endsWith(".files"))
+                            && !isUsbSourceProgram(name));
+                } else
+                    return name.toLowerCase().endsWith(VSN_EXT) || name.toLowerCase().endsWith(".files");
             }
         });
         
@@ -256,6 +267,66 @@ public class Constants {
     // }
     // return new String(hexChars);
     // }
+
+
+    private static boolean isUsbSourceProgram(String name) {
+
+        if ((name.toLowerCase().equals("usb.vsn") || name.toLowerCase().equals("usb.files"))
+                && existUsbProgram()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public static boolean existUsbProgram() {
+
+        File dir = new File(FOLDER_USB_0 + "/usb.files");
+        if (dir.isDirectory() && isExistValidSource(dir))
+            return true;
+
+        return false;
+    }
+
+    public static boolean isExistValidSource(File sourceDir) {
+
+        File[] files = sourceDir.listFiles();
+        if (files != null && files.length > 0)
+            for (File file : files) {
+                if (file.isFile() && (file.length() > 0) &&
+                        (isValidPicture(file.getName().toLowerCase())
+                                || isValidVideo(file.getName().toLowerCase())))
+                    return true;
+            }
+
+        return false;
+    }
+
+    public static boolean isValidPicture(String fileName) {
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png") || fileName.endsWith(".bmp") ||
+                fileName.endsWith(".gif") || fileName.endsWith(".tif") || fileName.endsWith(".tiff") || fileName.endsWith(".dib") ||
+                fileName.endsWith(".jpe") || fileName.endsWith(".jfif")) {
+            return true;
+
+        } else if (DBG)
+            Log.d(TAG, "file " + fileName + " is not picture file.");
+
+        return false;
+    }
+
+    public static boolean isValidVideo(String fileName) {
+        if (fileName.endsWith(".mp4") || fileName.endsWith(".flv") || fileName.endsWith(".mkv") || fileName.endsWith(".mov") ||
+                fileName.endsWith(".m2ts") || fileName.endsWith(".avi") || fileName.endsWith(".mpg") || fileName.endsWith(".mpeg") ||
+                fileName.endsWith(".rmvb") || fileName.endsWith(".ts") || fileName.endsWith(".tp") || fileName.endsWith(".vob") ||
+                fileName.endsWith(".wmv") || fileName.endsWith(".3gp")) {
+            return true;
+
+        } else if (DBG)
+            Log.d(TAG, "file " + fileName + " is not video file.");
+
+        return false;
+    }
 
 }
 

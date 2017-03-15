@@ -48,29 +48,7 @@ public class TextObjectHeadTail extends TextObject {
 
             if (DBG)
                 Log.d(TAG, "need change texture.");
-
-            mNeedChangeTexture = false;
-
-            if (mCurTextId == 0) {
-                mCurTextId = 1;
-            } else
-                mCurTextId = 0;
-
-            updatePageToTexId(1, mCurTextId);
-            initShapes();
-            setupMVP();
-
-            Matrix.setIdentityM(mMMatrix, 0);
-            GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
-
-            // Prepare the triangle data
-            GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-            GLES20.glEnableVertexAttribArray(maPositionHandle);
-
-            // Prepare the triangle data
-            GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-            GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
-
+            changeTexture();
         }
 
         if (mIsGreaterThanAPixelPerFrame)

@@ -2,11 +2,7 @@ package com.color.home.widgets.multilines;
 
 import java.lang.ref.WeakReference;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
@@ -41,21 +37,21 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     private final static String TAG = "ItemMultiLinesPagedText";
 
     //    private TextView mTv;
-    private Item mItem;
-    private OnPlayFinishedListener mListener;
-    private MultilinePageSplitter mPageSplitter;
-    private String mText;
-    private int mPageIndex;
+    protected Item mItem;
+    protected OnPlayFinishedListener mListener;
+    protected MultilinePageSplitter mPageSplitter;
+    protected String mText = "";
+    protected int mPageIndex;
     private int mRealPlaytimes = 1;
-    private int mNeedPlayTimes;
-    private int mOnePicDuration = 2000;
-    private boolean isFirst = true;
+    protected int mNeedPlayTimes = 1;
+    protected long mOnePicDuration = 2000;
+    protected boolean mHadOnLayout = true;
 
     private long mUpdateInterval = 0;
     private CltJsonUtils mCltJsonUtils;
-    private boolean mIsCltJsonOk = false;
     private Runnable mCltRunnable;
     private NetworkConnectReceiver mNetworkConnectReceiver;
+    private boolean mIsFirstTimeGetCltJson;
 
     public ItemMultiLinesPagedText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -73,57 +69,74 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         mListener = regionView;
         this.mItem = item;
 
-        setMultilineText();
-
-        if (Texts.isCltJsonText(mText)){
-            if (DBG)
-                Log.d(TAG, "this is CLT_JSON text.");
-            if ("1".equals(item.isNeedUpdate)) {
-                try {
-                    mUpdateInterval = Long.parseLong(item.updateInterval);
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
-            }
-            mCltJsonUtils = new CltJsonUtils(mContext);
-            mIsCltJsonOk = mCltJsonUtils.initMapList(mText);
-        }
-
-        if (mIsCltJsonOk){
-
-            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
-
-            mCltRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (DBG)
-                        Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread());
-                    new NetTask().execute("");
-
-                    if ("1".equals(mItem.isNeedUpdate) && mUpdateInterval > 0) {
-                        removeCallbacks(mCltRunnable);
-                        postDelayed(mCltRunnable, mUpdateInterval);
-                    }
-                }
-            };
-        }
-
         try {
-            mOnePicDuration = Integer.parseInt(item.multipicinfo.onePicDuration);
-            mNeedPlayTimes = Integer.parseInt(item.playTimes);
+            if (item.multipicinfo != null && item.multipicinfo.onePicDuration != null)
+                mOnePicDuration = Integer.parseInt(item.multipicinfo.onePicDuration);
+
+            if (item.playTimes != null)
+                mNeedPlayTimes = Integer.parseInt(item.playTimes);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         if (DBG)
-            Log.d(TAG, "need play times= " + mNeedPlayTimes);
-        if (mNeedPlayTimes < 1){
+            Log.d(TAG, "mOnePicDuration= " + mOnePicDuration + ", need play times= " + mNeedPlayTimes);
+        if ((mOnePicDuration < 0) || (mNeedPlayTimes < 1)) {
             removeCallbacks(this);
             post(this);
             return;
         }
 
+        String itemText = Texts.getText(item);
+        if (Texts.isValidCltJsonText(itemText)) {
+            if (DBG)
+                Log.d(TAG, "this is CLT_JSON text.");
+            prepareCltJson(item, itemText);
+
+        } else {
+            mText = itemText;
+
+            if (TextUtils.isEmpty(mText)) {
+                if (DBG)
+                    Log.d(TAG, "text is empty. mOnePicDuration= " + mOnePicDuration);
+                removeCallbacks(this);
+                postDelayed(this, mOnePicDuration);
+                return;
+            }
+        }
+
+        initDisplay(item);
+
+    }
+
+    private void prepareCltJson(Item item, String itemText) {
+
+        if ("1".equals(item.isNeedUpdate) && item.updateInterval != null) {
+            try {
+                mUpdateInterval = Long.parseLong(item.updateInterval);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+
+        mCltJsonUtils = new CltJsonUtils(mContext);
+        mCltJsonUtils.initMapList(itemText);
+
+        mCltRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (DBG)
+                    Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread());
+                new NetTask().execute("");
+
+            }
+        };
+    }
+
+    protected void initDisplay(Item item) {
         int backcolor;
         if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor)) {
             if ("0xFF010000".equals(item.backcolor)) {
@@ -134,14 +147,6 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         } else
             backcolor = GraphUtils.parseColor("0x00000000");
         setBackgroundColor(backcolor);
-
-        if (TextUtils.isEmpty(mText)){
-            if (DBG)
-                Log.d(TAG, "text is empty.");
-            removeCallbacks(this);
-            postDelayed(this, mOnePicDuration);
-            return;
-        }
 
         if (!TextUtils.isEmpty(item.textColor))
             setTextColor(GraphUtils.parseColor(item.textColor));
@@ -182,7 +187,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
 
             setLineSpacing(getLineSpacingExtra(logfont), 1.0f);
             if (DBG)
-                Log.d(TAG, "lineHeight= " +  FastMath.round(getPaint().getFontMetrics(null) * 1.0f + getLineSpacingExtra(logfont)));
+                Log.d(TAG, "lineHeight= " + FastMath.round(getPaint().getFontMetrics(null) * 1.0f + getLineSpacingExtra(logfont)));
         }
 
         if (DBG)
@@ -192,27 +197,8 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             setGravity(Gravity.CENTER);
 
         } else if ("2".equals(item.centeralalign)) {//居右
-            setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+            setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
         }
-
-    }
-
-    private void setMultilineText() {
-        if (mItem.filesource != null) {
-            String filepath = mItem.filesource.filepath;
-
-            if ("1".equals(mItem.filesource.isrelative) && !TextUtils.isEmpty(filepath) && filepath.endsWith(".txt")) {
-                // We have a file.
-                String absFilePath = AppController.getPlayingRootPath() + "/" + filepath;
-                mText = Texts.getStringFromFile(absFilePath);
-            } else
-                mText = mItem.text;
-
-        } else
-            mText = mItem.text;
-
-        if (DBG)
-            Log.d(TAG, "setMultilineText. mText = " + mText);
     }
 
     private float getLineSpacingExtra(LogFont logcat) {
@@ -220,7 +206,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
 //        return 2.0f;
     }
 
-    private void setPageText() {
+    protected void setPageText() {
         if (DBG)
             Log.i(TAG, "setPageText. mPageIndex= " + mPageIndex);
         setText(mPageSplitter.getPages().get(mPageIndex));
@@ -231,12 +217,11 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         super.onLayout(changed, left, top, right, bottom);
 
         if (DBG)
-            Log.i(TAG, "onLayout. mIsCltJsonOk= " + mIsCltJsonOk + ", Thread= " + Thread.currentThread());
+            Log.i(TAG, "onLayout. Thread= " + Thread.currentThread());
+        if (!mHadOnLayout) {
 
-        if (isFirst && !TextUtils.isEmpty(mText) && mNeedPlayTimes >= 1) {
-
-            if (mIsCltJsonOk){
-                //get clt_json
+            if (mCltRunnable != null) {
+                //clt_json
                 removeCallbacks(mCltRunnable);
                 post(mCltRunnable);
 
@@ -244,11 +229,11 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
                 composeAndShow();
             }
 
-            isFirst = false;
+            mHadOnLayout = true;
         }
 
         if (DBG) {
-            Log.i(TAG, "onLayout, isFirst= " + isFirst + ", layout= " + getLayout() + ", line count= " + getLineCount());
+            Log.i(TAG, "onLayout, mHadOnLayout= " + mHadOnLayout + ", layout= " + getLayout() + ", line count= " + getLineCount());
             Layout layout = getLayout();
             if (layout != null) {
                 for (int i = 0; i < getLineCount(); i++) {
@@ -271,14 +256,14 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
 //        }
 //            BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(textBackColor);
 
-        int maxLineNumPerPage = this.getHeight() / this.getLineHeight() + (this.getHeight() % this.getLineHeight() >= (int)this.getPaint().getFontMetrics(null) ? 1 : 0);
-        if(maxLineNumPerPage < 1)
+        int maxLineNumPerPage = this.getHeight() / this.getLineHeight() + (this.getHeight() % this.getLineHeight() >= (int) this.getPaint().getFontMetrics(null) ? 1 : 0);
+        if (maxLineNumPerPage < 1)
             maxLineNumPerPage = 1;//最少显示1行
 
         if (DBG)
             Log.d(TAG, "onLayout. lineHeight= " + this.getLineHeight() + ", this.height= " + this.getHeight()
-             + ", getLineSpacingExtra= " + getLineSpacingExtra()
-            + ", maxLineNumPerPage= " + maxLineNumPerPage);
+                    + ", getLineSpacingExtra= " + getLineSpacingExtra()
+                    + ", maxLineNumPerPage= " + maxLineNumPerPage);
 
         mPageSplitter = new MultilinePageSplitter(maxLineNumPerPage, this);
         mPageSplitter.append(mText);
@@ -287,7 +272,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         mPageIndex = 0;
         setPageText();
 
-        if (mPageSplitter.getPages().size() > 1) {
+        if (mPageSplitter.getPages().size() > 0) {
             stopHandler();
             mHandler = new MTextMarquee(this, mOnePicDuration);
             mHandler.start();
@@ -300,20 +285,29 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         if (DBG)
             Log.i(TAG, "onAttachedToWindow. layout= " + this.getLayout());
 
+        mHadOnLayout = false;
+
+        if (Texts.isValidCltJsonText(Texts.getText(mItem)))
+            mIsFirstTimeGetCltJson = true;
+
+        if (mNetworkConnectReceiver != null)
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (DBG)
-            Log.i(TAG, "onDetachedFromWindow");
+            Log.i(TAG, "onDetachedFromWindow, mHandler= " + mHandler);
 
         removeCallbacks(this);
+
         if (mCltRunnable != null)
             removeCallbacks(mCltRunnable);
 
         if (mNetworkConnectReceiver != null)
-            mContext.unregisterReceiver(mNetworkConnectReceiver);
+            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
 
         stopHandler();
     }
@@ -326,7 +320,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     }
 
 
-    MTextMarquee mHandler;
+    protected MTextMarquee mHandler;
 
     @Override
     public void setListener(OnPlayFinishedListener listener) {
@@ -338,15 +332,21 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         this.mListener = null;
     }
 
-    private void tellListener() {
+    protected void tellListener() {
+        if (DBG)
+            Log.d(TAG, "tellListener. mListener= " + mListener);
         if (mListener != null) {
             if (DBG)
                 Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 
     public void nextPage() {
+        if (DBG)
+            Log.d(TAG, "mRealPlaytimes= " + mRealPlaytimes + ", mNeedPlayTimes= " + mNeedPlayTimes
+                    + ", mPageSplitter.getPages().size()= " + mPageSplitter.getPages().size());
         mPageIndex++;
         if (mPageIndex >= mPageSplitter.getPages().size()) {
             if (mRealPlaytimes == mNeedPlayTimes)
@@ -369,25 +369,25 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
     @Override
     public void reloadContent() {
         if (DBG)
-            Log.d(TAG, "reloadContent. mIsCltJsonOk= " + mIsCltJsonOk + ", mCltRunnable= " + mCltRunnable);
-        if (mIsCltJsonOk && mCltRunnable != null){
+            Log.d(TAG, "reloadContent. mCltRunnable= " + mCltRunnable);
+        if (mCltRunnable != null) {
             removeCallbacks(mCltRunnable);
             post(mCltRunnable);
         }
 
     }
 
-    private static final class MTextMarquee extends Handler {
+    protected static final class MTextMarquee extends Handler {
         private final static String TAG = "MTextMarquee";
         private static final boolean DBG = false;
         private static final int MESSAGE_TICK = 0x1;
-        private int MARQUEE_DELAY;
+        private long MARQUEE_DELAY;
 
 
         private final WeakReference<ItemMultiLinesPagedText> mView;
         private boolean mShouldStop;
 
-        public MTextMarquee(ItemMultiLinesPagedText view, int onePicDuration) {
+        public MTextMarquee(ItemMultiLinesPagedText view, long onePicDuration) {
             mView = new WeakReference<ItemMultiLinesPagedText>(view);
             MARQUEE_DELAY = onePicDuration;
         }
@@ -415,7 +415,7 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
             }
         }
 
-        void stop() {
+        public void stop() {
             if (DBG)
                 Log.d(TAG, "stop.");
 
@@ -443,26 +443,45 @@ public class ItemMultiLinesPagedText extends TextView implements OnPlayFinishObs
         }
     }
 
-    public class NetTask extends AsyncTask<String, Void, String>{
+    public class NetTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... params) {
 
-            return  mCltJsonUtils.getCltText();
+            return mCltJsonUtils.getCltText();
         }
 
         @Override
         protected void onPostExecute(String result) {
             if (DBG)
                 Log.d(TAG, "onPostExecute. result= " + result);
-            if (result != null && !Constants.NETWORK_EXCEPTION.equals(result) && !result.equals(mText)) {
+
+            if (TextUtils.isEmpty(result) || Constants.NETWORK_EXCEPTION.equals(result)){
+                if (DBG)
+                    Log.d(TAG, "the data is empty or the network had exception.");
+
+                if (mIsFirstTimeGetCltJson){
+                    if (DBG)
+                        Log.d(TAG, "the current text is empty, notify finished after one picture duration.");
+                    removeCallbacks(ItemMultiLinesPagedText.this);
+                    postDelayed(ItemMultiLinesPagedText.this, mOnePicDuration);
+                }
+
+            } else if (!result.equals(mText)){
                 if (DBG)
                     Log.d(TAG, "onPostExecute. result not equals mText, update.");
                 mText = result;
                 composeAndShow();
-            } else {
-                if (DBG)
-                    Log.d(TAG, "onPostExecute. result is not update.");
+
+            } else  if (DBG)
+                Log.d(TAG, "onPostExecute. result is not update.");
+
+            if (mIsFirstTimeGetCltJson)
+                mIsFirstTimeGetCltJson = false;
+
+            if (mUpdateInterval > 0) {
+                removeCallbacks(mCltRunnable);
+                postDelayed(mCltRunnable, mUpdateInterval);
             }
 
         }

@@ -106,6 +106,18 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
         } else {
             setScaleType(ScaleType.FIT_XY);
         }
+
+        mRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+//                if (DBG)
+//                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath + "    mduration=======" + mDuration);
+
+                tellListener();
+            }
+        };
+
         if (DBG)
             Log.i("rotation", "-----------goto rotation    =");
         //setRotationX(100.f);
@@ -130,39 +142,26 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
             }
 
         } else {//get bitmap from net
+
+            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+
             mCltJsonUtils = new CltJsonUtils(mContext);
-            final String url;
-            if (!mItem.url.contains("http://") && !mItem.url.contains("https://"))
-                url = "http://" + mItem.url;
-            else url = mItem.url;
 
             mCltRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    new HelpDataParseWorker().execute(new FilePathAndDim(url, width, height));
-
-                    try {
-
-                        if (DBG)
-                            Log.d(TAG, "run. url= " + url);
-                        if (Integer.parseInt(HttpUrl.parse(url).queryParameter("updateInterval")) > 0) {
-                            if (DBG)
-                                Log.d(TAG, "updateInterval > 0.");
-                            removeCallbacks(this);
-                            postDelayed(this, Integer.parseInt(HttpUrl.parse(url).queryParameter("updateInterval")));
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    new HelpDataParseWorker().execute(new FilePathAndDim(getCorrectUrl(), width, height));
 
                 }
             };
-            post(mCltRunnable);
-
-            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
 
         }
+    }
+
+    private String getCorrectUrl() {
+        if (mItem.url != null && !mItem.url.contains("http://") && !mItem.url.contains("https://"))
+            return "http://" + mItem.url;
+        return mItem.url;
     }
 
     private class HelpDataParseWorker extends AsyncTask<FilePathAndDim, Void, Bitmap> {
@@ -207,6 +206,19 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
                             + ", result.getHeight()= " + result.getHeight());
                 setImageBitmap(result);
             }
+
+            if (!TextUtils.isEmpty(mItem.url)){
+                try {
+                    if (Integer.parseInt(HttpUrl.parse(getCorrectUrl()).queryParameter("updateInterval")) > 0) {
+                        if (DBG)
+                            Log.d(TAG, "updateInterval > 0.");
+                        removeCallbacks(mCltRunnable);
+                        postDelayed(mCltRunnable, Integer.parseInt(HttpUrl.parse(getCorrectUrl()).queryParameter("updateInterval")));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -216,17 +228,19 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
 //        if (DBG)
 //            Log.i(TAG, "onAttachedToWindow. image = " + mItem.filesource.filepath);
 
-        mRunnable = new Runnable() {
+        if (mRunnable != null) {
+            removeCallbacks(mRunnable);
+            postDelayed(mRunnable, mDuration);//进场 + 停留 + 出场
+        }
 
-            @Override
-            public void run() {
-//                if (DBG)
-//                    Log.i("Mduration", "run. img duration up = " + mItem.filesource.filepath + "    mduration=======" + mDuration);
+        if (mCltRunnable != null) {
+            removeCallbacks(mCltRunnable);
+            post(mCltRunnable);
+        }
 
-                tellListener();
-            }
-        };
-        postDelayed(mRunnable, mDuration);//进场 + 停留 + 出场
+        //
+        if (mNetworkConnectReceiver != null)
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override
@@ -243,7 +257,7 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
             removeCallbacks(mCltRunnable);
 
         if (mNetworkConnectReceiver != null)
-            mContext.unregisterReceiver(mNetworkConnectReceiver);
+            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     private static Bitmap decodeImagePurgeOnly(final String file) {

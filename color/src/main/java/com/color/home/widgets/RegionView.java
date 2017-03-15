@@ -9,7 +9,11 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PathDashPathEffect;
+import android.graphics.PathEffect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Looper;
@@ -39,10 +43,11 @@ import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
 
-public class RegionView extends FrameLayout implements OnPlayFinishedListener, AdaptedRegion {
+public class RegionView extends FrameLayout implements OnPlayFinishedListener, AdaptedRegion, Drawable.Callback {
     // never public, so that another class won't be messed up.
     private final static String TAG = "RegionView";
     private static final boolean DBG = false;
+    private static final boolean DBG_DRAW = false;
     private static final boolean DRAW_DBG = false;
     private static final int[] sTypes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
             23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
@@ -73,9 +78,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     private boolean mIsAttached;
 
+
     private static class BorderDrawable extends Drawable {
         private Paint mStrokePaint = new Paint();
-        private RectF rectf;
+        private RectF mRectF;
+        private int mPathStyle;
+        private float mPhase = 0.f;
+        private Path mShape;
+        private float[] mIntervals;
 
         public BorderDrawable(int width, int height, int borderWidth, int color) {
 
@@ -83,21 +93,71 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 Log.d(TAG, "borderWidth= " + borderWidth);
 
             mStrokePaint.setStyle(Paint.Style.STROKE);
-            mStrokePaint.setStrokeWidth(borderWidth);
             mStrokePaint.setColor(color);
 
-            rectf = new RectF(borderWidth / 2.0f, borderWidth / 2.0f, width - borderWidth / 2.0f, height - borderWidth / 2.0f);
+            float lineWidth;
+            if (borderWidth <= 2) {
+                mStrokePaint.setStrokeWidth(borderWidth);
+                lineWidth = borderWidth / 2.f;
 
+            } else {
+                mPathStyle = borderWidth;
+                mStrokePaint.setStrokeWidth(1);
+
+                if (borderWidth == 3) {
+                    mIntervals = new float[]{8.f, 8.f};
+                    lineWidth = 0.5f;
+
+                } else {// triangle
+                    setPathShape();
+                    lineWidth = 2.f;
+                }
+            }
+
+            mRectF = new RectF(lineWidth, lineWidth, width - lineWidth, height - lineWidth);
+            if (DBG)
+                Log.d(TAG, "mRectF= " + mRectF);
+        }
+
+
+        private void setPathShape() {
+            mShape = new Path();
+            mShape.moveTo(0, -2);
+            mShape.lineTo(4, -2);
+            mShape.lineTo(2, 2);
+            mShape.close();
         }
 
         @Override
         public void draw(Canvas canvas) {
 
-            if (DBG)
-                Log.d(TAG, "rectf= " + rectf
-                        + ", canvas= [" + canvas.getWidth() + ", " + canvas.getHeight());
+            if (DBG_DRAW)
+                Log.d(TAG, "mRectF= " + mRectF
+                        + ", canvas= " + canvas + ", [" + canvas.getWidth() + ", " + canvas.getHeight());
 
-            canvas.drawRect(rectf, mStrokePaint);
+            if (mPathStyle <= 2){
+                canvas.drawRect(mRectF, mStrokePaint);
+
+            } else {
+                mStrokePaint.setPathEffect(getPathEffect());
+                canvas.drawRect(mRectF, mStrokePaint);
+
+                 mPhase -= 0.3f;
+
+                if (DBG_DRAW)
+                    Log.d(TAG, "callBack= " + getCallback() + ", mPhase= " + mPhase);
+                invalidateSelf();
+
+            }
+
+        }
+
+        private PathEffect getPathEffect() {
+            if (mPathStyle == 3){
+                return new DashPathEffect(mIntervals, mPhase);
+            } else{//mPathStyle == 4, triangle
+                return new PathDashPathEffect(mShape, 8.f, mPhase, PathDashPathEffect.Style.MORPH);
+            }
         }
 
         @Override
@@ -115,6 +175,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             return 0;
         }
 
+    }
+
+    @Override
+    public void invalidateDrawable(Drawable drawable) {
+        if (DBG_DRAW)
+            Log.d(TAG, "invalidateDrawable. drawable= " + drawable);
+        invalidate();
     }
 
     public RegionView(Context context, AttributeSet attrs) {
@@ -171,7 +238,12 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
+
                 mDrawable = new BorderDrawable(rectWidth, rectHeight, borderWidth, GraphUtils.parseColor(region.rect.bordercolor));
+                if (borderWidth > 2) {
+                    this.setLayerType(LAYER_TYPE_SOFTWARE, null);
+                    mDrawable.setCallback(this);
+                }
 
             }
         }
@@ -460,6 +532,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof SLPCHTSurfaceView
                 || getChildAt(0) instanceof PCItemSingleLineText
                 || getChildAt(0) instanceof ScrollRSSSurfaceview
+                || getChildAt(0) instanceof ItemSingleLineText
                 || getChildAt(0) instanceof ItemExternalVideoView)
                 || (getChildAt(0) instanceof ItemImageView && !TextUtils.isEmpty( mRegion.items.get(0).url))
                 ) {

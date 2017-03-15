@@ -149,7 +149,6 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-        ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
 
     }
 
@@ -220,6 +219,14 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (mNetworkConnectReceiver != null)
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+    }
+
+    @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (DBG)
@@ -231,10 +238,8 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
             mScrollRSSObject = null;
         }
 
-        if (mNetworkConnectReceiver != null) {
-            mContext.unregisterReceiver(mNetworkConnectReceiver);
-            mNetworkConnectReceiver = null;
-        }
+        if (mNetworkConnectReceiver != null)
+            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override

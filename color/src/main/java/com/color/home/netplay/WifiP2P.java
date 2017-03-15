@@ -1,29 +1,24 @@
 package com.color.home.netplay;
 
 import android.content.Context;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 
-import com.color.home.AppController;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.util.Properties;
 
-import libcore.io.IoUtils;
+import static com.color.home.netplay.Config.isIsoFromTxtFile;
+import static com.color.home.netplay.ConfigAPI.ATTR_IS_WIFI_P2P;
 
 /**
  * @author zzjd7382 WifiP2P:V
  */
-public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvider {
+public class WifiP2P {
     final static String TAG = "WifiP2P";
     static final boolean DBG = false;
     private static final int MESSAGE_RETRY = 1;
@@ -31,29 +26,137 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
     private Context mContext;
     private WifiManager mWifiManager;
     private WifiConfiguration mWifiConfig = null;
-    private IntentFilter mIntentFilter;
 
-    private SharedPreferences mSp;
-    private String mPeerServerIp;
-    private String mSSID;
-    private String mPass;
-    private boolean mAPConfiged;
-    private String mChannel;
 
-    public void enableApOnApplicable() {
+    public void setupWifiAP() {
         if (DBG)
             Log.i(TAG,
-                    "enableApOnApplicable. isAPConfiged()=" + isAPConfiged() + ", Device, mWifiManager.isWifiApEnabled()="
+                    "setupWifiAP. isAPConfigured()=" + isAPConfigured() + ", Device, mWifiManager.isWifiApEnabled()="
                             + mWifiManager.isWifiApEnabled());
 
-        if (isAPConfiged() && Config.isWifiModuleExists(mContext)) {
-//            if (!mWifiManager.isWifiApEnabled())
-            // reenable is OK...
-            enable();
-//            else {
-//                if (DBG)
-//                    Log.d(TAG, "enableApOnApplicable. [ap configed and currently device is in AP, ignore.");
+        if (Config.isWifiModuleExists(mContext))
+            if (isAPConfigured()) {
+    //            if (!mWifiManager.isWifiApEnabled())
+                // reenable is OK...
+                enable();
+    //            else {
+    //                if (DBG)
+    //                    Log.d(TAG, "setupWifiAP. [ap configed and currently device is in AP, ignore.");
+    //            }
+            } else {
+                disable();
+            }
+    }
+
+    public WifiP2P(Properties pp, Context context) throws UnsupportedEncodingException{
+        mContext = context;
+
+        if(mWifiManager == null)
+            mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+
+        String propIsAP = pp.getProperty(ATTR_IS_WIFI_P2P);
+        if (propIsAP == null) {
+            if (DBG)
+                Log.d(TAG, "saveWifiP2PFromExt. [is.wifi.p2p not set, so do not save to pref. Abort.");
+            return;
+        }
+
+        if (DBG)
+            Log.i(TAG, "saveWifiP2PFromExt. strIsWifiP2PFromConfig=" + pp + ", Thread=" + Thread.currentThread());
+
+        {
+            final boolean enableAPRequested = Config.isTrue(propIsAP.trim());
+
+//        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.KEY_AP_ENABLED, apEnabledInUsb ? 1 : 0);
+
+            String ssid = pp.getProperty(ConfigAPI.ATTR_AP_SSID);
+            String pass = pp.getProperty(ConfigAPI.ATTR_AP_PASS);
+            String channel = pp.getProperty(ConfigAPI.ATTR_AP_CHANNEL, "6");
+
+            if (enableAPRequested && !TextUtils.isEmpty(ssid) && pass != null) {
+                if (isIsoFromTxtFile(pp))
+                    ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
+            }
+
+            if (!TextUtils.isEmpty(ssid)) {
+                ssid = ssid.trim();
+            } else {
+                return;
+            }
+
+            if (!TextUtils.isEmpty(pass)) {
+                pass = pass.trim();
+            } else {
+                return;
+            }
+
+            if (!TextUtils.isEmpty(channel)) {
+                channel = channel.trim();
+            } else {
+                return;
+            }
+
+            // 1, Check change
+            if(! isApConfigChanged(enableAPRequested, ssid, pass, channel)){
+                Log.d(TAG, "Ap config didn't change . Do not save config or setup ap");
+                return ;
+            }
+
+            // 2, Save to SettingsProvider.
+
+            if (DBG)
+                Log.i(TAG, "Post apEnabledInUsb=" + enableAPRequested + ", Thread=" + Thread.currentThread() +
+                        "ssid=" + ssid +
+                        "pass=" + pass +
+                        "channel=" + channel);
+
+        }
+//
+//        if (Config.isWifiModuleExists(mContext)
+//            if (enableAPRequested && ) {
+//                if(!mWifiManager.isWifiApEnabled()) {
+//                    enable(ssid, pass, channel);
+//                    Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, Integer.parseInt(channel));
+//                }
+//            } else {
+//                disable();
 //            }
+
+        setupWifiAP();
+    }
+
+    private boolean isApConfigChanged(boolean isApConfig, String ssid, String pass, String channel ){
+        if(DBG)
+            Log.d(TAG, "isApConfigChanged..");
+        boolean dirty = false;
+        if(isApConfig != isAPConfigured()){
+            saveApEnableConfig(isApConfig);
+            dirty = true;
+        }
+        if(! ssid.equals(getSSIDFromProvider())){
+            saveSSIDToProvider(ssid);
+            dirty = true;
+        }
+        if(! pass.equals(getPassFromProvider())){
+            savePassToProvider(pass);
+            dirty = true;
+        }
+        if(! channel.equals(getChannelFromProvider())){
+            saveChannelToProvider(channel);
+            dirty = true;
+        }
+        return dirty;
+    }
+
+    private class WifiApConfig{
+        private String ssid;
+        private String pass;
+        private String channel;
+
+        public WifiApConfig(String ssid, String pass, String channel) {
+            this.ssid = ssid;
+            this.pass = pass;
+            this.channel = channel;
         }
     }
 
@@ -63,20 +166,16 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
         // The enable AP logic is only available on a box.
         // if (Constants.TEST_MOBILE_DEVICE_ID.equals(Build.ID)) {
         // if (DBG)
-        // Log.i(TAG, "Don't initWifiP2P. Not a box, Build.ID=" + Build.ID + ", isWIFIP2P()" + isWIFIP2P());
+        // Log.i(TAG, "Don't registerUSBWifiDongleReceiver. Not a box, Build.ID=" + Build.ID + ", isWIFIP2P()" + isWIFIP2P());
         // return;
         // }
 
         mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 
-        mSp = Config.getSharedPreferences(context);
-        updateAPInfo();
-        mSp.registerOnSharedPreferenceChangeListener(this);
 
-        mIntentFilter = new IntentFilter(WifiManager.WIFI_AP_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(ConnectivityManager.ACTION_TETHER_STATE_CHANGED);
+//        updateAPInfo();
 
-        enableApOnApplicable();
+        setupWifiAP();
     }
 
     public static final class WifiP2PConfigManager extends AsyncTask<String,Object,Object> {
@@ -140,11 +239,26 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
         }
     }
 
+//    public void enable(String ssid, String pass, String channel) {
+//        if (DBG)
+//            Log.d(TAG, "Async me");
+//
+//        new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, ssid, pass, channel);
+//
+//        // assertTrue(mWifiManager.setWifiApEnabled(null, true));
+//        // mWifiConfig = mWifiManager.getWifiApConfiguration();
+//        // if (mWifiConfig != null) {
+//        // Log.v(TAG, "mWifiConfig is " + mWifiConfig.toString());
+//        // } else {
+//        // Log.v(TAG, "mWifiConfig is null.");
+//        // }
+//    }
+
     public void enable() {
         if (DBG)
             Log.d(TAG, "Async me");
 
-        new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mSSID, mPass, mChannel);
+        new WifiP2PConfigManager(mWifiManager).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSSIDFromProvider(), getPassFromProvider(), getChannelFromProvider());
 
         // assertTrue(mWifiManager.setWifiApEnabled(null, true));
         // mWifiConfig = mWifiManager.getWifiApConfiguration();
@@ -167,7 +281,6 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
         // (DISABLE the ap.)
 
         // Reset the peer ip.
-        mPeerServerIp = null;
     }
 
     // // Test case 1: Test the soft AP SSID with letters
@@ -211,11 +324,6 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
     // Log.i(TAG, "assertTrue. setWifiApEnabled=" + setWifiApEnabled);
     // }
 
-    protected void enableWifiCheckBox() {
-        // TODO Auto-generated method stub
-        if (DBG)
-            Log.i(TAG, "enableWifiCheckBox. ");
-    }
 
     protected void updateTetherState(Object[] available, Object[] tethered, Object[] errored) {
         // TODO Auto-generated method stub
@@ -237,196 +345,45 @@ public class WifiP2P implements OnSharedPreferenceChangeListener, ServerIpProvid
 
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (DBG)
-            Log.i(TAG, "onSharedPreferenceChanged. sharedPreferences, key=" + key + ", Thread=" + Thread.currentThread());
-
-        // TODO Auto-generated method stub
-        // The system will notify us the same number of time of the number of the keys changed.
-        // i.e., if no key changed, no notification of the onSharedPreferenceChanged.
-        if (updateAPInfo()) {
-            AppController.getHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    if (DBG)
-                        Log.i(TAG, "onSharedPreferenceChanged. Post mAPConfiged=" + mAPConfiged + ", Thread=" + Thread.currentThread());
-                    if (mAPConfiged && Config.isWifiModuleExists(mContext)) {
-                        // if (!mWifiManager.isWifiApEnabled()) {
-                        enable();
-                    } else {
-                        // if (mWifiManager.isWifiApEnabled()) {
-                        disable();
-                    }
-                }
-            });
-        }
-
-    }
 
     public void onDetroy() {
         if (DBG)
             Log.i(TAG, "onDetroy. ");
 
-        mSp.unregisterOnSharedPreferenceChangeListener(this);
+//        mSp.unregisterOnSharedPreferenceChangeListener(this);
     }
 
-    private void readTetheringIpFromProc() {
-        if (DBG)
-            Log.i(TAG, "readTetheringIp. mPeerServerIp=" + mPeerServerIp);
 
-        if (mPeerServerIp == null) {
-            if (DBG)
-                Log.i(TAG, "readTetheringIp. ");
-            mPeerServerIp = findIp();
-            if (mPeerServerIp != null) {
-                if (DBG)
-                    Log.i(TAG, "readTetheringIp. found ip=" + mPeerServerIp);
-            }
-        }
-
+    public boolean isAPConfigured() {
+        return Settings.Global.getInt(mContext.getContentResolver(), ConfigAPI.KEY_AP_ENABLED, 0) == 1;
     }
 
-    /**
-     * Extract and save ip and corresponding MAC address from arp table in HashMap
-     */
-    private String findIp() {
-        if (DBG)
-            Log.i(TAG, "findIp. ");
-
-        String resultIp = null;
-        BufferedReader localBufferdReader = null;
-        try {
-            localBufferdReader = new BufferedReader(new FileReader(new File("/proc/net/arp")));
-            String line = "";
-            while ((line = localBufferdReader.readLine()) != null) {
-                String[] ipmac = line.split("[ ]+");
-                if (!ipmac[0].matches("IP")) {
-                    String ip = ipmac[0];
-                    String mac = ipmac[3];
-                    if (DBG)
-                        Log.i(TAG, "createArpMap. line=" + line + ", ip=" + ip);
-                    if (ip.startsWith("192.168.43") && !mac.equals("00:00:00:00:00:00")) {
-                        resultIp = ip;
-                        if (DBG)
-                            Log.i(TAG, "createArpMap. find ip=" + resultIp);
-                    }
-                    // if (!checkMapARP.containsKey(ip)) {
-                    // checkMapARP.put(ip, mac);
-                    // }
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error read arp:", e);
-        } finally {
-            if (localBufferdReader != null) {
-                IoUtils.closeQuietly(localBufferdReader);
-            }
-        }
-
-        // Use the last one.
-        return resultIp;
+    public String getChannelFromProvider() {
+        return Settings.Global.getString(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL);
     }
 
-    @Override
-    public String getServerIp() {
-        if (!isAPConfiged()) {
-            if (DBG)
-                Log.i(TAG, "getServerIp. ");
-            return null;
-        }
-
-        if (mPeerServerIp == null) {
-            readTetheringIpFromProc();
-        }
-        return mPeerServerIp;
+    public String getPassFromProvider() {
+        return Settings.Global.getString(mContext.getContentResolver(), ConfigAPI.ATTR_AP_PASS);
     }
 
-    public boolean isAPConfiged() {
-        return mAPConfiged;
+    public String getSSIDFromProvider() {
+        return Settings.Global.getString(mContext.getContentResolver(), ConfigAPI.ATTR_AP_SSID);
     }
 
-    public boolean updateAPInfo() {
-        boolean isAPConfiged = mSp.getBoolean(Config.KEY_IS_WIFI_P2P, false);
-
-        int apEnabledConfig = Settings.Global.getInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, -1);
-
-        if(apEnabledConfig != (isAPConfiged ? 1 : 0))
-            Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_ENABLED, isAPConfiged ? 1 : 0);
-        String ssid = mSp.getString(Config.KEY_AP_SSID, "");
-        String pass = mSp.getString(ConfigAPI.ATTR_AP_PASS, "");
-        String channel = mSp.getString(ConfigAPI.ATTR_AP_CHANNEL, "6");
-        try {
-            Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, Integer.valueOf(channel));
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        if (DBG)
-            Log.d(TAG, "updateAPInfo. [isAPConfiged=" + isAPConfiged
-                    + ", ssid=" + ssid
-                    + ", pass=" + pass
-                    + ", channel=" + channel
-                    + ", mIsAP=" + mAPConfiged
-                    + ", mSSID=" + mSSID
-                    + ", mPass=" + mPass
-                    + ", mChannel=" + mChannel
-            );
-
-        boolean dirty = false;
-        if (isAPConfiged != mAPConfiged) {
-            mAPConfiged = isAPConfiged;
-            if (DBG)
-                Log.d(TAG, "updateAPInfo. [isAPConfiged changed.");
-
-            dirty = true;
-        }
-
-        if (!ssid.equals(mSSID)) {
-            mSSID = ssid;
-            if (DBG)
-                Log.d(TAG, "updateAPInfo. [ssid changed.");
-
-            dirty = true;
-        }
-
-        if (!pass.equals(mPass)) {
-            mPass = pass;
-            if (DBG)
-                Log.d(TAG, "updateAPInfo. [pass changed.");
-
-            dirty = true;
-        }
-
-        if (!channel.equals(mChannel)) {
-            mChannel = channel;
-            if (DBG)
-                Log.d(TAG, "updateAPInfo. [channel changed.");
-
-            dirty = true;
-        }
-
-        if (DBG)
-            Log.d(TAG, "updateAPInfo. [dirty=" + dirty);
-
-        if (dirty) {
-            if (DBG)
-                Log.d(TAG, "Dirty.");
-//             updateDb(isAPConfiged, ssid, pass, channel);
-        }
-
-        return dirty;
+    public void saveApEnableConfig(boolean isApConfig) {
+        Settings.Global.putInt(mContext.getContentResolver(), ConfigAPI.KEY_AP_ENABLED, isApConfig ? 1 : 0);
     }
 
-//    private void updateDb(boolean isAPConfiged, String ssid, String pass, String channel) {
-//        ContentValues values = new ContentValues(3);
-//        values.put(ColorContract.COLUMN_ENABLED, isAPConfiged ? 1 : 0);
-//        values.put(ColorContract.COLUMN_SSID, Wifi.normalize(ssid));
-//        values.put(ColorContract.COLUMN_PASS, Wifi.normalize(pass));
-//        // Not
-//        values.put(ColorContract.COLUMN_RES1, Wifi.normalize(channel));
-//        int update = AppController.getInstance().getContentResolver().update(ColorContract.NETWORK_AP_CONTENT_URI, values, null, null);
-//        if (DBG)
-//            Log.d(TAG, "updateDb AP. [update=" + update);
-//    }
+    public void saveChannelToProvider(String channel) {
+        Settings.Global.putString(mContext.getContentResolver(), ConfigAPI.ATTR_AP_CHANNEL, channel);
+    }
+
+    public void savePassToProvider(String pass) {
+        Settings.Global.putString(mContext.getContentResolver(), ConfigAPI.ATTR_AP_PASS, pass);
+    }
+
+    public void saveSSIDToProvider(String ssid) {
+        Settings.Global.putString(mContext.getContentResolver(), ConfigAPI.ATTR_AP_SSID, ssid);
+    }
+
 }

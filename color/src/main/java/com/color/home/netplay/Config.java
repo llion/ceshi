@@ -1,18 +1,5 @@
 package com.color.home.netplay;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Random;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -24,13 +11,25 @@ import android.net.NetworkInfo;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.Constants;
 import com.color.home.network.Ethernet;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Random;
 
 /**
  * @author zzjd7382
@@ -78,8 +77,11 @@ public class Config implements ConfigAPI {
 //            edit.putBoolean("FirstInit", true);
 //            edit.apply();
 //        }
+        final boolean firstRun = Settings.Global.getInt(mContext.getContentResolver(), "clt.FirstRun", 1) == 1;
 
-        if (mSp.getBoolean("FirstInit", true)) {
+        if (firstRun) {
+            Settings.Global.putInt(mContext.getContentResolver(), "clt.FirstRun", 0);
+
             String ro_serialno = SystemProperties.get("ro.serialno");
             String serialno = "0000";
             if (ro_serialno != null && ro_serialno.length() >= 4) {
@@ -103,10 +105,21 @@ public class Config implements ConfigAPI {
                 Log.d(TAG, "setupDefaultAPIfFirstRun. [Random channel=" + channelrandom);
             }
 
-            saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
-            final Editor edit = mSp.edit();
-            edit.putBoolean("FirstInit", false);
-            edit.apply();
+            Settings.Global.putInt(mContext.getContentResolver(), KEY_AP_ENABLED, 1);
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_SSID, modelname + "-" + serialno);
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_PASS, "123456789");
+            Settings.Global.putString(mContext.getContentResolver(), ATTR_AP_CHANNEL, String.valueOf(channelrandom));
+
+
+//            try {
+//                new WifiP2P(pp, mContext);
+//            } catch (UnsupportedEncodingException e) {
+//                e.printStackTrace();
+//            }
+//            saveAPInfo(true, modelname + "-" + serialno, "123456789", String.valueOf(channelrandom));
+//            final Editor edit = mSp.edit();
+//            edit.putBoolean("FirstInit", false);
+//            edit.apply();
         }
     }
 
@@ -149,7 +162,7 @@ public class Config implements ConfigAPI {
         return pp;
     }
 
-    public void cfgByProperties(Properties pp) throws UnsupportedEncodingException {
+    public void cfgByProperties(Properties pp) throws IOException {
         if (DBG) {
             ConnectivityManager mConnectivityManager = (ConnectivityManager) AppController.getInstance().getSystemService(
                     Context.CONNECTIVITY_SERVICE);
@@ -186,67 +199,71 @@ public class Config implements ConfigAPI {
             setMobileEnabled(pp);
 
         new Ethernet(mContext, pp);
-        String ip = pp.getProperty(ATTR_SERVER_IP);
-        if (ip != null)
-            saveSrvIpNportFromUsb(ip.trim());
 
         if (pp.getProperty(ATTR_WIFI_ENABLED) != null) {
-            if (isWifiModuleExists(mContext))
-                new Wifi(pp);
+//            if (isWifiModuleExists(mContext))
+                new Wifi(pp, mContext);
         }
 
-        if (pp.getProperty(ATTR_IS_WIFI_P2P) != null)
-            saveWifiP2PFromExt(pp);
+        if (pp.getProperty(ATTR_IS_WIFI_P2P) != null) {
+//            saveWifiP2PFromExt(pp);
+            new WifiP2P(pp, mContext);
+        }
 
         String screenshot = pp.getProperty(CMD_SCREENSHOT);
         if (screenshot != null)
             screenshot(screenshot);
 
-        mFtpServer.setupFtpService(pp);
     }
 
-    private void setMobileEnabled(Properties pp) {
-        Log.d(TAG, "currentlyAirplaneEnabled =" + (Settings.Global.getInt(mContext.getContentResolver(),
-                Settings.Global.AIRPLANE_MODE_ON, 0) == 1));
-
-        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+    private void setMobileEnabled(Properties pp) throws IOException {
         String mobileMode = pp.getProperty(ConfigAPI.ATTR_MOBILE_ENABLED);
         boolean toEnableMobile = Config.isTrue(mobileMode);
-        Settings.Global.putInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, toEnableMobile ? 1 : 0);
-        boolean toEnableAirplane = !toEnableMobile;
-        Log.d(TAG, "Attempt to switch airplane mode to " + toEnableAirplane);
-        cm.setAirplaneMode(toEnableAirplane);
+        int rilProperExpected = toEnableMobile ? 1 : 0;
 
-        Settings.System.putInt(mContext.getContentResolver(),
-                Settings.Global.AIRPLANE_MODE_ON,toEnableAirplane ? 1 : 0);
-//        Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-//        intent.putExtra("state", toEnableAirplane);
-//        mContext.sendBroadcast(intent);
-        Log.d(TAG, "isAirplane mode on=" + Settings.Global.getInt(mContext.getContentResolver(),
-                Settings.Global.AIRPLANE_MODE_ON, 0));
+        if(Settings.Global.getInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, 0) == rilProperExpected) {
+            Log.w(TAG, "setMobileEnabled not changed. abort. toEnableMobile=" + toEnableMobile);
+            return;
+        }
 
-        mSp.edit().putString(ATTR_AP_SSID, "").apply();
-        cm.setMobileDataEnabled(toEnableMobile);
+        // Dirty and take action.
+        Settings.Global.putInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, rilProperExpected);
+        Log.d(TAG, "Attempt to " + (toEnableMobile ? "enable" : "disable") + " mobile data.");
+
+        if(! rilProperChanged(rilProperExpected)) {
+            Log.w(TAG, "huawei proper not changed. abort.!");
+            return;
+        }
+
+        if(toEnableMobile)
+            enableRil();
+        else
+            disableRil();
     }
 
-    private void setMobileDataState(boolean mobileDataEnabled)
-    {
-        try
-        {
-            TelephonyManager telephonyService = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-
-            Method setMobileDataEnabledMethod = telephonyService.getClass().getDeclaredMethod("setDataEnabled", boolean.class);
-
-            if (null != setMobileDataEnabledMethod)
-            {
-                setMobileDataEnabledMethod.invoke(telephonyService, mobileDataEnabled);
-            }
+    private boolean rilProperChanged(int rilProperExpected){
+        boolean properChanged = false;
+        try {
+            int rilProper = SystemProperties.getInt("persist.color.modem.huawei", 0);
+            if(rilProperExpected != rilProper)
+                properChanged = true;
+        }catch (NumberFormatException e){
+            e.printStackTrace();
+            properChanged = true;
         }
-        catch (Exception ex)
-        {
-            Log.e(TAG, "Error setting mobile data state", ex);
-        }
+        return properChanged;
     }
+
+    private static void enableRil() throws IOException {
+        Log.d(TAG, "enable ril");
+        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 1"});
+    }
+
+    private static void disableRil() throws IOException {
+        Log.d(TAG, "disable ril");
+        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 0"});
+    }
+
 
     public static boolean isIsoFromTxtFile(Properties pp) {
         return !pp.contains(UTF_8);
@@ -370,22 +387,6 @@ public class Config implements ConfigAPI {
         // XXX: Shared pref will only notify upon a change of the KEY.
         // If the following KEY_IS_WIFI_P2P is not changed, no notification will be issued.
         edit.putBoolean(KEY_IS_WIFI_P2P, enabled).commit();
-    }
-
-    public void saveSrvIpNportFromUsb(String srvIpNPort) {
-        final String ipNPort = mSp.getString(KEY_SERVER_IPPORT, "");
-        if (ipNPort.equals(srvIpNPort)) {
-            if (DBG)
-                Log.i(TAG, "persistentServerIpNportFromExtStorage. serverIpNPort=" + srvIpNPort
-                        + ", from sdcard is identical to the sp, do nothing.");
-
-        } else {
-            if (DBG)
-                Log.i(TAG, "persistentServerIpNportFromExtStorage. Differs and save. sdcard ipport=" + srvIpNPort + ", while the sp="
-                        + ipNPort);
-
-            mSp.edit().putString(KEY_SERVER_IPPORT, srvIpNPort).commit();
-        }
     }
 
     public boolean isAntialias() {

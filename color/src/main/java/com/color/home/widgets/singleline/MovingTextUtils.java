@@ -1,5 +1,6 @@
 package com.color.home.widgets.singleline;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.ProgramParser.Item;
@@ -17,22 +18,26 @@ public class MovingTextUtils {
         // TODO: Double check whether we really need the performance switch.
         // ensureSystemPerformance();
 
-        float pixelPerFrame = 0.2f;
+        float pixelPerFrame = 0.5f;
         try {
             // points/sec.
-            float mSpeed = Float.parseFloat(item.speed);
+            float mSpeed = 30.f;
+            if (!TextUtils.isEmpty(item.speed))
+                mSpeed = Float.parseFloat(item.speed);
 
             // points/frame.
             boolean mIfSpeedByFrame = "1".equals(item.ifspeedbyframe);
-            float mSpeedByFrame = 1;
-            try {
-                mSpeedByFrame= Float.parseFloat(item.speedbyframe);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
+
+            float mSpeedByFrame = 1.0f;
+            if (!TextUtils.isEmpty(item.speedbyframe))
+                try {
+                    mSpeedByFrame = Float.parseFloat(item.speedbyframe);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
 
             if (mIfSpeedByFrame) {
-                pixelPerFrame = mSpeedByFrame / 2.0f;
+                pixelPerFrame = mSpeedByFrame;
             } else {
                 // 60frames/sec is assumed.
                 pixelPerFrame = mSpeed / 60.0f;

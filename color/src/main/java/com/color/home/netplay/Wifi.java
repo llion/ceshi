@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -14,22 +15,30 @@ public class Wifi {
     private final static String TAG = "Wifi";
     private static final boolean DBG = false;
     final WifiConnect mWc;
+    private Context mContext;
 
-    public Wifi(Properties pp) throws UnsupportedEncodingException {
+    public Wifi(Properties pp, Context context) throws UnsupportedEncodingException {
+        mContext = context;
         mWc = new WifiConnect();
 
         final boolean enabled = Config.isTrue(pp.getProperty(ConfigAPI.ATTR_WIFI_ENABLED));
+        Log.d(TAG, "Attempt to " + (enabled ? "ENABLE" : "DISABLE") + " wifi ...");
         mWc.setWifi(enabled);
 
         if (enabled) {
+            if(!Config.isWifiModuleExists(mContext)){
+                Log.d(TAG, "Attempt to enable wifi while wifi module unattached..");
+                return;
+            }
             String ssid = pp.getProperty(ConfigAPI.ATTR_WIFI_SSID);
             String pass = pp.getProperty(ConfigAPI.ATTR_WIFI_PASS);
             String type = pp.getProperty(ConfigAPI.ATTR_WIFI_TYPE);
             String hidden = pp.getProperty(ConfigAPI.ATTR_WIFI_ISHIDDEN);
             // Removed the password != null config, as there could be open wifi.
             if (!TextUtils.isEmpty(ssid)) {
-                if (Config.isIsoFromTxtFile(pp))
+                if (Config.isIsoFromTxtFile(pp)) {
                     ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
+                }
                 mWc.connectTo(ssid, pass, type, hidden);
             }
         }

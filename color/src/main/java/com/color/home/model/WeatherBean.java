@@ -2,31 +2,41 @@ package com.color.home.model;
 
 
 public class WeatherBean {
-    private String location;//区域
-    private String areaCode;//区域代码
-    private String weather; //天气状况
-
-    public String getWeather() {
-        return weather;
-    }
-
-    public void setWeather(String weather) {
-        this.weather = weather;
-    }
-
+    private int errorCode;
+    private String reason;
+    private String info;//天气情况:多云...
     private String temperature;  //温度
     private String humidity;  //湿度
     private String wind;    //风力
     private String winddirection; //风向
-    private String cold; //穿衣指数
+    private String quality;//空气质量等级
+    private String curPm;//当前空气指数
+    private String pm25;//PM2.5
+    private String chuanyi;//穿衣指数
     private String lastuptime; //更新时间
 
-    public String getCold() {
-        return cold;
+    public int getErrorCode() {
+        return errorCode;
     }
 
-    public void setCold(String cold) {
-        this.cold = cold;
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
     }
 
     public String getHumidity() {
@@ -37,12 +47,36 @@ public class WeatherBean {
         this.humidity = humidity;
     }
 
-    public String getLocation() {
-        return location;
+    public String getQuality() {
+        return quality;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setQuality(String quality) {
+        this.quality = quality;
+    }
+
+    public String getPm25() {
+        return pm25;
+    }
+
+    public void setPm25(String pm25) {
+        this.pm25 = pm25;
+    }
+
+    public String getCurPm() {
+        return curPm;
+    }
+
+    public void setCurPm(String curPm) {
+        this.curPm = curPm;
+    }
+
+    public String getChuanyi() {
+        return chuanyi;
+    }
+
+    public void setChuanyi(String chuanyi) {
+        this.chuanyi = chuanyi;
     }
 
     public String getLastuptime() {
@@ -51,14 +85,6 @@ public class WeatherBean {
 
     public void setLastuptime(String lastuptime) {
         this.lastuptime = lastuptime;
-    }
-
-    public String getAreaCode() {
-        return areaCode;
-    }
-
-    public void setAreaCode(String areaCode) {
-        this.areaCode = areaCode;
     }
 
     public String getTemperature() {

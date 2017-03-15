@@ -190,11 +190,14 @@ public class AppController extends Application {
 
     }
 
-    public static final String LOG_TYPE_PROGRAM = "log.type.program";
+    public static final String LOG_TYPE_PROGRAM_RES_MISSING = "log.type.program.missing_resource";
     public static final String LOG_TYPE_UPDATING = "log.type.failed_updating";
     public static final String LOG_TYPE_CONNECTIVITY = "log.type.connectivity";
     public static final String LOG_TYPE_DEVICE = "log.type.device";
-    public static final String LOG_TYPE_BAD_OPERATION = "log.type.bad_operation";
+    public static final String LOG_TYPE_BAD_OPERATION = "log.type.operation.bad_operation";
+    public static final String LOG_TYPE_START_PLAYING = "log.type.program.start_playing";
+    public static final String LOG_TYPE_ETHERNET_CONFIGURED = "log.type.connectivity.lan.ethernet_configured";
+    public static final String LOG_TYPE_WIFI_CONFIGURED = "log.type.connectivity.wifi.wifi_configured";
 
     public void reportInternetLog(String log_type, String description, int level, String others, String... args){
         Intent intent = new Intent(Constants.ACTION_LOG_REPORTING);
@@ -265,7 +268,7 @@ public class AppController extends Application {
             }
         });
 
-        scheduleEnsureFTP(mFtpFacilities, 3000);
+        ensureFtpServer();
 
 
         mModel = new Model();
@@ -280,6 +283,10 @@ public class AppController extends Application {
 
     }
 
+    public void ensureFtpServer() {
+        scheduleEnsureFTP(mFtpFacilities, 3000);
+    }
+
     private void scheduleEnsureFTP(Runnable runnable, int delayMillis) {
         sHandler.removeCallbacks(runnable);
         sHandler.postDelayed(runnable, delayMillis);
@@ -291,6 +298,10 @@ public class AppController extends Application {
             if (!ensureFtpRootAndProgramPath()) {
                 Log.w(TAG, "Schedule another scheduleEnsureFTP.");
                 scheduleEnsureFTP(this, 5000);
+            } else {
+                // SystemProperties.set("ftpd.reset", "1");
+                // Need not reset ftpd, as the FTPD'll only validate the path on connected.
+                Log.d(TAG, "Ensured FTP path.");
             }
         }
     };
@@ -305,6 +316,8 @@ public class AppController extends Application {
 
                 return false;
             }
+            Log.e(TAG, "FtpServer. [Not exist, FTP dir:" + ftpDir);
+            return false;
         }
 
         return true;
@@ -404,21 +417,13 @@ public class AppController extends Application {
     }
 
     private void toastMe(Context context, String text, final int duration) {
-        Toast cheatSheet = new Toast(context);
-        TextView textView = new TextView(context);
-        textView.setBackgroundColor(Color.BLACK);
-        textView.setText(text);
-        textView.setTextSize(16);
-        textView.setTextColor(Color.WHITE);
-        cheatSheet.setView(textView);
-        cheatSheet.setDuration(duration);
-        cheatSheet.setGravity(Gravity.TOP | Gravity.LEFT, 0, 0);
-        cheatSheet.show();
+        toastMe(context, text, duration, Color.WHITE);
     }
 
     private void toastMe(Context context, String text, final int duration, final int textColor) {
         Toast cheatSheet = new Toast(context);
         TextView textView = new TextView(context);
+        textView.getPaint().setAntiAlias(false);
         textView.setBackgroundColor(Color.BLACK);
         textView.setText(text);
         textView.setTextSize(16);

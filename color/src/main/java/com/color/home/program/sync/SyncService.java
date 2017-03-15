@@ -170,7 +170,7 @@ public class SyncService extends CLIntentService {
                         try {
                             pp.setProperty(Config.UTF_8, "1");
                             AppController.getInstance().getCfg().cfgByProperties(pp);
-                        } catch (UnsupportedEncodingException e) {
+                        }catch (IOException e){
                             e.printStackTrace();
                         }
                     }
@@ -191,7 +191,11 @@ public class SyncService extends CLIntentService {
             } else if (Constants.ACTION_USB_SYNCED.equals(action)) {
                 if (DBG)
                     Log.d(TAG, "onHandleIntent. [ACTION_USB_SYNCED.");
-                mStrategy.onUsbSynced();
+                if (!Constants.existUsbProgram()) {
+                    mStrategy.onUsbSynced();
+                } else
+                    Log.d(TAG, "usb source program exists, do not play synced program.");
+
             } else if (Intent.ACTION_MEDIA_MOUNTED.equals(action)) {
                 if (DBG)
                     Log.d(TAG, "onHandleIntent. [mounted getDataString=" + intent.getDataString());
@@ -220,7 +224,13 @@ public class SyncService extends CLIntentService {
                         // Parallel: the following service's thread differ from the appcontroller handler.
                         if (!new File(Constants.FOLDER_USB_0 + "/nocopy.txt").exists()) {
                             SyncUsbService.startService();
+
                         }else {
+                            if (Constants.existUsbProgram()){
+                                Log.d(TAG, "usb source program exists, do not play other programs in usb.");
+                                return;
+                            }
+
                             if(DBG)
                                 Log.d(TAG, "nocopy.txt exists. Play programs in usb..");
                             mStrategy.onUsbMounted();
@@ -228,6 +238,9 @@ public class SyncService extends CLIntentService {
                     }
                     // } else if (intent.getData().toString().endsWith("/mnt/sdcard")) {
                     // mStrategy.onMntSdcardMounted();
+                } else if (intent.getData().toString().startsWith("/mnt/internal_sd")) {
+                    Log.w(TAG, "/mnt/internal_sd was mounted too late, recheck ftp path and restart ftpd.");
+                    AppController.getInstance().ensureFtpServer();
                 }
             } else if (Intent.ACTION_MEDIA_REMOVED.equals(action) && intent.getData().toString().endsWith("0")) {
                 mStrategy.onUsbRemoved();

@@ -56,15 +56,18 @@ public class WifiConnect {
     }
 
     public void setWifi(boolean enable) {
+        if(DBG)
+            Log.d(TAG, "set wifi =" + enable);
+
         if (mWifiManager != null) {
-            if (mWifiManager.isWifiEnabled() != enable) {
-                boolean enabled = mWifiManager.setWifiEnabled(enable);
-                if (DBG)
-                    Log.d(TAG, "openWifi. [setWifiEnabled is enable=" + enable + ", result=" + enabled);
-            }else{
-                if(DBG)
-                    Log.d(TAG, "wifi is already enabled..");
-            }
+//            if (mWifiManager.isWifiEnabled() != enable) {
+            boolean enabled = mWifiManager.setWifiEnabled(enable);
+            if (DBG)
+                Log.d(TAG, "openWifi. [setWifiEnabled is enable=" + enable + ", result=" + enabled);
+//            }else{
+//                if(DBG)
+//                    Log.d(TAG, "wifi is already enabled..");
+//            }
 
         }else{
             Log.e(TAG, "wifi manager is null!");

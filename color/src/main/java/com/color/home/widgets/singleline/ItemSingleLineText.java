@@ -34,22 +34,24 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemSingleLineText";
 
-    private Item mItem;
-    private RegionView mRegionView;
-    private OnPlayFinishedListener mListener;
+    protected Item mItem;
+    protected OnPlayFinishedListener mListener;
     private boolean mIsGlaring;
     private boolean mIsDetached;
-    private int mDuration;
-    private Runnable mRunnable;
-    private Integer[] mSplitTexts;
-    private String mText;
-    private int mIndex;
+    protected long mOnePicDuration = 2000;
+    private Runnable mNotifyRunnable;
+    protected Integer[] mSplitTexts;
+    protected String mText = "";
+    protected int mIndex;
+    protected RegionView mRegionView;
 
     private long mUpdateInterval = 0;
     private CltJsonUtils mCltJsonUtils;
     private Runnable mCltRunnable;
     private NetworkConnectReceiver mNetworkConnectReceiver;
-    private boolean mIsCltJsonOk = false;
+    private int mNeedPlayTimes = 1;
+    private int mRealPlaytimes = 1;
+    private boolean mIsFirstTimeGetCltJson;
 
     public ItemSingleLineText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -68,14 +70,91 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         mRegionView = regionView;
         this.mItem = item;
 
-        mText = item.getTexts().mText;
-        // At least a blank.
-        if (TextUtils.isEmpty(mText)) {
-            mText = " ";
+        try {
+            if (item.multipicinfo != null && item.multipicinfo.onePicDuration != null)
+                mOnePicDuration = Integer.parseInt(item.multipicinfo.onePicDuration);
+
+            if (item.playTimes != null)
+                mNeedPlayTimes = Integer.parseInt(item.playTimes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
+        if (DBG)
+            Log.d(TAG, "mOnePicDuration= " + mOnePicDuration + ", need play times= " + mNeedPlayTimes);
+        if ((mOnePicDuration < 0) || (mNeedPlayTimes < 1)) {
+            removeCallbacks(this);
+            post(this);
+            return;
+        }
+
+        mNotifyRunnable = new Runnable() {
+            @Override
+            public void run() {
+                tellListener();
+            }
+        };
+
+//        int itemWidth = regionView.getRegionWidth();
+        if (DBG)
+            Log.d(TAG, "setItem. [mRegionView.getWidth()=" + mRegionView.getWidth());
+        initDisplay(item);
+
+        String itemText = Texts.getText(item);
+        if (Texts.isValidCltJsonText(itemText)) {
+            if (DBG)
+                Log.d(TAG, "this is CLT_JSON text.");
+
+            prepareCltJson(item, itemText);
+
+        } else {
+            if (DBG)
+                Log.d(TAG, "this is not CLT_JSON text.");
+
+            mText = itemText;
+            if (TextUtils.isEmpty(mText)) {
+                if (DBG)
+                    Log.d(TAG, "text is empty. tell Listener after one picture duration. mOnePicDuration= " + mOnePicDuration);
+                postDelayed(mNotifyRunnable, mOnePicDuration);
+
+                return;
+            }
+
+            displayByPages();
+
+        }
+
+    }
+
+    private void prepareCltJson(Item item, String itemText) {
+        if ("1".equals(item.isNeedUpdate) && item.updateInterval != null) {
+            try {
+                mUpdateInterval = Long.parseLong(item.updateInterval);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+
+        mCltJsonUtils = new CltJsonUtils(mContext);
+        mCltJsonUtils.initMapList(itemText);
+
+        mCltRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (DBG)
+                    Log.d(TAG, "mCltRunnable. mUpdateInterval= " + mUpdateInterval + ", Thread= " + Thread.currentThread());
+                new NetTask().execute("");
+
+            }
+        };
+    }
+
+    protected void initDisplay(Item item) {
         getPaint().setAntiAlias(AppController.getInstance().getCfg().isAntialias());
-        
+
         // Color.
         setTextColor(GraphUtils.parseColor(item.textColor));
         if (!TextUtils.isEmpty(item.backcolor) && !"0xFF000000".equals(item.backcolor))
@@ -89,9 +168,9 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
             if (logfont.lfHeight != null) {
                 setTextSize(TypedValue.COMPLEX_UNIT_PX, Integer.parseInt(logfont.lfHeight));
             }
-            
+
             setTypeface(AppController.getInstance().getTypeface(logfont.lfFaceName));
-            
+
             int typeface = Typeface.NORMAL;
             if ("1".equals(logfont.lfItalic)) {
                 typeface = Typeface.ITALIC;
@@ -106,103 +185,49 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         }
 
 
+        if (DBG)
+            Log.i(TAG, "setItem. textview width=" + getWidth()
+                    + ", full duration=" + item.duration);
 //        mDuration = 1000;
 
         mIsGlaring = "1".equals(mItem.beglaring);
         if (mIsGlaring) {
-            getPaint().setShader(new LinearGradient(0, 0, 100, 100, new int[] {
-                    Color.RED, Color.GREEN, Color.BLUE },
+            getPaint().setShader(new LinearGradient(0, 0, 100, 100, new int[]{
+                    Color.RED, Color.GREEN, Color.BLUE},
                     null, Shader.TileMode.MIRROR));
         }
-        
-        
-        
-//        int itemWidth = regionView.getRegionWidth();
-        if (DBG)
-            Log.d(TAG, "setItem. [mRegionView.getWidth()=" + mRegionView.getWidth());
-
-        if (Texts.isCltJsonText(mText)){
-            if (DBG)
-                Log.d(TAG, "this is CLT_JSON text.");
-
-            if ("1".equals(item.isNeedUpdate)) {
-                mUpdateInterval = Long.parseLong(item.updateInterval);
-            }
-            mCltJsonUtils = new CltJsonUtils(mContext);
-
-            mIsCltJsonOk = mCltJsonUtils.initMapList(mText);
-            if (mIsCltJsonOk) {
-
-                mCltRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (DBG)
-                            Log.d(TAG, "mCltRunnable. mUpdateInterval= " + mUpdateInterval + ", Thread= " + Thread.currentThread());
-                        new NetTask().execute("");
-
-                        if ("1".equals(mItem.isNeedUpdate) && mUpdateInterval > 0) {
-                            removeCallbacks(mCltRunnable);
-                            postDelayed(mCltRunnable, mUpdateInterval);
-                        }
-                    }
-                };
-
-                removeCallbacks(mCltRunnable);
-                post(mCltRunnable);
-
-            } else
-                firstShowText();
-
-        } else {
-            if (DBG)
-                Log.d(TAG, "this is not CLT_JSON text.");
-
-            firstShowText();
-
-        }
-
-        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-        ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
-        
     }
 
-    private void firstShowText() {
+    private void displayByPages() {
         if (DBG)
-            Log.d(TAG, "firstShowText.");
+            Log.d(TAG, "displayByPages.");
 
         mSplitTexts = splitText(mText, mRegionView.getWidth());
-        resetTextFromStart();
-
-        int fullDuration = Integer.parseInt(mItem.duration);
+        mIndex = 0;
 
         if (DBG)
-            Log.d(TAG, "firstShowText. mSplitTexts.length= " + mSplitTexts.length);
+            Log.d(TAG, "mSplitTexts.length= " + mSplitTexts.length + ", mText= " + mText
+                    + ", this.getWidth= " + this.getWidth() + ", this.getHeight= " + this.getHeight());
 
-        if (mSplitTexts.length < 2) {
-            mDuration = fullDuration;
-        } else {
-            mDuration = fullDuration / (mSplitTexts.length - 1);
-        }
+//        int fullDuration = Integer.parseInt(mItem.duration);
 
         if (DBG)
-            Log.i(TAG, "firstShowText. textview width=" + getWidth()
-                    + ", full duration=" + fullDuration + ", per page duration= " + mDuration);
+            Log.d(TAG, "displayByPages. mSplitTexts.length= " + mSplitTexts.length);
+
+//        if (mSplitTexts.length < 2) {
+//            mDuration = fullDuration;
+//        } else {
+//            mDuration = fullDuration / (mSplitTexts.length - 1);
+//        }
+
+        if (DBG)
+            Log.i(TAG, "displayByPages. textview width=" + getWidth() + ", per page duration= " + mOnePicDuration);
 
         removeCallbacks(this);
-        postDelayed(this, mDuration);
+        post(this);
     }
 
-    public void resetTextFromStart() {
-        mIndex = 0;
-        if (mSplitTexts.length < 2) {
-            setText(mText);
-        } else {
-            setText(mText.substring(mSplitTexts[mIndex], mSplitTexts[mIndex + 1]));
-            mIndex ++;
-        }
-    }
-    
-    private Integer[] splitText(String text, int width) {
+    protected Integer[] splitText(String text, int width) {
         if (width == 0) {
             if (DBG)
                 Log.d(TAG, "splitText. [BAD width 0.");
@@ -211,10 +236,10 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         ArrayList<Integer> segments = new ArrayList<Integer>(20);
         // 0, ->
         segments.add(0);
-        
+
         int length = text.length();
         int start = 0;
-        
+
         for (start = 0; start <= length - 1; ) {
             int breakText = getPaint().breakText(text, start, length, true, width, null);
             if (breakText == 0) {
@@ -222,24 +247,23 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
                     Log.d(TAG, "splitText. [End of text.");
                 break;
             }
-            
+
             segments.add(start + breakText);
-            
+
             if (DBG)
                 Log.d(TAG, "splitText. [breakText=" + breakText
                         + ", array=" + (start + breakText)
                         + ", text length=" + mText.length());
-            
+
             start += breakText;
         }
-        
+
 //      int breakText = getPaint().breakText(text, true, itemWidth, measuredWidth);
 
-        
         return segments.toArray(new Integer[0]);
     }
-    
-    
+
+
     @Override
     public void setListener(OnPlayFinishedListener listener) {
         this.mListener = listener;
@@ -249,7 +273,7 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
     public void removeListener(OnPlayFinishedListener listener) {
         this.mListener = null;
     }
-    
+
 
     @Override
     protected void onAttachedToWindow() {
@@ -257,8 +281,17 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         if (DBG)
             Log.i(TAG, "onAttachedToWindow. image = " + (mItem.filesource == null ? "NULL" : mItem.filesource.filepath));
 
-//        removeCallbacks(this);
-//        postDelayed(this, mDuration);
+        if (Texts.isValidCltJsonText(Texts.getText(mItem)))
+            mIsFirstTimeGetCltJson = true;
+
+        if (mCltRunnable != null) {
+            removeCallbacks(mCltRunnable);
+            post(mCltRunnable);
+        }
+
+        if (mNetworkConnectReceiver != null)
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+
     }
 
     @Override
@@ -272,17 +305,17 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
             removeCallbacks(mCltRunnable);
 
         if (mNetworkConnectReceiver != null)
-            mContext.unregisterReceiver(mNetworkConnectReceiver);
+            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
 
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
-
     }
 
-    private void tellListener() {
+    protected void tellListener() {
+
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
             removeListener(mListener);
         }
@@ -290,38 +323,39 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
     @Override
     public void run() {
-        if (DBG)
-            Log.i(TAG, "run.  mSplitTexts.length= " + mSplitTexts.length 
+        if (DBG) {
+            Log.i(TAG, "run.  mSplitTexts.length= " + mSplitTexts.length
                     + ", mIndex=" + mIndex + ", Thread= " + Thread.currentThread());
-        
-        if (mIndex >= mSplitTexts.length - 1) {
-            tellListener();
-            if (DBG)
-                Log.d(TAG, "run. [End of texts.");
-            mIndex = 0;
-//            resetTextFromStart();
-//            
-//            removeCallbacks(this);
-//            postDelayed(this, mDuration);
-            
+
         }
 
-        if (mSplitTexts.length >= 2) {
+        if ((mSplitTexts.length <= 1)||
+                ((mSplitTexts.length > 1) && (mIndex >= mSplitTexts.length - 1))) {
+            if (DBG)
+                Log.d(TAG, "run. [End of texts. mRealPlaytimes= " + mRealPlaytimes + ", mNeedPlayTimes= " + mNeedPlayTimes);
+
+            if (mRealPlaytimes == mNeedPlayTimes)
+                tellListener();
+
+            mRealPlaytimes++;
+            mIndex = 0;
+
+        }
+
+        if (mSplitTexts.length > 1) {//the mText is not empty
             setText(mText.substring(mSplitTexts[mIndex], mSplitTexts[mIndex + 1]));
-            mIndex ++;
+            mIndex++;
         }
 
         removeCallbacks(this);
-        postDelayed(this, mDuration);
-
-        
+        postDelayed(this, mOnePicDuration);
     }
 
     @Override
     public void reloadContent() {
         if (DBG)
-            Log.d(TAG, "reloadContent. mIsCltJsonOk= " + mIsCltJsonOk + ", mCltRunnable= " + mCltRunnable);
-        if (mIsCltJsonOk && mCltRunnable != null){
+            Log.d(TAG, "reloadContent. mCltRunnable= " + mCltRunnable);
+        if (mCltRunnable != null) {
             removeCallbacks(mCltRunnable);
             post(mCltRunnable);
         }
@@ -333,22 +367,40 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
         @Override
         protected String doInBackground(String... params) {
 
-            return  mCltJsonUtils.getCltText();
+            return mCltJsonUtils.getCltText();
         }
 
         @Override
         protected void onPostExecute(String result) {
             if (DBG)
                 Log.d(TAG, "onPostExecute. result= " + result);
-            if (result != null && !Constants.NETWORK_EXCEPTION.equals(result) && !result.equals(mText)) {
+
+            if (TextUtils.isEmpty(result) || Constants.NETWORK_EXCEPTION.equals(result)){
+                if (DBG)
+                    Log.d(TAG, "the data is empty or the network had exception.");
+
+                if (mIsFirstTimeGetCltJson){
+                    if (DBG)
+                        Log.d(TAG, "the current text is empty, notify finished after one picture duration.");
+                    removeCallbacks(mNotifyRunnable);
+                    postDelayed(mNotifyRunnable, mOnePicDuration);
+                }
+
+            } else if (!result.equals(mText)){
                 if (DBG)
                     Log.d(TAG, "onPostExecute. result not equals mText, update.");
                 mText = result;
-                firstShowText();
+                displayByPages();
 
-            } else {
-                if (DBG)
-                    Log.d(TAG, "onPostExecute. result is not update.");
+            } else  if (DBG)
+                Log.d(TAG, "onPostExecute. result is not update.");
+
+            if (mIsFirstTimeGetCltJson)
+                mIsFirstTimeGetCltJson = false;
+
+            if (mUpdateInterval > 0) {
+                removeCallbacks(mCltRunnable);
+                postDelayed(mCltRunnable, mUpdateInterval);
             }
 
         }

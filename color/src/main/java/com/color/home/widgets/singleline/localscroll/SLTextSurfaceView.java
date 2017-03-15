@@ -21,17 +21,20 @@ import com.color.home.widgets.OnPlayFinishObserverable;
 import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
-import com.color.home.widgets.multilines.MultiPicScrollRenderer;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
 public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver, NetworkObserver {
-    private final static String TAG = "SLTextSurfaceView";
-    private static final boolean DBG = false;
-    private TextRenderer mRenderer;
-    private OnPlayFinishedListener mListener;
-    private Item mItem;
-    private TextObject mTextobj;
+    protected final static String TAG = "SLTextSurfaceView";
+    protected static final boolean DBG = false;
+    protected TextRenderer mRenderer;
+    protected OnPlayFinishedListener mListener;
+    protected Item mItem;
+    protected TextObject mTextobj;
     private NetworkConnectReceiver mNetworkConnectReceiver;
+
+    public SLTextSurfaceView(Context context) {
+        super(context);
+    }
 
     public SLTextSurfaceView(Context context, TextObject theTextObj) {
         super(context);
@@ -54,11 +57,53 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         mListener = regionView;
         this.mItem = item;
 
-        mTextobj.setText(item.getTexts().mText);
-        if (DBG)
-            Log.d(TAG, "setItem. [item.getTextBitmapHash()=" + item.getTextBitmapHash() + ", text=" + item.getTexts().mText);
-        mTextobj.setTextItemBitmapHash(item.getTextBitmapHash());
+//        mTextobj.setText(item.getTexts().mText);
+//        if (DBG)
+//            Log.d(TAG, "setItem. [item.getTextBitmapHash()=" + item.getTextBitmapHash() + ", text=" + item.getTexts().mText);
+//        mTextobj.setTextItemBitmapHash(item.getTextBitmapHash());
 
+        initDisplay(item);
+
+        float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
+        if (DBG)
+            Log.d(TAG, "setItem. [pixelPerFrame=" + pixelPerFrame);
+//        mTextobj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
+        mTextobj.setPixelPerFrame(pixelPerFrame);
+
+        // Total play length in milisec.
+        long playLength = 300000;
+        try {
+            playLength = Long.parseLong(item.playLength);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        if (DBG)
+            Log.d(TAG, "setItem. [playLength=" + playLength);
+
+        boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
+        if (mIsScrollByTime) {
+            removeCallbacks(this);
+            postDelayed(this, playLength);
+        } else {
+            // Counts.
+            int repeatCount = 1;
+            try {
+                repeatCount = Integer.parseInt(item.repeatcount);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+            if (DBG)
+                Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
+            mTextobj.setRepeatCount(repeatCount);
+            mTextobj.setView(this);
+            // int mDuration = Integer.parseInt(item.duration);
+        }
+
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+
+    }
+
+    protected void initDisplay(Item item) {
         // Color.
         if (DBG)
             Log.d(TAG, "setItem. [item.backcolor=" + item.backcolor);
@@ -107,40 +152,12 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
             mTextobj.setTypeface(logfont.lfFaceName, style);
         }
 
-        float pixelPerFrame = MovingTextUtils.getPixelPerFrame(item);
-        if (DBG)
-            Log.d(TAG, "setItem. [pixelPerFrame=" + pixelPerFrame);
-//        mTextobj.setPixelPerFrame(Math.max(1, Math.round(pixelPerFrame)));
-        mTextobj.setPixelPerFrame(pixelPerFrame);
-
-        // Total play length in milisec.
-        int mPlayLength = Integer.parseInt(item.playLength);
-        if (DBG)
-            Log.d(TAG, "setItem. [mPlayLength=" + mPlayLength);
-        boolean mIsScrollByTime = "1".equals(item.isscrollbytime);
-        if (mIsScrollByTime) {
-            removeCallbacks(this);
-            postDelayed(this, mPlayLength);
-        } else {
-            // Counts.
-            int repeatCount = Integer.parseInt(item.repeatcount);
-            if (DBG)
-                Log.d(TAG, "setItem. [repeatCount=" + repeatCount);
-            mTextobj.setRepeatCount(repeatCount);
-            mTextobj.setView(this);
-            // int mDuration = Integer.parseInt(item.duration);
-        }
-
         boolean isGlaring = "1".equals(mItem.beglaring);
         if (isGlaring) {
-            mTextobj.getPaint().setShader(new LinearGradient(0, 0, 100, 100, new int[] {
-                    Color.RED, Color.GREEN, Color.BLUE },
+            mTextobj.getPaint().setShader(new LinearGradient(0, 0, 100, 100, new int[]{
+                    Color.RED, Color.GREEN, Color.BLUE},
                     null, Shader.TileMode.MIRROR));
         }
-
-        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-        ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
-
     }
 
     @Override
@@ -148,6 +165,14 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         if (DBG)
             Log.i(TAG, "run. Finish item play due to play length time up");
         notifyPlayFinished();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (mNetworkConnectReceiver != null)
+            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override
@@ -162,7 +187,7 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
             mTextobj.removeCltRunnable();
 
         if (mNetworkConnectReceiver != null)
-            mContext.unregisterReceiver(mNetworkConnectReceiver);
+            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
         // if (mAnim != null) {
         // if (DBG)
         // Log.i(TAG, "onDetachedFromWindow. mAnim=" + mAnim + ", not null, end it. Thread=" + Thread.currentThread());
@@ -204,6 +229,6 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         if (DBG)
             Log.d(TAG, "reloadContent. mTheTextObj= " + mTextobj);
         if (mTextobj != null)
-            mTextobj.setCltJsonText();
+            mTextobj.reloadCltJson();
     }
 }
