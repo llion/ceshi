@@ -18,7 +18,6 @@ import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.MultiPicInfo;
 import com.color.home.ProgramParser.Region;
 import com.color.home.ProgramParser.ScrollPicInfo;
-import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.EffectView;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.OnPlayFinishObserverable;
@@ -50,7 +49,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
     private int mPicCount;
     private ScrollPicInfo mScrollpicinfo;
 
-    private long duration = 500L;
+    private long mAnimDuration = 500L;
     private int ineffectType = 0;
     private boolean isFirstComing = true;// the first time display picture, the view already has ineffect animation
     private boolean isTranslate = false;
@@ -98,14 +97,14 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         if (item.ineffect != null && item.ineffect.Time != null) {
 
             try {
-                duration = Long.parseLong(item.ineffect.Time);
+                mAnimDuration = Long.parseLong(item.ineffect.Time);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
         if (DBG)
-            Log.i(TAG, "ineffect duration=" + duration);
+            Log.i(TAG, "ineffect duration=" + mAnimDuration);
 
         setPageText();
 
@@ -536,7 +535,7 @@ public class ItemMultiLinesMultipic extends EffectView implements OnPlayFinishOb
         }
         if (animator != null) {
             animator.setTarget(this);
-            animator.setDuration(duration);
+            animator.setDuration(mAnimDuration);
             animator.start();
         }
 

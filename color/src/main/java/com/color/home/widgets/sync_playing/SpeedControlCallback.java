@@ -56,6 +56,8 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
     }
 
     // runs on decode thread
+    /**
+     */
     @Override
     public void preRender(long presentationTimeUsec, long durationUsec, MediaExtractor extractor) {
         // For the first frame, we grab the presentation time from the video
@@ -141,7 +143,7 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
                 //time goes backward or be reset to somewhere distant now
                 if(sleepTimeUsec >= 10000000) {
 //                    if(VERBOSE)
-                        Log.w(TAG, "Time goes backward or be reset to somewhere distant now..");
+                        Log.w(TAG, "Time goes backward or be reset to somewhere distant now.. Do a seeking.");
                     extractor.seekTo((System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec, MediaExtractor.SEEK_TO_NEXT_SYNC);
                     break;
                 }

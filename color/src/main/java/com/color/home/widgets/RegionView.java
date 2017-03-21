@@ -46,6 +46,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     // never public, so that another class won't be messed up.
     private final static String TAG = "RegionView";
     private static final boolean DBG = false;
+
+    private static final boolean SYNC_DBG = true;
+    private static final String SYNC_TAG = "SYNC_IMG";
+
     private static final boolean DBG_DRAW = false;
     private static final boolean DRAW_DBG = false;
     private static final int[] sTypes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -271,6 +275,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             setupItems();
     }
 
+    private static boolean isSyncImageRegionView(Region region){
+        return "syncImage".equals(region.name) && region.items.size() >= 2;
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
@@ -335,7 +343,55 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private void setAdapter(ItemsAdapter itemsAdapter) {
         mItemsAdapter = itemsAdapter;
 
-        setDisplayedChild(0);
+        setTheFirstChild();
+    }
+
+    private void setTheFirstChild(){
+        if(isSyncImageRegionView(mRegion)) {
+            if(SYNC_DBG){
+                Log.d(SYNC_TAG, "Sync img region.");
+            }
+
+            ItemSyncImageView.CurrentSyncImageStatus syncImgStatus = getCurrentSyncImgStatus();
+            if(SYNC_DBG){
+                Log.d(SYNC_TAG, "syncImgStatus index=" + syncImgStatus.index);
+                Log.d(SYNC_TAG, "syncImgStatus rest stay=" + syncImgStatus.restStayTime);
+            }
+            //TODO Switch child with no animation.
+            setDisplayedChild(syncImgStatus.index + 1, false);
+        }else {
+            setDisplayedChild(0, true);
+        }
+    }
+
+    private ItemSyncImageView.CurrentSyncImageStatus getCurrentSyncImgStatus(){
+        ItemSyncImageView.CurrentSyncImageStatus syncImgStatus = new ItemSyncImageView.CurrentSyncImageStatus();
+
+        long regionDurationMs = 0;
+        for(Item item : mRegion.items){
+            //inEffect + stay + outEffect(stay)
+            regionDurationMs += Long.parseLong(item.duration);
+        }
+        if(SYNC_DBG){
+            Log.d(SYNC_TAG, "regionDurationMs=" + regionDurationMs);
+        }
+
+        long offsetMs = (System.currentTimeMillis() - ItemSyncImageView.BENCHMARK_TIMES_MS) % regionDurationMs;
+        if(SYNC_DBG)
+            Log.d(SYNC_TAG, "Sync offsetMs = " + offsetMs);
+
+        long sumDuration = 0;
+        for(int i = 0; i < mRegion.items.size(); i ++){
+            sumDuration += Long.parseLong(mRegion.items.get(i).duration);
+            if(sumDuration > offsetMs) {
+                syncImgStatus.index = i;
+                syncImgStatus.restStayTime = sumDuration - offsetMs;
+                Log.d(SYNC_TAG, "index=" + i + ", sumDuration=" + sumDuration);
+                break;
+            }
+        }
+
+        return syncImgStatus;
     }
 
     // @Override
@@ -413,7 +469,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.i(TAG, "showNext. region id=" + mRegion.id);
-        setDisplayedChild(mDisplayedChild + 1);
+        setDisplayedChild(mDisplayedChild + 1, true);
     }
 
     @Override
@@ -503,7 +559,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     // Log.i(TAG, "onAnimationRepeat. ");
     // }
 
-    private void setDisplayedChild(int displayedChild) {
+    private void setDisplayedChild(int displayedChild, boolean playAnimation) {
         if (DBG)
             Log.i(TAG, "setDisplayedChild. displayedChild=" + displayedChild);
 
@@ -580,7 +636,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         // Random.
         Item item = mRegion.items.get(mDisplayedChild);
 
-        mRealAnimationType = getRealAnimationType(item);
+        if(playAnimation)
+            mRealAnimationType = getRealAnimationType(item);
+        else
+            mRealAnimationType = 0;
 
         View view = getAdapter().getView(mDisplayedChild, null, null);
         if (DBG)

@@ -16,13 +16,17 @@
 
 package com.color.home.widgets.sync_playing;
 
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.Surface;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,17 +36,9 @@ import java.nio.ByteBuffer;
 import static android.media.MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
 
 
-/**
- * Plays the video track from a movie file to a Surface.
- * <p>
- * TODO: needs more advanced shuttle controls (pause/resume, skip)
- */
-public class MoviePlayer {
-    private static final String TAG = "MoviePlayer";
+public class AudioPlayer {
+    private static final String TAG = "AudioPlayer";
     private static final boolean VERBOSE = false;
-
-    //2000,1,1
-    private static final long BENCHMARK_TIMES = Long.valueOf("949334400000000");
 
     // Declare this here to reduce allocations.
     private MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
@@ -51,138 +47,36 @@ public class MoviePlayer {
     private volatile boolean mIsStopRequested;
 
     private File mSourceFile;
-    private Surface mOutputSurface;
     SpeedControlCallback mFrameCallback;
     private boolean mLoop;
-    private int mVideoWidth;
-    private int mVideoHeight;
 
 
-    /**
-     * Interface to be implemented by class that manages playback UI.
-     * <p>
-     * Callback methods will be invoked on the UI thread.
-     */
-    public interface PlayerFeedback {
-        void playbackStopped();
-    }
-
-
-    /**
-     * Callback invoked when rendering video frames.  The MoviePlayer client must
-     * provide one of these.
-     */
-    public interface FrameCallback {
-        /**
-         * Called immediately before the frame is rendered.
-         * @param presentationTimeUsec The desired presentation time, in microseconds.
-         *
-         */
-        void preRender(long presentationTimeUsec, long durationUs, MediaExtractor extractor);
-
-        /**
-         * Called immediately after the frame render call returns.  The frame may not have
-         * actually been rendered yet.
-         * TODO: is this actually useful?
-         */
-        void postRender();
-
-        /**
-         * Called after the last frame of a looped movie has been rendered.  This allows the
-         * callback to adjust its expectations of the next presentation time stamp.
-         */
-        void loopReset();
-    }
-
-
-    /**
-     * Constructs a MoviePlayer.
-     *
-     * @param sourceFile The video file to open.
-     * @param outputSurface The Surface where frames will be sent.
-     * @param frameCallback Callback object, used to pace output.
-     * @throws IOException
-     */
-    public MoviePlayer(File sourceFile, Surface outputSurface, SpeedControlCallback frameCallback)
+    public AudioPlayer(File sourceFile, SpeedControlCallback frameCallback)
             throws IOException {
         mSourceFile = sourceFile;
-        mOutputSurface = outputSurface;
         mFrameCallback = frameCallback;
 
-        // Pop the file open and pull out the video characteristics.
-        // TODO: consider leaving the extractor open.  Should be able to just seek back to
-        //       the start after each iteration of play.  Need to rearrange the API a bit --
-        //       currently play() is taking an all-in-one open+work+release approach.
-        MediaExtractor extractor = null;
-        try {
-            extractor = new MediaExtractor();
-            extractor.setDataSource(sourceFile.toString());
-            int trackIndex = selectTrack(extractor);
-            if (trackIndex < 0) {
-                throw new RuntimeException("No video track found in " + mSourceFile);
-            }
-            extractor.selectTrack(trackIndex);
-
-            MediaFormat format = extractor.getTrackFormat(trackIndex);
-
-            mVideoWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-            mVideoHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
-//            int frameRate = format.getInteger(MediaFormat.KEY_FRAME_RATE);
-            if(VERBOSE)
-                Log.d(TAG, "VideoWidth= " + mVideoWidth + ", VideoHeight = " + mVideoHeight);
-//            mFrameCallback.setFixedPlaybackRate(frameRate);
-//            mFrameCallback.setFixedPlaybackRate(60);
-
-            if (VERBOSE) {
-                Log.d(TAG, "Video size is " + mVideoWidth + "x" + mVideoHeight);
-            }
-        } finally {
-            if (extractor != null) {
-                extractor.release();
-            }
-        }
     }
 
-    /**
-     * Returns the width, in pixels, of the video.
-     */
-    public int getVideoWidth() {
-        return mVideoWidth;
-    }
 
-    /**
-     * Returns the height, in pixels, of the video.
-     */
-    public int getVideoHeight() {
-        return mVideoHeight;
-    }
-
-    /**
-     * Sets the loop mode.  If true, playback will loop forever.
-     */
     public void setLoopMode(boolean loopMode) {
         mLoop = loopMode;
     }
 
-    /**
-     * Asks the player to stop.  Returns without waiting for playback to halt.
-     * <p>
-     * Called from arbitrary thread.
-     */
+
     public void requestStop() {
         mIsStopRequested = true;
     }
 
-    /**
-     * Decodes the video stream, sending frames to the surface.
-     * <p>
-     * Does not return until video playback is complete, or we get a "stop" signal from
-     * frameCallback.
-     */
+
+    private int mSampleRate = 0;
+    private int mChannelCount = 0;
+    private String mMime = "";
+
     public void play() throws IOException {
         MediaExtractor extractor = null;
         MediaCodec decoder = null;
-
+        AudioTrack audioTrack = null;
         // The MediaExtractor error messages aren't very useful.  Check to see if the input
         // file exists so we can throw a better one if it's not there.
         if (!mSourceFile.canRead()) {
@@ -192,42 +86,49 @@ public class MoviePlayer {
         try {
             extractor = new MediaExtractor();
             extractor.setDataSource(mSourceFile.toString());
-            int trackIndex = selectTrack(extractor);
-            if (trackIndex < 0) {
+
+
+            //Just to retrieve the duration; TODO
+            int videoTrackIndex = selectVideoTrack(extractor);
+            if (videoTrackIndex < 0) {
                 throw new RuntimeException("No video track found in " + mSourceFile);
             }
-            extractor.selectTrack(trackIndex);
+            MediaFormat videoTrackFormat = extractor.getTrackFormat(videoTrackIndex);
+            mDuration = videoTrackFormat.getLong(MediaFormat.KEY_DURATION);
 
-            MediaFormat format = extractor.getTrackFormat(trackIndex);
-
-            mDuration = format.getLong(MediaFormat.KEY_DURATION);
-//            if(VERBOSE)
+            int audioTrackIndex = selectAudioTrack(extractor);
+            if (audioTrackIndex < 0) {
+                throw new RuntimeException("No audio track found in " + mSourceFile);
+            }
+            if(VERBOSE)
                 Log.d(TAG, "duration:" + mDuration);
-            //seek before start
-//            Calendar c = Calendar.getInstance();
-//            c.set(2016, 1, 1, 0, 0, 0);
-//            c.set(Calendar.MILLISECOND, 0);
-//            long benchmarkTimeUs = c.getTimeInMillis()*1000;
-//
-//            // Roughly calibrate in microSecond before playing
-//            if(VERBOSE)
-//                Log.d(TAG, "sysUs:" + System.currentTimeMillis()*1000 + ", benchUs:" + benchmarkTimeUs);
-            //TODO DO NOT seek when the video starts in case of it look weired.
-//            long seekOffsetUs = ( System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % mDuration;
-//            extractor.seekTo(seekOffsetUs, MediaExtractor.SEEK_TO_NEXT_SYNC);
-//            long sampleTime = extractor.getSampleTime();
-//            if(VERBOSE)
-//                Log.d(TAG, "seekOffset:" + seekOffsetUs + ", position after seeking prePlay:" + sampleTime);
 
-            // Create a MediaCodec decoder, and configure it with the MediaFormat from the
-            // extractor.  It's very important to use the format from the extractor because
-            // it contains a copy of the CSD-0/CSD-1 codec-specific data chunks.
-            String mime = format.getString(MediaFormat.KEY_MIME);
-            decoder = MediaCodec.createDecoderByType(mime);
-            decoder.configure(format, mOutputSurface, null, 0);
+            extractor.selectTrack(audioTrackIndex);
+            MediaFormat format = extractor.getTrackFormat(audioTrackIndex);
+//            mDuration = format.getLong(MediaFormat.KEY_DURATION);
+
+            mMime = format.getString(MediaFormat.KEY_MIME);
+            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            mChannelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            if(VERBOSE)
+                Log.d(TAG, "mime=" + mMime + ", frameRate=" + mSampleRate + ", channelCount=" + mChannelCount);
+
+//            MediaFormat mediaFormatSpecified = specifyAudioFormat();
+//            decoder = MediaCodec.createDecoderByType("audio/mp4a-latm");
+
+            decoder = MediaCodec.createDecoderByType(mMime);
+            decoder.configure(format, null, null, 0);
             decoder.start();
 
-            doExtract(extractor, trackIndex, decoder);
+            int bufferSize = AudioTrack.getMinBufferSize(mSampleRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, mSampleRate,
+                    AudioFormat.CHANNEL_OUT_STEREO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    bufferSize,
+                    AudioTrack.MODE_STREAM);
+            audioTrack.play();
+
+            doExtract(extractor, audioTrackIndex, decoder, audioTrack);
         } finally {
             // release everything we grabbed
             if (decoder != null) {
@@ -239,16 +140,82 @@ public class MoviePlayer {
                 extractor.release();
                 extractor = null;
             }
+            if (audioTrack != null){
+                audioTrack.stop();
+                audioTrack.release();
+                audioTrack = null;
+            }
         }
     }
 
     private long mDuration = 0;
+
     /**
      * Selects the video track, if any.
      *
      * @return the track index, or -1 if no video track is found.
      */
-    private static int selectTrack(MediaExtractor extractor) {
+    private int selectAudioTrack(MediaExtractor extractor) {
+        // Select the first video track we find, ignore the rest.
+        int numTracks = extractor.getTrackCount();
+        for (int i = 0; i < numTracks; i++) {
+            MediaFormat format = extractor.getTrackFormat(i);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (mime.startsWith("audio/")) {
+                if (VERBOSE) {
+                    Log.d(TAG, "Extractor selected track " + i + " (" + mime + "): " + format);
+                }
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private MediaFormat specifyAudioFormat(){
+        MediaFormat mediaFormat = new MediaFormat();
+//        mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
+        mediaFormat.setString(MediaFormat.KEY_MIME, "audio/mp4a-latm");
+        mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
+        mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mChannelCount);
+
+        int audioProfile = MediaCodecInfo.CodecProfileLevel.AACObjectLC;
+
+        int samplingFreq[] = {
+                96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050,
+                16000, 12000, 11025, 8000
+        };
+
+        // Search the Sampling Frequencies
+        int sampleIndex = -1;
+        for (int i = 0; i < samplingFreq.length; ++i) {
+            if (samplingFreq[i] == mSampleRate) {
+                Log.d("TAG", "kSamplingFreq " + samplingFreq[i] + " i : " + i);
+                sampleIndex = i;
+            }
+        }
+
+        if (sampleIndex == -1) {
+            return null;
+        }
+
+        //Does it
+        ByteBuffer csd = ByteBuffer.allocate(2);
+        csd.put((byte) ((audioProfile << 3) | (sampleIndex >> 1)));
+
+        csd.position(1);
+        csd.put((byte) ((byte) ((sampleIndex << 7) & 0x80) | (mChannelCount << 3)));
+        csd.flip();
+        mediaFormat.setByteBuffer("csd-0", csd); // add csd-0
+
+        for (int k = 0; k < csd.capacity(); ++k) {
+            Log.e("TAG", "csd : " + csd.array()[k]);
+        }
+
+        return mediaFormat;
+    }
+
+    private int selectVideoTrack(MediaExtractor extractor) {
         // Select the first video track we find, ignore the rest.
         int numTracks = extractor.getTrackCount();
         for (int i = 0; i < numTracks; i++) {
@@ -269,67 +236,11 @@ public class MoviePlayer {
     /**
      * Work loop.  We execute here until we run out of video or are told to stop.
      */
-    private void doExtract(MediaExtractor extractor, int trackIndex, MediaCodec decoder) {
-        // We need to strike a balance between providing input and reading output that
-        // operates efficiently without delays on the output side.
-        //
-        // To avoid delays on the output side, we need to keep the codec's input buffers
-        // fed.  There can be significant latency between submitting frame N to the decoder
-        // and receiving frame N on the output, so we need to stay ahead of the game.
-        //
-        // Many video decoders seem to want several frames of video before they start
-        // producing output -- one implementation wanted four before it appeared to
-        // configure itself.  We need to provide a bunch of input frames up front, and try
-        // to keep the queue full as we go.
-        //
-        // (Note it's possible for the encoded data to be written to the stream out of order,
-        // so we can't generally submit a single frame and wait for it to appear.)
-        //
-        // We can't just fixate on the input side though.  If we spend too much time trying
-        // to stuff the input, we might miss a presentation deadline.  At 60Hz we have 16.7ms
-        // between frames, so sleeping for 10ms would eat up a significant fraction of the
-        // time allowed.  (Most video is at 30Hz or less, so for most content we'll have
-        // significantly longer.)  Waiting for output is okay, but sleeping on availability
-        // of input buffers is unwise if we need to be providing output on a regular schedule.
-        //
-        //
-        // In some situations, startup latency may be a concern.  To minimize startup time,
-        // we'd want to stuff the input full as quickly as possible.  This turns out to be
-        // somewhat complicated, as the codec may still be starting up and will refuse to
-        // accept input.  Removing the timeout from dequeueInputBuffer() results in spinning
-        // on the CPU.
-        //
-        // If you have tight startup latency requirements, it would probably be best to
-        // "prime the pump" with a sequence of frames that aren't actually shown (e.g.
-        // grab the first 10 NAL units and shove them through, then rewind to the start of
-        // the first key frame).
-        //
-        // The actual latency seems to depend on strongly on the nature of the video (e.g.
-        // resolution).
-        //
-        //
-        // One conceptually nice approach is to loop on the input side to ensure that the codec
-        // always has all the input it can handle.  After submitting a buffer, we immediately
-        // check to see if it will accept another.  We can use a short timeout so we don't
-        // miss a presentation deadline.  On the output side we only check once, with a longer
-        // timeout, then return to the outer loop to see if the codec is hungry for more input.
-        //
-        // In practice, every call to check for available buffers involves a lot of message-
-        // passing between threads and processes.  Setting a very brief timeout doesn't
-        // exactly work because the overhead required to determine that no buffer is available
-        // is substantial.  On one device, the "clever" approach caused significantly greater
-        // and more highly variable startup latency.
-        //
-        // The code below takes a very simple-minded approach that works, but carries a risk
-        // of occasionally running out of output.  A more sophisticated approach might
-        // detect an output timeout and use that as a signal to try to enqueue several input
-        // buffers on the next iteration.
-        //
-        // If you want to experiment, set the VERBOSE flag to true and watch the behavior
-        // in logcat.  Use "logcat -v threadtime" to see sub-second timing.
+    private void doExtract(MediaExtractor extractor, int trackIndex, MediaCodec decoder, AudioTrack audioTrack) {
 
         final int TIMEOUT_USEC = 100000;
         ByteBuffer[] decoderInputBuffers = decoder.getInputBuffers();
+        ByteBuffer[] decoderOutputBuffers = decoder.getOutputBuffers();
         int inputChunk = 0;
         long firstInputTimeNsec = -1;
 
@@ -338,13 +249,14 @@ public class MoviePlayer {
 
         long lastNano = 0;
 
-//        long lastSystemMillis = 0;
+
+
         while (!outputDone) {
-//            if (VERBOSE) Log.d(TAG, "loop");
             if (mIsStopRequested) {
                 Log.d(TAG, "Stop requested");
                 return;
             }
+
 
             // Feed more data to the decoder.
             if (!inputDone) {
@@ -359,9 +271,7 @@ public class MoviePlayer {
                     int chunkSize = extractor.readSampleData(inputBuf, 0);
                     //
 
-                    boolean reachTheEnd = false;
                     if (chunkSize < 0) {
-                        reachTheEnd = true;
                         if(mLoop){
                             Log.e(TAG, "chunkSize is 0, seekTo the start of the video.");
 
@@ -373,6 +283,8 @@ public class MoviePlayer {
                             // Use BUFFER_FLAG_CODEC_CONFIG instead.
                             extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                             chunkSize = extractor.readSampleData(inputBuf, 0);
+
+//                            audioTrack.flush();
                             //TODO
                             // Do the seeking ,if needed, at the first loop ends
                             // to avoid abnormal playing at the video beginning.
@@ -385,7 +297,6 @@ public class MoviePlayer {
                             if (VERBOSE) Log.d(TAG, "sent input EOS");
                         }
                     }
-//                    else {
 
                     if (extractor.getSampleTrackIndex() != trackIndex) {
                         Log.w(TAG, "WEIRD: got sample from track " +
@@ -418,10 +329,12 @@ public class MoviePlayer {
                     if (VERBOSE) Log.d(TAG, "no output from decoder available");
                 } else if (decoderStatusOrIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     // not important for us, since we're using Surface
+                    decoderOutputBuffers = decoder.getOutputBuffers();
                     if (VERBOSE) Log.d(TAG, "decoder output buffers changed");
                 } else if (decoderStatusOrIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     MediaFormat newFormat = decoder.getOutputFormat();
                     if (VERBOSE) Log.d(TAG, "decoder output format changed: " + newFormat);
+                    audioTrack.setPlaybackRate(newFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
                 } else if (decoderStatusOrIndex < 0) {
                     throw new RuntimeException(
                             "unexpected result from decoder.dequeueOutputBuffer: " +
@@ -440,14 +353,29 @@ public class MoviePlayer {
                         if(VERBOSE)
                             Log.d(TAG, "first presentation Us:" + mBufferInfo.presentationTimeUs);
                     }
-                    boolean doLoop = false;
-                    if (VERBOSE) {
 
-                        Log.d(TAG, "OutputFrame deltaNano : " + (System.nanoTime() - lastNano));
-                        lastNano = System.nanoTime();
-                        Log.d(TAG, "surface decoder given buffer " + decoderStatusOrIndex +
-                                " (size=" + mBufferInfo.size + ")" );
+//                    boolean doRender = (mBufferInfo.size != 0);
+                    boolean doRender = true;
+                    if (doRender && mFrameCallback != null) {
+                        mFrameCallback.preRender(mBufferInfo.presentationTimeUs, mDuration, extractor);
                     }
+
+                    ByteBuffer outBuffer = decoderOutputBuffers[decoderStatusOrIndex];
+
+                    final byte[] chunk = new byte[mBufferInfo.size];
+                    outBuffer.get(chunk); // Read the buffer all at once
+                    outBuffer.clear(); // ** MUST DO!!! OTHERWISE THE NEXT TIME YOU GET THIS SAME BUFFER BAD THINGS WILL HAPPEN
+
+                    audioTrack.write(chunk, mBufferInfo.offset, mBufferInfo.offset + mBufferInfo.size); // AudioTrack write data
+                    decoder.releaseOutputBuffer(decoderStatusOrIndex, false);
+                    if(VERBOSE)
+                        Log.d(TAG, "presentation Us=" + mBufferInfo.presentationTimeUs);
+
+                    if (doRender && mFrameCallback != null) {
+                        mFrameCallback.postRender();
+                    }
+
+                    boolean doLoop = false;
 
                     //FLAG_END_OF_STREAM is not available on RockChip platform.
                     if ((mBufferInfo.flags & BUFFER_FLAG_CODEC_CONFIG) != 0) {
@@ -459,24 +387,10 @@ public class MoviePlayer {
                         }
                     }
 
-                    boolean doRender = (mBufferInfo.size != 0);
-
-                    if (doRender && mFrameCallback != null) {
-                        mFrameCallback.preRender(mBufferInfo.presentationTimeUs, mDuration, extractor);
-                    }
-
-                    if(VERBOSE)
-                        Log.d(TAG, "presentation Us=" + mBufferInfo.presentationTimeUs);
-
-                    decoder.releaseOutputBuffer(decoderStatusOrIndex, doRender);
-                    if (doRender && mFrameCallback != null) {
-                        mFrameCallback.postRender();
-                    }
-
                     if (doLoop) {
                         Log.d(TAG, "Reached EOS, looping");
                         //int decoderStatusOrIndex = decoder.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
-//                        extractor.seekTo(0, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+                        extractor.seekTo(0, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
                         if(VERBOSE)
                             Log.d(TAG, "sampleTime after EOS:" + extractor.getSampleTime());
 
@@ -489,17 +403,11 @@ public class MoviePlayer {
         }
     }
 
-    /**
-     * Thread helper for video playback.
-     * <p>
-     * The PlayerFeedback callbacks will execute on the thread that creates the object,
-     * assuming that thread has a looper.  Otherwise, they will execute on the main looper.
-     */
-    public static class PlayTask implements Runnable {
+    public static class AudioPlayTask implements Runnable {
         private static final int MSG_PLAY_STOPPED = 0;
 
-        private MoviePlayer mVideoPlayer;
-        private PlayerFeedback mFeedback;
+        private AudioPlayer mAudioPlayer;
+        private MoviePlayer.PlayerFeedback mFeedback;
         private boolean mDoLoop;
         private Thread mThread;
         private LocalHandler mLocalHandler;
@@ -512,8 +420,8 @@ public class MoviePlayer {
          *  @param videoPlayer The player object, configured with control and output.
          * @param feedback UI feedback object.
          */
-        public PlayTask(MoviePlayer videoPlayer, PlayerFeedback feedback) {
-            mVideoPlayer = videoPlayer;
+        public AudioPlayTask(AudioPlayer videoPlayer, MoviePlayer.PlayerFeedback feedback) {
+            mAudioPlayer = videoPlayer;
             mFeedback = feedback;
 
             mLocalHandler = new LocalHandler();
@@ -530,8 +438,8 @@ public class MoviePlayer {
          * Creates a new thread, and starts execution of the player.
          */
         public void execute() {
-            mVideoPlayer.setLoopMode(mDoLoop);
-            mThread = new Thread(this, "Movie Player");
+            mAudioPlayer.setLoopMode(mDoLoop);
+            mThread = new Thread(this, "Audio Player");
             mThread.start();
         }
 
@@ -541,7 +449,7 @@ public class MoviePlayer {
          * Called from arbitrary thread.
          */
         public void requestStop() {
-            mVideoPlayer.requestStop();
+            mAudioPlayer.requestStop();
         }
 
         /**
@@ -564,7 +472,7 @@ public class MoviePlayer {
         @Override
         public void run() {
             try {
-                mVideoPlayer.play();
+                mAudioPlayer.play();
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
             } finally {
@@ -587,7 +495,7 @@ public class MoviePlayer {
 
                 switch (what) {
                     case MSG_PLAY_STOPPED:
-                        PlayerFeedback fb = (PlayerFeedback) msg.obj;
+                        MoviePlayer.PlayerFeedback fb = (MoviePlayer.PlayerFeedback) msg.obj;
                         fb.playbackStopped();
                         break;
                     default:

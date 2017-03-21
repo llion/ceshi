@@ -34,18 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
-/**
- * Play a movie from a file on disk.  Output goes to a TextureView.
- * <p>
- * Currently video-only.
- * <p>
- * Contrast with PlayMovieSurfaceActivity, which uses a SurfaceView.  Much of the code is
- * the same, but here we can handle the aspect ratio adjustment with a simple matrix,
- * rather than a custom layout.
- * <p>
- * TODO: investigate crash when screen is rotated while movie is playing (need
- *       to have onPause() wait for playback to stop)
- */
 public class ItemTextureVideoView extends TextureView implements TextureView.SurfaceTextureListener, MoviePlayer.PlayerFeedback {
     private static final String TAG = "ItemTextureVideoView";
     private static final boolean VERBOSE = true;
@@ -54,7 +42,8 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 //    private TextureView mTextureView;
 
     private boolean mShowStopLabel;
-    private MoviePlayer.PlayTask mPlayTask;
+    private MoviePlayer.PlayTask mVideoPlayTask;
+    private AudioPlayer.AudioPlayTask mAudioPlayTask;
     private boolean mSurfaceTextureReady = false;
 
     private final Object mStopper = new Object();   // used to signal stop
@@ -115,9 +104,9 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 //        //
 //        // We want to be sure that the player won't continue to send frames after we pause,
 //        // because we're tearing the view down.  So we wait for it to stop here.
-//        if (mPlayTask != null) {
+//        if (mVideoPlayTask != null) {
 //            stopPlayback();
-//            mPlayTask.waitForStop();
+//            mVideoPlayTask.waitForStop();
 //        }
 //    }
 
@@ -153,36 +142,43 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
     }
 
     private void startPlayBack() {
-        if (mPlayTask != null) {
+        if (mVideoPlayTask != null) {
             Log.w(TAG, "movie already playing");
 //            return;
-            mPlayTask = null;
+            mVideoPlayTask = null;
         }
+        if (mAudioPlayTask != null) {
+            mAudioPlayTask = null;
+        }
+
         if(VERBOSE)
             Log.d(TAG, "starting movie");
         SpeedControlCallback callback = new SpeedControlCallback();
-//            if (((CheckBox) findViewById(R.id.locked60fps_checkbox)).isChecked()) {
-//                // TODO: consider changing this to be "free running" mode
-//
-//            }
+
         SurfaceTexture st1 = getSurfaceTexture();
         Surface surface = new Surface(st1);
-        MoviePlayer player = null;
+        MoviePlayer videoPlayer = null;
+        AudioPlayer audioPlayer = null;
         try {
-            player = new MoviePlayer(new File(mFilePath), surface, callback);
+            videoPlayer = new MoviePlayer(new File(mFilePath), surface, callback);
+            audioPlayer = new AudioPlayer(new File(mFilePath), callback);
         } catch (IOException ioe) {
             Log.e(TAG, "Unable to play movie", ioe);
             surface.release();
             return;
         }
-        adjustAspectRatio(player.getVideoWidth(), player.getVideoHeight());
+        adjustAspectRatio(videoPlayer.getVideoWidth(), videoPlayer.getVideoHeight());
 
-        mPlayTask = new MoviePlayer.PlayTask(player, this);
+        mVideoPlayTask = new MoviePlayer.PlayTask(videoPlayer, this);
+        mAudioPlayTask = new AudioPlayer.AudioPlayTask(audioPlayer, this);
 
         mShowStopLabel = true;
 //            updateControls();
-        mPlayTask.setLoopMode(mLoop);
-        mPlayTask.execute();
+        mVideoPlayTask.setLoopMode(mLoop);
+        mVideoPlayTask.execute();
+        mAudioPlayTask.setLoopMode(mLoop);
+        //TODO
+//        mAudioPlayTask.execute();
     }
 
     @Override
@@ -210,8 +206,11 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
      * Requests stoppage if a movie is currently playing.  Does not wait for it to stop.
      */
     private void stopPlayback() {
-        if (mPlayTask != null) {
-            mPlayTask.requestStop();
+        if (mVideoPlayTask != null) {
+            mVideoPlayTask.requestStop();
+        }
+        if (mAudioPlayTask != null) {
+            mAudioPlayTask.requestStop();
         }
     }
 
@@ -219,7 +218,8 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
     public void playbackStopped() {
         Log.d(TAG, "playback stopped");
         mShowStopLabel = false;
-        mPlayTask = null;
+        mVideoPlayTask = null;
+        mAudioPlayTask = null;
 //        updateControls();
     }
 

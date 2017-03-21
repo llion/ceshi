@@ -466,6 +466,30 @@ public class ItemsAdapter extends BaseAdapter {
                 syncView.setItem(mRegionView, item);
 
                 return syncView;
+            } else if ("31".equals(item.type)) {
+                if (DBG)
+                    Log.d(TAG, "convertView==" + convertView);
+
+                // if (convertView != null && convertView.getContext().toString())
+//                    if (DBG)
+                ItemSyncImageView iiv;
+                if (convertView != null
+                    //&&
+//                            convertView instanceof ItemImageView &&
+//                            !(convertView instanceof  SwitchableImageView)
+                        ) {
+                    iiv = (ItemSyncImageView) convertView;
+                    if (DBG)
+                        Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
+                                "!(convertView instanceof  SwitchableImageView)");
+                } else {
+                    iiv = new ItemSyncImageView(mContext);
+                    iiv.setRegion(mRegion);
+                    if (DBG)
+                        Log.d(TAG, "new ItemImageView(mContext)");
+                }
+                iiv.setItem(mRegionView, item);
+                return iiv;
             } else {
                 return unknowView(item);
             }
