@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.FileUtils;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -102,7 +103,8 @@ public class SyncService extends CLIntentService {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(typeID) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
+                    if(Settings.Global.getInt(getContentResolver(), "showToast", 1) == 1)
+                        AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(typeID) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
 
                     // Sync dirty files whenever a program started.
                     try {
