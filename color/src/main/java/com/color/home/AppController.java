@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.LruCache;
 import android.view.Gravity;
@@ -230,6 +231,7 @@ public class AppController extends Application {
         return mConnectivity;
     }
 
+    public boolean isProgramToastShowing;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -281,6 +283,7 @@ public class AppController extends Application {
             Log.d(TAG, "onCreate. [mDownloadDataDir is NULL.");
         }
 
+        isProgramToastShowing = Settings.Global.getInt(getContentResolver(), "showToast", 1) == 1;
     }
 
     public void ensureFtpServer() {
@@ -390,6 +393,8 @@ public class AppController extends Application {
     }
 
     public void toast(final Context context, final String text, final int duration) {
+        if(!isProgramToastShowing)
+            return;
         if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
             toastMe(context, text, duration);
         } else {
