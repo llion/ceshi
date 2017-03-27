@@ -13,6 +13,8 @@ import android.view.View;
 import android.widget.Adapter;
 import android.widget.FrameLayout;
 
+import com.color.home.AppController;
+import com.color.home.Constants;
 import com.color.home.ProgramParser.Page;
 import com.color.home.ProgramParser.Program;
 
@@ -123,6 +125,7 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
         if (mDisplayedChild == 0 && pagesCount == 1) {
             if (DBG)
                 Log.d(TAG, "showNext. [Single page program, don't move on to next.");
+            sendBroadcastOfProgramFinished();
             return;
         }
         
@@ -186,6 +189,10 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
 
         // loop.
         if (displayedChild >= getAdapter().getCount()) {
+
+            //the last page had finished
+            sendBroadcastOfProgramFinished();
+
             displayedChild = 0;
             if (DBG)
                 Log.d(TAG, "setDisplayedChild. [0");
@@ -293,5 +300,15 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
 
         // Not found.
         return -1;
+    }
+
+
+    public void sendBroadcastOfProgramFinished() {
+        if (DBG)
+            Log.d(TAG, "sendBroadcastOfProgramFinished");
+        Intent it = new Intent(Constants.ACTION_PROGRAM_FINISHED);
+        it.putExtra("path", AppController.getInstance().getModel().getPath());
+        it.putExtra("file_name", AppController.getInstance().getModel().getFileName());
+        mContext.sendBroadcast(it);
     }
 }

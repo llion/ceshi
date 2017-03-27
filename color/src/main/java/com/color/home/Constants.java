@@ -77,6 +77,7 @@ public class Constants {
     public static final String ACTION_PROGRAM_STARTED = "com.color.intent.action.ACTION_PROGRAM_STARTED";
     public static final String ACTION_CURRENT_PROG_INDEX = "com.clt.intent.action.CURRENT_PROG_INDEX";
     public static final String ACTION_LOG_REPORTING = "com.clt.intent.action.reportLog";
+    public static final String ACTION_PROGRAM_FINISHED = "com.clt.intent.action.PROGRAM_FINISHED";
     public static final String VSN_EXT = ".vsn";
     public static final String NETWORK_EXCEPTION = "NetworkException";
 
