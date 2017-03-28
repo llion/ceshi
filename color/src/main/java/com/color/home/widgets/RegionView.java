@@ -413,7 +413,6 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.i(TAG, "showNext. region id=" + mRegion.id);
-
         setDisplayedChild(mDisplayedChild + 1);
     }
 
@@ -513,7 +512,6 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 Log.i(TAG, "setDisplayedChild. do nothing, same displayedChild=" + displayedChild);
 
             return;
-
         }
 
         // This differs from the program view on switching the pages.

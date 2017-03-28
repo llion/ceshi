@@ -452,18 +452,12 @@ public class ItemsAdapter extends BaseAdapter {
                 if(item.url==null)
                     return unknowView(item);
 
-                Log.e(TAG,"item.url:"+item.url);
-
                 Uri parse = Uri.parse(item.url);
-
+                Log.i(TAG, "item.url= " + item.url);
                 String scheme = parse.getScheme();
-
-
-                Log.e(TAG,"scheme:"+scheme);
+                Log.i(TAG, "scheme= " + scheme);
 
                 if(scheme!=null){
-
-
                     /**
                      * no protocol but has port
                      * example: 192.168.1.200:8080/test
@@ -471,10 +465,10 @@ public class ItemsAdapter extends BaseAdapter {
                      * result:scheme=192.168.1.200,but it's not legal protocol
                      * so add "http://" in front of item.url
                      */
-                    if(scheme.length()>8){
-
+                    if(scheme.length()>6){
                         if(item.url.contains("type=clt_streaming")
                                 ||(item.url.contains(".m3u8"))){
+
                             ItemStreamView isv = new ItemStreamView(mContext);
                             item.url="http://"+item.url;
                             isv.setItem(mRegionView,item);
@@ -483,9 +477,7 @@ public class ItemsAdapter extends BaseAdapter {
                             ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
                             web.setItem(mContext, mRegionView, item);
                             return web;
-
                         }
-
                     }
 
                     if(scheme.equals("rtsp")
@@ -504,11 +496,11 @@ public class ItemsAdapter extends BaseAdapter {
                         web.setItem(mContext, mRegionView, item);
                         return web;
                     }
-
-
                 }else{
+
                      if(item.url.contains("type=clt_streaming")
                              ||(item.url.contains(".m3u8"))){
+
                          ItemStreamView isv = new ItemStreamView(mContext);
                          item.url="http://"+item.url;
                          isv.setItem(mRegionView,item);
@@ -517,12 +509,8 @@ public class ItemsAdapter extends BaseAdapter {
                          ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
                          web.setItem(mContext, mRegionView, item);
                          return web;
-
                      }
-
                 }
-
-
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
              */

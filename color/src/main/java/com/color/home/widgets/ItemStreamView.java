@@ -62,10 +62,8 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         this(context, attrs,0);
     }
 
-
     public ItemStreamView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
         mContext=context;
         holder = getHolder();
         holder.addCallback(this);
@@ -78,15 +76,11 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         if (DBG)
             Log.d(TAG, "onPrepared called, mIsVideoReadyToBePlayed=" + mIsVideoReadyToBePlayed
                     + ", mIsVideoSizeKnown=" + mIsVideoSizeKnown);
+
         mIsVideoReadyToBePlayed = true;
-
-//        mMediaPlayer.setLooping(mSeekable && mIsLoop);
-
         if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
             startVideoPlayback();
-
         }
-
     }
 
     @Override
@@ -94,8 +88,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         if (DBG)
             Log.d(TAG, "onBufferingUpdate percent:" + percent);
     }
-
-
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -105,7 +97,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             releaseMediaPlayer();
         return true;
     }
-
 
     @Override
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
@@ -119,7 +110,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         mVideoWidth = width;
         mVideoHeight = height;
 
-
         // Donnot call twice. HMH
         if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
             startVideoPlayback();
@@ -131,7 +121,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         if (DBG)
             Log.d(TAG, "surfaceCreated called");
         playVideo();
-
     }
 
     @Override
@@ -145,7 +134,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     public void surfaceDestroyed(SurfaceHolder holder) {
         if (DBG)
             Log.d(TAG, "surfaceDestroyed called");
-
         releaseMediaPlayer();
     }
 
@@ -156,7 +144,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         }
         tellListener();
     }
-
 
     @Override
     protected void onDetachedFromWindow() {
@@ -211,10 +198,8 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             }else{
 
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
             }
         }
-
     }
 
     private void checkSkipDraw() {
@@ -249,16 +234,13 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         try {
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.reset();
-
             mMediaPlayer.setDataSource(mContext, Uri.parse(path));
             mMediaPlayer.setDisplay(holder);
             mMediaPlayer.prepareAsync();
-
             //setting volume
 //            float leftVolume;
 //            float rightVolume = leftVolume = mVolume;
 //            mMediaPlayer.setVolume(leftVolume, rightVolume);
-
             mMediaPlayer.setOnBufferingUpdateListener(this);
             mMediaPlayer.setOnErrorListener(this);
             mMediaPlayer.setOnSeekCompleteListener(this);
@@ -289,7 +271,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     }
 
     private void tellListener() {
-
         if (DBG)
             Log.i(TAG, "tellListener. Tell listener =" + mListener);
 
@@ -297,7 +278,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             mListener.onPlayFinished(this);
             removeListener(mListener);
         }
-
     }
 
     public void releaseMediaPlayer() {
@@ -317,9 +297,9 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         if (DBG)
             Log.v(TAG, "startVideoPlayback, mMediaPlayer=" + mMediaPlayer);
         holder.setFixedSize(mVideoWidth, mVideoHeight);
+
         if (!mStarted) {
             mStarted = true;
-
             mMediaPlayer.start();
             mNetworkConnectReceiver = new NetworkConnectReceiver(this);
             registerNetworkConnectReceiver();
@@ -329,12 +309,10 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     public void setItem(RegionView regionView, ProgramParser.Item item) {
         mListener = regionView;
 //        mSeekable = ((ProgramParser.VideoItem) item).isSeekable();
-
         path=item.url;
 
         if (DBG)
         Log.i(TAG,"path:"+path);
-
         mKeepAsp = "1".equals(item.reserveAS);
         try {
             mDuration = Integer.parseInt(item.duration);
@@ -343,17 +321,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             // ignore;
             e.printStackTrace();
         }
-
-//        if (DBG)
-//            Log.i(TAG, "setItem. SurfaceView, [absFilePath=" + path + ", isSeekable=" + mSeekable);
-//        try {
-////            mVolume = Float.parseFloat(item.volume);
-////            mStartOffset = Integer.parseInt(item.inOffset);
-////            mPlayLength = Integer.parseInt(item.playLength);
-//        } catch (NumberFormatException nfe) {
-//            Log.e(TAG, "Bad Number", nfe);
-//        }
-
     }
 
     @Override
@@ -369,24 +336,19 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             mListener.onPlayFinished(this);
             removeListener(mListener);
         }
-
     }
-
 
     @Override
     public boolean onInfo(MediaPlayer mediaPlayer, int i, int i1) {
-
         return true;
     }
 
     @Override
     public void reloadContent() {
       if(mMediaPlayer!=null){
-
           if(DBG)
               Log.i(TAG,"itemStreamView:-reloadContent");
           mMediaPlayer.start();
-
       }
     }
 
