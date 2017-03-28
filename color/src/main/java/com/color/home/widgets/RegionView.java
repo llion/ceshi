@@ -413,6 +413,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.i(TAG, "showNext. region id=" + mRegion.id);
+
         setDisplayedChild(mDisplayedChild + 1);
     }
 
@@ -512,6 +513,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 Log.i(TAG, "setDisplayedChild. do nothing, same displayedChild=" + displayedChild);
 
             return;
+
         }
 
         // This differs from the program view on switching the pages.
@@ -522,6 +524,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (mDisplayedChild == 0 && getAdapter().getCount() == 1
                 && (getChildAt(0) instanceof ItemTimer
                 || getChildAt(0) instanceof ItemWebView
+                || getChildAt(0) instanceof ItemStreamView
                 || getChildAt(0) instanceof ItemMultiLinesPagedText
                 || getChildAt(0) instanceof ItemMultiLinesMultipic
                 || getChildAt(0) instanceof ItemMLScrollMultipic2View
@@ -597,6 +600,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || view instanceof ItemMLScrollMultipic2View
                 || view instanceof ItemMLScrollableText
                 || view instanceof ItemVideoView
+                || view instanceof ItemStreamView
                 || view instanceof ItemMultiLinesPagedText
                 || view instanceof SLPCSurfaceView
                 || view instanceof SLPCHTSurfaceView

@@ -3,6 +3,7 @@ package com.color.home.widgets;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -109,6 +110,7 @@ public class ItemsAdapter extends BaseAdapter {
             // Video
             if ("3".equals(item.type)) {
                 ItemVideoView vv = new ItemVideoView(mContext);
+
                 vv.setRegion(mRegion);
                 vv.setItem(mRegionView, item);
 
@@ -445,14 +447,85 @@ public class ItemsAdapter extends BaseAdapter {
                 } else
                     return unknowView(item);
 
-            } else if ("27".equals(item.type)) {// web
-                ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
-                // String filePath = getAbsFilePath(item);
+            } else if ("27".equals(item.type)) {
+
+                if(item.url==null)
+                    return unknowView(item);
+
+                Log.e(TAG,"item.url:"+item.url);
+
+                Uri parse = Uri.parse(item.url);
+
+                String scheme = parse.getScheme();
+
+
+                Log.e(TAG,"scheme:"+scheme);
+
+                if(scheme!=null){
+
+
+                    /**
+                     * no protocol but has port
+                     * example: 192.168.1.200:8080/test
+                     * String scheme=parse.getScheme()
+                     * result:scheme=192.168.1.200,but it's not legal protocol
+                     * so add "http://" in front of item.url
+                     */
+                    if(scheme.length()>8){
+
+                        if(item.url.contains("type=clt_streaming")
+                                ||(item.url.contains(".m3u8"))){
+                            ItemStreamView isv = new ItemStreamView(mContext);
+                            item.url="http://"+item.url;
+                            isv.setItem(mRegionView,item);
+                            return isv;
+                        }else{
+                            ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
+                            web.setItem(mContext, mRegionView, item);
+                            return web;
+
+                        }
+
+                    }
+
+                    if(scheme.equals("rtsp")
+                            ||scheme.equals("udp")
+                            ||scheme.equals("rtp")
+                            ||scheme.equals("rtmp")
+                            ||(parse.getQueryParameter("type")!=null&&parse.getQueryParameter("type").equals("clt_streaming"))
+                            ||item.url.contains("type=clt_streaming")
+                            ||item.url.contains(".m3u8")){//streaming
+
+                        ItemStreamView isv = new ItemStreamView(mContext);
+                        isv.setItem(mRegionView,item);
+                        return isv;
+                    }else {
+                        ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
+                        web.setItem(mContext, mRegionView, item);
+                        return web;
+                    }
+
+
+                }else{
+                     if(item.url.contains("type=clt_streaming")
+                             ||(item.url.contains(".m3u8"))){
+                         ItemStreamView isv = new ItemStreamView(mContext);
+                         item.url="http://"+item.url;
+                         isv.setItem(mRegionView,item);
+                         return isv;
+                     }else{
+                         ItemWebView web = (ItemWebView) mInflater.inflate(R.layout.layout_webview, null);
+                         web.setItem(mContext, mRegionView, item);
+                         return web;
+
+                     }
+
+                }
+
+
             /*
              * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
              */
-                web.setItem(mContext, mRegionView, item);
-                return web;
             } else {
                 return unknowView(item);
             }
