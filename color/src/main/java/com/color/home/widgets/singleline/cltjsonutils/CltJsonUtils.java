@@ -1,8 +1,6 @@
 package com.color.home.widgets.singleline.cltjsonutils;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.provider.Settings;
@@ -15,7 +13,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.internal.Utils;
 
 import net.minidev.json.JSONArray;
-import org.apache.commons.io.output.ByteArrayOutputStream;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -189,7 +186,7 @@ public class CltJsonUtils {
                         }
 
                     } else
-                        content = JsonPath.parse(resultStr).read(filter);
+                        content = JsonPath.parse(resultStr).read(filter).toString();
                 }
                 else
                     content = response.body().string();
