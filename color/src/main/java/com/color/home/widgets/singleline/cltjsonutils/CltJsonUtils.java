@@ -14,6 +14,7 @@ import com.color.home.model.CltContent;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.internal.Utils;
 
+import net.minidev.json.JSONArray;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -135,7 +136,7 @@ public class CltJsonUtils {
     public String getContentFromNet(String url, String filter) {
 
         if (DBG)
-            Log.d(TAG, "getContentFromNet. url= " + url);
+            Log.d(TAG, "getContentFromNet. url= " + url + ", filter= " + filter);
         Response response = null;
         String content = "";
 
@@ -165,8 +166,31 @@ public class CltJsonUtils {
             if (response.isSuccessful()) {
                 if (DBG)
                     Log.d(TAG, "getContentFromNet. response.isSuccessful. cacheResponse= " + response.cacheResponse());
-                if (!TextUtils.isEmpty(filter))
-                    content = JsonPath.parse(response.body().string()).read(filter);
+                if (!TextUtils.isEmpty(filter)) {
+
+                    String resultStr = response.body().string();
+                    if (DBG)
+                        Log.d(TAG, "is json array?= " +
+                                (JsonPath.parse(resultStr).read(filter) instanceof net.minidev.json.JSONArray)
+                                + ", is string?= " + ((JsonPath.parse(resultStr).read(filter) instanceof String)));
+
+                    if (JsonPath.parse(resultStr).read(filter) instanceof JSONArray) {
+                        JSONArray jsonArray = JsonPath.parse(resultStr).read(filter);
+                        if (DBG)
+                            Log.d(TAG, "jsonArray= " + jsonArray);
+                        if (jsonArray != null) {
+                            for (int i = 0; i < jsonArray.size(); i++) {
+                                Log.d(TAG, "i= " + i + ", value= " + jsonArray.get(i).toString());
+                                content += jsonArray.get(i).toString();
+
+                                if (i < jsonArray.size() - 1)
+                                    content += " ";
+                            }
+                        }
+
+                    } else
+                        content = JsonPath.parse(resultStr).read(filter);
+                }
                 else
                     content = response.body().string();
             } else if (DBG) {
