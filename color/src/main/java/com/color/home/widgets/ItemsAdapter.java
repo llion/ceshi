@@ -33,6 +33,7 @@ import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+import com.color.home.widgets.sync_playing.ItemSyncImageView;
 import com.color.home.widgets.sync_playing.ItemTextureVideoView;
 import com.color.home.widgets.timer.ItemTimer;
 import com.color.home.widgets.weather.ItemWeatherMLPagesView;
@@ -117,7 +118,7 @@ public class ItemsAdapter extends BaseAdapter {
                 // If I'm the only one, always loop.
                 vv.setLoop(getCount() == 1);
                 return vv;
-            } else if ("7".equals(item.type)) { // Image
+            } else if ("7".equals(item.type)) { // clock
 
                 String filepath = item.filesource.filepath;
                 int index = filepath.indexOf("clock") + 5;
@@ -455,18 +456,16 @@ public class ItemsAdapter extends BaseAdapter {
              */
                 web.setItem(mContext, mRegionView, item);
                 return web;
-            } else if ("30".equals(item.type)) {
+            } else if ("3".equals(item.type) && isSyncRegion(mRegion)) {
 //                return null;
 
                 //TODO sendBroadcast to start udp listening thread.
-                //mContext.sendBroadcast(new Intent("com.clt.intent.syncProgramStop"));
-                mContext.sendStickyBroadcast(new Intent("com.clt.intent.syncProgramStart"));
                 ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
-
+                syncView.setRegion(mRegion);
                 syncView.setItem(mRegionView, item);
 
                 return syncView;
-            } else if ("31".equals(item.type)) {
+            } else if ("2".equals(item.type) && isSyncRegion(mRegion)) {
                 if (DBG)
                     Log.d(TAG, "convertView==" + convertView);
 
@@ -498,6 +497,10 @@ public class ItemsAdapter extends BaseAdapter {
             e.printStackTrace();
             return unknowView(item);
         }
+    }
+
+    public static boolean isSyncRegion(Region region){
+        return "sync_program".equals(region.name);
     }
 
     public View unknowView(Item item) {

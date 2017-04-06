@@ -1,6 +1,7 @@
-package com.color.home.widgets;
+package com.color.home.widgets.sync_playing;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -12,6 +13,10 @@ import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
+import com.color.home.widgets.EffectView;
+import com.color.home.widgets.OnPlayFinishObserverable;
+import com.color.home.widgets.OnPlayFinishedListener;
+import com.color.home.widgets.RegionView;
 
 public class ItemSyncImageView extends EffectView implements OnPlayFinishObserverable {
     private static final boolean DBG = true;
@@ -342,8 +347,8 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     }
 
     public static class CurrentSyncImageStatus{
-        int index;
-        long restStayTime;
+        public int index;
+        public long restStayTime;
     }
 
 }

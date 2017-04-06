@@ -38,6 +38,7 @@ import com.color.home.widgets.singleline.PCItemSingleLineText;
 import com.color.home.widgets.singleline.SLPCHTSurfaceView;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+import com.color.home.widgets.sync_playing.ItemSyncImageView;
 import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
@@ -275,9 +276,6 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             setupItems();
     }
 
-    private static boolean isSyncImageRegionView(Region region){
-        return "syncImage".equals(region.name) && region.items.size() >= 2;
-    }
 
     @Override
     protected void onDetachedFromWindow() {
@@ -342,27 +340,9 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     private void setAdapter(ItemsAdapter itemsAdapter) {
         mItemsAdapter = itemsAdapter;
-
-        setTheFirstChild();
+        setDisplayedChild(0);
     }
 
-    private void setTheFirstChild(){
-        if(isSyncImageRegionView(mRegion)) {
-            if(SYNC_DBG){
-                Log.d(SYNC_TAG, "Sync img region.");
-            }
-
-            ItemSyncImageView.CurrentSyncImageStatus syncImgStatus = getCurrentSyncImgStatus();
-            if(SYNC_DBG){
-                Log.d(SYNC_TAG, "syncImgStatus index=" + syncImgStatus.index);
-                Log.d(SYNC_TAG, "syncImgStatus rest stay=" + syncImgStatus.restStayTime);
-            }
-            //TODO Switch child with no animation.
-            setDisplayedChild(syncImgStatus.index + 1, false);
-        }else {
-            setDisplayedChild(0, true);
-        }
-    }
 
     private ItemSyncImageView.CurrentSyncImageStatus getCurrentSyncImgStatus(){
         ItemSyncImageView.CurrentSyncImageStatus syncImgStatus = new ItemSyncImageView.CurrentSyncImageStatus();
@@ -469,7 +449,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.i(TAG, "showNext. region id=" + mRegion.id);
-        setDisplayedChild(mDisplayedChild + 1, true);
+        setDisplayedChild(mDisplayedChild + 1);
     }
 
     @Override
@@ -559,7 +539,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     // Log.i(TAG, "onAnimationRepeat. ");
     // }
 
-    private void setDisplayedChild(int displayedChild, boolean playAnimation) {
+    private void setDisplayedChild(int displayedChild) {
         if (DBG)
             Log.i(TAG, "setDisplayedChild. displayedChild=" + displayedChild);
 
@@ -616,6 +596,24 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
 
             return;
+        }
+
+        boolean playAnimation = true;
+        //If it is the first image in a sync region...
+        if(ItemsAdapter.isSyncRegion(mRegion) && !"2".equals(mRegion.items.get(mDisplayedChild).type)) {
+            if(SYNC_DBG){
+                Log.d(SYNC_TAG, "Sync img region.");
+            }
+
+            ItemSyncImageView.CurrentSyncImageStatus syncImgStatus = getCurrentSyncImgStatus();
+            if(SYNC_DBG){
+                Log.d(SYNC_TAG, "syncImgStatus index=" + syncImgStatus.index);
+                Log.d(SYNC_TAG, "syncImgStatus rest stay=" + syncImgStatus.restStayTime);
+            }
+            //TODO Switch child with no animation.
+            playAnimation = false;
+            displayedChild = syncImgStatus.index + 1;
+//            setDisplayedChild(syncImgStatus.index + 1, false);
         }
 
         if (displayedChild >= getAdapter().getCount()) {

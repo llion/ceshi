@@ -36,7 +36,7 @@ import java.lang.reflect.Field;
 
 public class ItemTextureVideoView extends TextureView implements TextureView.SurfaceTextureListener, MoviePlayer.PlayerFeedback {
     private static final String TAG = "ItemTextureVideoView";
-    private static final boolean VERBOSE = true;
+    private static final boolean DBG = true;
 
     private Context mContext;
 //    private TextureView mTextureView;
@@ -48,6 +48,30 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 
     private final Object mStopper = new Object();   // used to signal stop
 
+    private Runnable mRunnable;
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+                tellListener();
+            }
+        };
+        postDelayed(mRunnable, mDuration);
+    }
+
+
+    private void tellListener() {
+        if (mListener != null) {
+            if (DBG)
+                Log.i(TAG, "tellListener. Tell listener =" + mListener);
+            mListener.onPlayFinished(this);
+        }
+    }
 
     private ItemTextureVideoView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -95,7 +119,7 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 
 //    @Override
 //    protected void onPause() {
-//        if(VERBOSE)
+//        if(DBG)
 //            Log.d(TAG, "PlayMovieActivity onPause");
 //        super.onPause();
 //        // We're not keeping track of the state in static fields, so we need to shut the
@@ -127,7 +151,7 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
         }
 
         if (mShowStopLabel) {
-            if(VERBOSE)
+            if(DBG)
                 Log.d(TAG, "stopping movie");
             stopPlayback();
             // Don't update the controls here -- let the task thread do it after the movie has
@@ -135,7 +159,7 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
             //mShowStopLabel = false;
             //updateControls();
         } else {
-            if(VERBOSE)
+            if(DBG)
                 Log.d(TAG, "starting movie");
             startPlayBack();
         }
@@ -151,7 +175,7 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
             mAudioPlayTask = null;
         }
 
-        if(VERBOSE)
+        if(DBG)
             Log.d(TAG, "starting movie");
         SpeedControlCallback callback = new SpeedControlCallback();
 
@@ -191,7 +215,6 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
         mSurfaceTextureReady = false;
         // assume activity is pausing, so don't need to update controls
         Log.d(TAG, "Texture Destroyed.");
-        mContext.sendBroadcast(new Intent("com.clt.intent.syncProgramStop"));
 
         stopPlayback();
         return true;    // caller should release ST
@@ -266,11 +289,13 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
     private boolean mLoop;
     private String mFilePath;
     private RegionView mListener;
+    private long mDuration = 500;
 
     public void setItem(RegionView regionView, ProgramParser.Item item) {
         mListener = regionView;
         mFilePath = item.getAbsFilePath();
         mLoop = "1".equals(item.loop);
+        mDuration = Integer.parseInt(item.duration);
         Log.i(TAG, "setItem. VideoView, [absFilePath=" + mFilePath);
 //        try {
 //            mVolume = Float.parseFloat(item.volume);

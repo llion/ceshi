@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -155,7 +156,11 @@ public class PageView extends AbsoluteLayout {
             if (region != null) {
                 if (DBG)
                     Log.i(TAG, "setupRegions. region = " + region + ", region.name= " + region.name);
-
+                if(ItemsAdapter.isSyncRegion(region)){
+                    mContext.sendStickyBroadcast(new Intent("com.clt.intent.syncProgramStart"));
+                }else{
+                    mContext.sendBroadcast(new Intent("com.clt.intent.syncProgramStop"));
+                }
                 RegionView regionView;
                 if (isSinglelineScrollRegion(region))
                     regionView = (SinglelineScrollRegionView) li.inflate(R.layout.layout_singleline_scroll_region, null);
