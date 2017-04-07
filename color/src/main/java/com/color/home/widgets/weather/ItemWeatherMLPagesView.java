@@ -84,8 +84,9 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
 
         postDelayed(this, duration);
 
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+        if (mNetworkConnectReceiver != null) {
+           registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+        }
 
     }
 
@@ -97,7 +98,7 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
             removeCallbacks(mWeatherRunnable);
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
 
@@ -154,9 +155,12 @@ public class ItemWeatherMLPagesView extends ItemMultiLinesPagedText implements N
     }
 
     public static void registerNetworkConnectReceiver(Context context, NetworkConnectReceiver networkConnectReceiver) {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         context.registerReceiver(networkConnectReceiver, filter);
+    }
+
+    public static void unRegisterNetworkConnectReceiver(Context context, NetworkConnectReceiver networkConnectReceiver){
+        context.unregisterReceiver(networkConnectReceiver);
     }
 
     @Override

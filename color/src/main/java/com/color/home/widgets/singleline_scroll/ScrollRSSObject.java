@@ -1,8 +1,6 @@
 package com.color.home.widgets.singleline_scroll;
 
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -25,11 +23,11 @@ import android.widget.TextView;
 import com.color.home.AppController;
 import com.color.home.Constants;
 import com.color.home.R;
+import com.color.home.utils.ColorHttpUtils;
 import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
-import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndContent;
 import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndEntry;
 import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndFeed;
@@ -56,7 +54,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
     private HandlerThread mCltHandlerThread;
     private Handler mCltHandler;
     private Runnable mCltRunnable;
-    CltJsonUtils mCltJsonUtils;
+    ColorHttpUtils mColorHttpUtils;
 
     private String mUrl = "";
     private String mText = "";
@@ -75,14 +73,14 @@ public class ScrollRSSObject extends SinglineScrollObject {
     public ScrollRSSObject(Context context, String url) {
         super(context);
         mUrl = url;
-        mCltJsonUtils = new CltJsonUtils(context);
+        mColorHttpUtils = new ColorHttpUtils(context);
     }
 
     @Override
     public boolean update() {
         genTexs();
 
-        String rssContent = mCltJsonUtils.getContentFromNet(mUrl, null);
+        String rssContent = mColorHttpUtils.getData(mUrl, null);
         if (!TextUtils.isEmpty(rssContent) && !Constants.NETWORK_EXCEPTION.equals(rssContent)) {
 
                 initFeed(rssContent);
@@ -121,7 +119,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
                     if (DBG)
                         Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
 
-                    String rssContent = mCltJsonUtils.getContentFromNet(mUrl, null);
+                    String rssContent = mColorHttpUtils.getData(mUrl, null);
                     if (!TextUtils.isEmpty(rssContent) && !Constants.NETWORK_EXCEPTION.equals(rssContent)) {
 
                         initFeed(rssContent);
@@ -139,7 +137,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
                         } else {
                             if (mFilters.contains("image") && (mFeed != null && mFeed.getImage() != null && !TextUtils.isEmpty(mFeed.getImage().getUrl()))) {
 
-                                byte[] bytes = mCltJsonUtils.getBitmapBytes(mFeed.getImage().getUrl());
+                                byte[] bytes = mColorHttpUtils.getBitmapBytes(mFeed.getImage().getUrl());
                                 if (bytes != null && !mImageMd5.equals(getMd5FromByte(bytes))) {
                                         Log.d(TAG, "the image had updated, need to change texture.");
                                     mNeedChangeTexture = true;
@@ -269,7 +267,7 @@ public class ScrollRSSObject extends SinglineScrollObject {
 
         Bitmap image = null;
         if (mFilters.contains("image") && (mFeed != null && mFeed.getImage() != null && !TextUtils.isEmpty(mFeed.getImage().getUrl()))) {
-            byte[] bytes = mCltJsonUtils.getBitmapBytes(mFeed.getImage().getUrl());
+            byte[] bytes = mColorHttpUtils.getBitmapBytes(mFeed.getImage().getUrl());
             if (bytes != null) {
                 mImageMd5 = getMd5FromByte(bytes);
                 image = getSuitableBitmap(bytes, getPcHeight());

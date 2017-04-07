@@ -1,4 +1,4 @@
-package com.color.home.widgets.singleline.cltjsonutils;
+package com.color.home.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -8,14 +8,15 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.Constants;
-import com.color.home.model.CltContent;
+import com.color.home.model.CltJsonContent;
+import com.color.home.model.CltDataInfo;
+import com.color.home.model.DataInUrl;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.internal.Utils;
 
 import net.minidev.json.JSONArray;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,24 +38,23 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * Created by Administrator on 2016/12/6.
+ * Created by Administrator on 2017/3/29.
  */
-public class CltJsonUtils {
+
+public class ColorHttpUtils {
 
     private static final boolean DBG = false;
-    private static final String TAG = "CltJsonUtils";
+    private static final String TAG = "ColorHttpUtils";
     public static final String FOLDER_LAN = "/mnt/sdcard/Android/data/com.color.home/files/Ftp";
 
     private Context mContext;
     private OkHttpClient mClient;
-    public List<CltContent> mCltContentList;
     private File mCacheDir;
 
     private String mEtag = "";
     private boolean mIsFirstGetBitmap = true;
 
-
-    public CltJsonUtils(Context context) {
+    public ColorHttpUtils(Context context) {
         this.mContext = context;
         initClient();
     }
@@ -78,172 +78,188 @@ public class CltJsonUtils {
         mClient = builder.build();
     }
 
-    public String getCltText() {
-        String str = "", content;
-        try {
-            if (mCltContentList != null && mCltContentList.size() > 0) {
-                for (CltContent cltContent : mCltContentList) {
-                    str += cltContent.getPrefix();
-                    content = getContentFromNet(getUrl(cltContent.getJsonObject().getString("url")),
-                            cltContent.getJsonObject().getString("filter"));
+    public List<CltDataInfo> getCltDataInfos(ArrayList<CltJsonContent> cltJsonList) {
 
-                    if (DBG)
-                        Log.d(TAG, "content= " + content);
-                    if (content != null && content.contains(Constants.NETWORK_EXCEPTION))
-                        return Constants.NETWORK_EXCEPTION;
+        if (cltJsonList == null || cltJsonList.size() == 0)
+            return null;
 
-                    str += content;
+        List<DataInUrl> dataAlreadyGet = new ArrayList<DataInUrl>();
+        List<CltDataInfo> cltDataInfos = new ArrayList<CltDataInfo>();
 
-                    if (DBG)
-                        Log.d(TAG, "before replayce \"\\\\n\", str= " + str);
+        for (int i = 0; i < cltJsonList.size(); i++) {
 
-                    str = str.replace("\\n", "\n");
-                    if (DBG)
-                        Log.d(TAG, "str= " + str);
-                }
+            CltDataInfo cltDataInfo = new CltDataInfo();
+            cltDataInfo.setPrefix(cltJsonList.get(i).getPrefix().replace("\\n", "\n"));
 
-            } else if (DBG)
-                Log.d(TAG, "mCltContentList is null? " + (mCltContentList == null) +
-                        ((mCltContentList != null)? ", mCltContentList.size= " + mCltContentList.size() : ""));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return str;
-    }
-
-    private String getUrl(String url) {
-        if (DBG)
-            Log.d(TAG, "getUrl. origin url= " + url);
-
-        if (!TextUtils.isEmpty(url) && url.contains("$(account)")) {
-            String usernameString = Settings.Global.getString(mContext.getContentResolver(), "user.name");
-            if (DBG)
-                Log.i(TAG, "setItem. usernameString=" + usernameString);
-            if (!TextUtils.isEmpty(usernameString))
-                url = url.replace("$(account)", usernameString);
-        }
-
-        if (DBG)
-            Log.d(TAG, "getUrl. url= " + url);
-        return url;
-    }
-
-    public String getContentFromNet(String url, String filter) {
-
-        if (DBG)
-            Log.d(TAG, "getContentFromNet. url= " + url + ", filter= " + filter);
-        Response response = null;
-        String content = "";
-
-        try {
-            Request.Builder builder = new Request.Builder()
-                    .url(url)
-                    .addHeader("Content-Type", "application/json; charset=utf-8")
-                    .get();
-            Request request;
-            if (!isNetworkAvailable()) {
-                request = builder
-                        .cacheControl(CacheControl.FORCE_CACHE)
-                        .build();
-            } else {
-
-                ensureTargetDirRoom();
-                request = builder
-                        .cacheControl(CacheControl.FORCE_NETWORK)
-                        .build();
-            }
-
-            response = mClient.newCall(request).execute();
-
-            if (DBG)
-                Log.d(TAG, "getContentFromNet. mClient= " + mClient + ", cacheResponse= " + response.cacheResponse()
-                         + ", cacheControl= " + response.cacheControl() + ", Thread= " + Thread.currentThread());
-            if (response.isSuccessful()) {
-                if (DBG)
-                    Log.d(TAG, "getContentFromNet. response.isSuccessful. cacheResponse= " + response.cacheResponse());
-                if (!TextUtils.isEmpty(filter)) {
-
-                    String resultStr = response.body().string();
-                    if (DBG)
-                        Log.d(TAG, "is json array?= " +
-                                (JsonPath.parse(resultStr).read(filter) instanceof net.minidev.json.JSONArray)
-                                + ", is string?= " + ((JsonPath.parse(resultStr).read(filter) instanceof String)));
-
-                    if (JsonPath.parse(resultStr).read(filter) instanceof JSONArray) {
-                        JSONArray jsonArray = JsonPath.parse(resultStr).read(filter);
-                        if (DBG)
-                            Log.d(TAG, "jsonArray= " + jsonArray);
-                        if (jsonArray != null) {
-                            for (int i = 0; i < jsonArray.size(); i++) {
-                                Log.d(TAG, "i= " + i + ", value= " + jsonArray.get(i).toString());
-                                content += jsonArray.get(i).toString();
-
-                                if (i < jsonArray.size() - 1)
-                                    content += " ";
-                            }
-                        }
-
-                    } else
-                        content = JsonPath.parse(resultStr).read(filter).toString();
-                }
-                else
-                    content = response.body().string();
-            } else if (DBG) {
-                Log.d(TAG, "response failed. code= " + response.code() + ", message= " + response.message());
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (isNetworkException(e))
-                content = Constants.NETWORK_EXCEPTION;
-
-        } finally {
-
-            if (response != null)
-                Utils.closeQuietly(response.body());
-
-            if (DBG)
-                Log.d(TAG, "getContentFromNet. content= " + content);
-            return content;
-        }
-
-    }
-
-    public void initMapList(String text) {
-
-        mCltContentList = new ArrayList<CltContent>();
-        String prefix, subStr;
-        int firstMarkIndex;
-        JSONObject jsonObject;
-        for (; text.indexOf("CLT_JSON") != text.lastIndexOf("CLT_JSON"); ) {
-            firstMarkIndex = text.indexOf("CLT_JSON");
-            prefix = text.substring(0, firstMarkIndex);
-            subStr = text.substring(firstMarkIndex + 8);
-            if (DBG)
-                Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", prefix= " + prefix + ", subStr= " + subStr
-                        + ", subStr.substring(0, subStr.indexOf(\"CLT_JSON\"))= " + subStr.substring(0, subStr.indexOf("CLT_JSON")));
+            //json data
+            String data = "";
             try {
+                String url = getUrl(cltJsonList.get(i).getJsonObject().getString("url"));
+                data = getData(url, dataAlreadyGet);
 
-                jsonObject = new JSONObject(subStr.substring(0, subStr.indexOf("CLT_JSON")));
-                mCltContentList.add(new CltContent(prefix, jsonObject));
+                if (!hadRecord(url, dataAlreadyGet))//record this url and save the data
+                    dataAlreadyGet.add(new DataInUrl(url, data));
 
-                if (DBG)
-                    Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", url= " + jsonObject.getString("url")
-                            + ", filter= " + jsonObject.getString("filter"));
-
-            } catch (JSONException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            if (subStr.indexOf("CLT_JSON") + 8 < subStr.length())
-                text = subStr.substring(subStr.indexOf("CLT_JSON") + 8);
-            else
-                text = subStr.substring(subStr.indexOf("CLT_JSON"));
+            try {
+                setContent(data, cltJsonList.get(i).getJsonObject().getString("filter"), cltDataInfo);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                cltDataInfo.setContentStr(data);//no filter
+            }
+
+            cltDataInfos.add(cltDataInfo);
 
         }
 
+        dataAlreadyGet.clear();
+
+        return cltDataInfos;
+
+    }
+
+    private boolean hadRecord(String url, List<DataInUrl> dataAlreadyGet) {
+
+        if (dataAlreadyGet != null && dataAlreadyGet.size() > 0) {
+
+            for (DataInUrl data : dataAlreadyGet)
+                if (url.equals(data.getUrl())) {
+                    if (DBG)
+                        Log.d(TAG, "the url accessed had recorded.");
+                    return true;
+                }
+        }
+
+        return false;
+
+    }
+
+    public String getData(String url, List<DataInUrl> dataAlreadyGet) {
+
+        if (TextUtils.isEmpty(url))
+            return "";
+
+        String data = getDataFromRecord(url, dataAlreadyGet);
+        if (data == null) {
+            if (DBG)
+                Log.d(TAG, "this url have not accessed.");
+
+            if (!isNetworkAvailable())
+                data = getDataFromCache(url);
+            else
+                data = getDataFromNet(url);
+
+        }
+
+        return data.replace("\\n", "\n");
+    }
+
+    private void setContent(String data, String filter, CltDataInfo cltDataInfo) {
+        if (DBG)
+            Log.d(TAG, "setContent. data= " + data + ", filter= " + filter);
+
+        if (TextUtils.isEmpty(filter) ||Constants.NETWORK_EXCEPTION.equals(data)) {
+            cltDataInfo.setContentStr(data);
+            return;
+        }
+
+        try {
+            if (JsonPath.parse(data).read(filter) instanceof JSONArray) {
+                if (DBG)
+                    Log.d(TAG, "the result after filtered is array.");
+                cltDataInfo.setContentArray((JSONArray) JsonPath.parse(data).read(filter));
+
+            } else {
+                if (DBG)
+                    Log.d(TAG, "the result after filtered is not array.");
+                cltDataInfo.setContentStr(JsonPath.parse(data).read(filter).toString());
+
+            }
+        } catch (Exception e) {//data is null or empty or the filter is wrong
+            e.printStackTrace();
+            cltDataInfo.setContentStr("");
+        }
+
+    }
+
+    private String getDataFromNet(String url) {
+        if (DBG)
+            Log.d(TAG, "get data from net.");
+
+        Request request = new Request.Builder()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .url(url)
+                .cacheControl(CacheControl.FORCE_NETWORK)
+                .build();
+
+        Response response = null;
+        String result = "";
+
+        try {
+            response = mClient.newCall(request).execute();
+            if (response.isSuccessful()) {
+                if (DBG)
+                    Log.d(TAG, "get data from net successful.");
+                result = response.body().string();
+
+            } else {
+                if (DBG)
+                    Log.d(TAG, "get data from net failed. code= " + response.code()
+                            + ", message= " + response.message());
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            if (isNetworkException(e))
+                result = Constants.NETWORK_EXCEPTION;
+
+        } finally {
+            if (response != null)
+                Utils.closeQuietly(response);
+        }
+
+        return result;
+
+    }
+
+    private String getDataFromCache(String url) {
+        if (DBG)
+            Log.d(TAG, "get data from cache.");
+
+        Request request = new Request.Builder()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .url(url)
+                .cacheControl(CacheControl.FORCE_CACHE)
+                .build();
+
+        Response response = null;
+
+        try {
+            response = mClient.newCall(request).execute();
+            if (response.isSuccessful()) {
+                if (DBG)
+                    Log.d(TAG, "get data from cache successful.");
+                return response.body().string();
+
+            } else {
+                if (DBG)
+                    Log.d(TAG, "get data from cache failed. code= " + response.code()
+                            + ", message= " + response.message());
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        } finally {
+            if (response != null)
+                Utils.closeQuietly(response);
+        }
+
+        return "";
     }
 
     public byte[] getBitmapBytesWithEtag(String originUrl) {
@@ -380,6 +396,40 @@ public class CltJsonUtils {
         return bytes;
     }
 
+    private String getDataFromRecord(String url, List<DataInUrl> dataAlreadyGet) {
+
+        if (dataAlreadyGet != null && dataAlreadyGet.size() > 0) {
+
+            for (DataInUrl data : dataAlreadyGet)
+                if (url.equals(data.getUrl())) {
+                    if (DBG)
+                        Log.d(TAG, "the data of this url had already getted. url= " + url);
+                    return data.getData();
+                }
+        }
+
+        return null;
+
+    }
+
+    protected String getUrl(String url) {
+        if (DBG)
+            Log.d(TAG, "getUrl. origin url= " + url);
+        if (!url.contains("http://") && !url.contains("https://"))
+            url = "http://" + url;
+
+        if (!TextUtils.isEmpty(url) && url.contains("$(account)")) {
+            String usernameString = Settings.Global.getString(mContext.getContentResolver(), "user.name");
+            if (DBG)
+                Log.i(TAG, "setItem. usernameString=" + usernameString);
+            if (!TextUtils.isEmpty(usernameString))
+                url = url.replace("$(account)", usernameString);
+        }
+
+        if (DBG)
+            Log.d(TAG, "getUrl. url= " + url);
+        return url;
+    }
 
     private boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -449,6 +499,7 @@ public class CltJsonUtils {
             Log.d(TAG, "after clearing, cacheDir freeSize= " + dir.getUsableSpace());
 
     }
+
 
     public File getCacheDir(String uniqueName) {
 //        String cachePath;

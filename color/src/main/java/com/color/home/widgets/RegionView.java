@@ -27,6 +27,10 @@ import android.widget.FrameLayout;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.utils.GraphUtils;
+import com.color.home.widgets.clt_json.ItemMLScrollCltJsonView;
+import com.color.home.widgets.clt_json.ItemMLPagedCltJsonView;
+import com.color.home.widgets.clt_json.ItemSLScrollCltJsonView;
+import com.color.home.widgets.clt_json.ItemSLPagedCltJsonView;
 import com.color.home.widgets.externalvideo.ItemExternalVideoView;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMLScrollableText;
@@ -533,6 +537,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof PCItemSingleLineText
                 || getChildAt(0) instanceof ScrollRSSSurfaceview
                 || getChildAt(0) instanceof ItemSingleLineText
+                || getChildAt(0) instanceof ItemSLPagedCltJsonView
+                || getChildAt(0) instanceof ItemMLPagedCltJsonView
+                || getChildAt(0) instanceof ItemSLScrollCltJsonView
+                || getChildAt(0) instanceof ItemMLScrollCltJsonView
                 || getChildAt(0) instanceof ItemExternalVideoView)
                 || (getChildAt(0) instanceof ItemImageView && !TextUtils.isEmpty( mRegion.items.get(0).url))
                 ) {

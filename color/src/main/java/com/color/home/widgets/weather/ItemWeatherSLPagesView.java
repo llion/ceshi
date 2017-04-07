@@ -61,7 +61,7 @@ public class ItemWeatherSLPagesView extends ItemSingleLineText implements Networ
         }
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            ItemWeatherMLPagesView.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     Runnable mKeepRunnable = new Runnable() {
@@ -218,6 +218,6 @@ public class ItemWeatherSLPagesView extends ItemSingleLineText implements Networ
             removeCallbacks(mWeatherRunnable);
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            ItemWeatherMLPagesView.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 }

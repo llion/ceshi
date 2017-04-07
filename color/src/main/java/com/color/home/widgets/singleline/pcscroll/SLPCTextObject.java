@@ -36,7 +36,6 @@ import com.color.home.widgets.multilines.StreamResolver;
 import com.color.home.widgets.singleline.MovingTextUtils;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
-import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;

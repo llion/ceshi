@@ -75,7 +75,7 @@ public class ItemWeatherMLScrollView extends ItemMLScrollMultipic2View implement
         super.onAttachedToWindow();
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            ItemWeatherMLPagesView.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ItemWeatherMLScrollView extends ItemMLScrollMultipic2View implement
             mWeatherMLScrollObject.removeWeatherRunnable();
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            ItemWeatherMLPagesView.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override

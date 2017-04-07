@@ -1,9 +1,11 @@
 package com.color.home.widgets;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -15,8 +17,7 @@ import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.Region;
 import com.color.home.network.NetworkConnectReceiver;
 import com.color.home.network.NetworkObserver;
-import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
-import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
+import com.color.home.utils.ColorHttpUtils;
 
 import okhttp3.HttpUrl;
 
@@ -30,7 +31,7 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
     private Bitmap mBitmap;
     public Region mRegion;//....
 
-    private CltJsonUtils mCltJsonUtils;
+    private ColorHttpUtils mColorHttpUtils;
     private Runnable mCltRunnable;
     private NetworkConnectReceiver mNetworkConnectReceiver;
 
@@ -145,7 +146,7 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
 
             mNetworkConnectReceiver = new NetworkConnectReceiver(this);
 
-            mCltJsonUtils = new CltJsonUtils(mContext);
+            mColorHttpUtils = new ColorHttpUtils(mContext);
 
             mCltRunnable = new Runnable() {
                 @Override
@@ -175,7 +176,7 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
 
             if (!TextUtils.isEmpty(mItem.url)) {
 
-                return getArtworkQuick(mCltJsonUtils.getBitmapBytesWithEtag(info.file), null, info.width, info.height);
+                return getArtworkQuick(mColorHttpUtils.getBitmapBytesWithEtag(info.file), null, info.width, info.height);
 
             } else {
 
@@ -239,8 +240,10 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
         }
 
         //
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+        if (mNetworkConnectReceiver != null) {
+            IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+            mContext.registerReceiver(mNetworkConnectReceiver, filter);
+        }
     }
 
     @Override
@@ -257,7 +260,7 @@ public class ItemImageView extends EffectView implements OnPlayFinishObserverabl
             removeCallbacks(mCltRunnable);
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
     }
 
     private static Bitmap decodeImagePurgeOnly(final String file) {

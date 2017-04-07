@@ -80,7 +80,7 @@ public class ItemWeatherSLScrollView extends SLTextSurfaceView implements Networ
         super.onAttachedToWindow();
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            ItemWeatherMLPagesView.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class ItemWeatherSLScrollView extends SLTextSurfaceView implements Networ
             mWeatherSLScrollObject.removeWeatherRunnable();
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            ItemWeatherMLPagesView.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override

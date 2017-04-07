@@ -18,7 +18,7 @@ import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
-public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver, NetworkObserver {
+public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver{
     private final static String TAG = "ItemMLScrollMultipic2V";
     private static final boolean DBG = false;
     protected MultiPicScrollRenderer mRenderer;
@@ -83,8 +83,6 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
             // int mDuration = Integer.parseInt(item.duration);
         }
 
-        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-
     }
 
     protected void initDisplay(Item item) {
@@ -109,16 +107,6 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         }
     }
 
-    public static void registerNetworkConnectReceiver(Context context, NetworkConnectReceiver networkConnectReceiver) {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        context.registerReceiver(networkConnectReceiver, filter);
-    }
-
-    public static void unRegisterNetworkConnectReceiver(Context context, NetworkConnectReceiver networkConnectReceiver){
-        context.unregisterReceiver(networkConnectReceiver);
-    }
-
     public static String dumpColor(int color) {
         return Integer.toHexString(color);
         // return "A=" + Color.alpha(color) + ", R=" + Color.red(color) + ", G=" + Color.green(color) + ", B=" + Color.blue(color);
@@ -139,8 +127,6 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override
@@ -152,11 +138,6 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks
                     + ", mTheTextObj= " + mTheTextObj);
 
-        if (mTheTextObj != null)
-            mTheTextObj.removeCltRunnable();
-
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
         // if (mAnim != null) {
         // if (DBG)
         // Log.i(TAG, "onDetachedFromWindow. mAnim=" + mAnim + ", not null, end it. Thread=" + Thread.currentThread());
@@ -192,11 +173,4 @@ public class ItemMLScrollMultipic2View extends GLSurfaceView implements Runnable
         return mRenderer;
     }
 
-    @Override
-    public void reloadContent() {
-        if (DBG)
-            Log.d(TAG, "reloadContent. mTheTextObj= " + mTheTextObj);
-        if (mTheTextObj != null)
-            mTheTextObj.reloadCltJson();
-    }
 }

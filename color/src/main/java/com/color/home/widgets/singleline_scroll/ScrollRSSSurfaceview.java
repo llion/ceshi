@@ -1,12 +1,16 @@
 package com.color.home.widgets.singleline_scroll;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.color.home.Constants;
 import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.Item;
+import com.color.home.netplay.Connectivity;
 import com.color.home.network.NetworkConnectReceiver;
 import com.color.home.network.NetworkObserver;
 import com.color.home.widgets.RegionView;
@@ -222,8 +226,10 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+        if (mNetworkConnectReceiver != null){
+            IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+            mContext.registerReceiver(mNetworkConnectReceiver, filter);
+        }
     }
 
     @Override
@@ -239,7 +245,7 @@ public class ScrollRSSSurfaceview extends SinglelineScrollSurfaceView implements
         }
 
         if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
     }
 
     @Override

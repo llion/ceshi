@@ -48,6 +48,10 @@ public class Constants {
     public static final int TYPE_FTP = 3;
     public static final long WEATHER_UPDATE_INTERVAL = 3 * 60 * 60 * 1000;
 
+    public static final int CLT_JSON_ARRAY_SIZE_EQUAL = 4;
+    public static final int CLT_JSON_ARRAY_SIZE_UNEQUAL = 5;
+    public static final int CLT_JSON_NO_ARRAY = 6;
+
 //    public static String getRemoteFileUri(String relativeFilepath) {
 //        return AppController.getInstance().getConnectivity().getProgramFolderUri() + relativeFilepath;
 //    }

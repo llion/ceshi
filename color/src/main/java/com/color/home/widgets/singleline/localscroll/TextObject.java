@@ -19,21 +19,15 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.opengl.GLES20;
-import android.opengl.Matrix;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.color.home.AppController;
 import com.color.home.AppController.MyBitmap;
-import com.color.home.Constants;
 import com.color.home.ProgramParser.Item;
 import com.color.home.Texts;
 import com.color.home.widgets.multilines.MultiPicScrollObject;
 import com.color.home.widgets.singleline.QuadGenerator;
-import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 import com.color.home.widgets.singleline.pcscroll.SLPCTextObject;
 import com.google.common.hash.HashCode;
 
@@ -54,12 +48,8 @@ public class TextObject extends SLPCTextObject {
     private int mColor;
 
     protected int mCurTextId = 0;
-    protected boolean mNeedChangeTexture = false;
-    private Handler mCltHandler;
-    private HandlerThread mCltHandlerThread;
-    private Runnable mCltRunnable;
-    private CltJsonUtils mCltJsonUtils;
-    private boolean mIsFirstTimeGetCltJson;
+
+
 
 
     public TextObject(Context context, Item item) {
@@ -82,18 +72,6 @@ public class TextObject extends SLPCTextObject {
     public void update() {
 
         String itemText = Texts.getText(mItem);
-        if (Texts.isValidCltJsonText(itemText)) {
-            if (DBG)
-                Log.d(TAG, "this is CLT_JSON.");
-            mIsFirstTimeGetCltJson = true;
-            mTexCount = 2;
-            genTexs();
-            prepareCltJson();
-
-            mCltHandler.removeCallbacks(mCltRunnable);
-            mCltHandler.post(mCltRunnable);
-
-        } else {
 
             if (!TextUtils.isEmpty(itemText))
                  setText(itemText);
@@ -101,7 +79,6 @@ public class TextObject extends SLPCTextObject {
 
             super.update();
 
-        }
 
     }
 
@@ -277,111 +254,12 @@ public class TextObject extends SLPCTextObject {
     @Override
     public void render() {
 
-        if (mNeedChangeTexture) {
-
-            if (DBG)
-                Log.d(TAG, "need change texture.");
-            changeTexture();
-        }
         super.render();
     }
 
-    protected void changeTexture() {
-        mNeedChangeTexture = false;
 
-        MyBitmap texFromMemCache = texFromMemCache();
-        if (DBG)
-            Log.d(TAG, "texFromMemCache= " + texFromMemCache);
 
-        if (texFromMemCache == null) {
-            prepareTexture();
 
-        } else {
-            setSize(texFromMemCache);
-        }
-
-        if (mCurTextId == 0) {
-            mCurTextId = 1;
-        } else
-            mCurTextId = 0;
-
-        updatePageToTexId(1, mCurTextId);
-        initShapes();
-        setupMVP();
-
-        Matrix.setIdentityM(mMMatrix, 0);
-        GLES20.glUniform2f(muTexScaleHandle, (float) mPcWidth, (float) getEvenPcHeight());
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-        GLES20.glEnableVertexAttribArray(maPositionHandle);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-        GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
-    }
-
-    private void prepareCltJson() {
-
-        mCltHandlerThread = new HandlerThread("color-net-thread");
-        mCltHandlerThread.start();
-        mCltHandler = new Handler(mCltHandlerThread.getLooper());
-
-        mCltJsonUtils = new CltJsonUtils(mContext);
-        mCltJsonUtils.initMapList(Texts.getText(mItem));
-
-        initCltRunnable();
-    }
-
-    private void initCltRunnable() {
-        mCltRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (DBG)
-                    Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
-
-                String resultText = mCltJsonUtils.getCltText();
-
-                if (TextUtils.isEmpty(resultText) || Constants.NETWORK_EXCEPTION.equals(resultText)){
-                    if (DBG)
-                        Log.d(TAG, "the data is empty or the network had exception."
-                                + " mIsFirstTimeGetCltJson= " + mIsFirstTimeGetCltJson
-                                + ", mRepeatCount= " + mRepeatCount);
-
-                    if (mIsFirstTimeGetCltJson && mRepeatCount > 0) {
-                        setTextItemBitmapHash(mItem.getTextBitmapHash(mText));
-                        mNeedChangeTexture = true;
-                    }
-
-                } else if (!resultText.equals(mText)) {//get clt_json successful
-                    if (DBG)
-                        Log.d(TAG, "the data had updated.");
-                    setText(resultText);
-                    setTextItemBitmapHash(mItem.getTextBitmapHash(mText));
-                    mNeedChangeTexture = true;
-
-                } else  if (DBG)
-                    Log.d(TAG, "the data had not updated.");
-
-                if (mIsFirstTimeGetCltJson)
-                    mIsFirstTimeGetCltJson = false;
-
-                if ("1".equals(mItem.isNeedUpdate)) {
-                    long updateInterval = 0;
-                    try {
-                        updateInterval = Long.parseLong(mItem.updateInterval);
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (mCltHandler != null && updateInterval > 0) {
-                        mCltHandler.removeCallbacks(this);
-                        mCltHandler.postDelayed(this, updateInterval);
-                    }
-                }
-            }
-        };
-    }
 
     private void ensureTargetDirRoom() {
         File dataDir = new File("/data");
@@ -727,35 +605,6 @@ public class TextObject extends SLPCTextObject {
         mText = aText;
         if (DBG)
             Log.d(TAG, "setText. mText= " + mText);
-    }
-
-    public void reloadCltJson() {
-        try {
-
-            if (DBG)
-                Log.d(TAG, "reloadCltJson. mCltHandler= " + mCltHandler + ", mCltRunnable= " + mCltRunnable);
-            if (mCltHandler != null && mCltRunnable != null){
-                mCltHandler.removeCallbacks(mCltRunnable);
-                mCltHandler.post(mCltRunnable);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void removeCltRunnable() {
-
-        if (DBG)
-            Log.d(TAG, "removeCltRunnable. mCltHandler= " + mCltHandler + ", mCltHandlerThread= " + mCltHandlerThread);
-
-        if (mCltHandler != null){
-            mCltHandler.removeCallbacks(mCltRunnable);
-        }
-        if (mCltHandlerThread != null){
-            mCltHandlerThread.quit();
-        }
     }
 
 }

@@ -22,10 +22,16 @@ import com.color.home.Texts;
 import com.color.home.widgets.clocks.ItemQuazAnalogClock;
 import com.color.home.widgets.clocks.ItemSmoothAnalogClock;
 import com.color.home.widgets.clocks.ItemTextClock;
+import com.color.home.widgets.clt_json.ItemMLScrollCltJsonView;
+import com.color.home.widgets.clt_json.ItemSLScrollCltJsonView;
+import com.color.home.widgets.clt_json.ItemSLPagedCltJsonView;
+import com.color.home.widgets.clt_json.SLScrollCltJsonHeadTailObject;
+import com.color.home.widgets.clt_json.SLScrollCltJsonObject;
 import com.color.home.widgets.externalvideo.ItemExternalVideoView;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.multilines.ItemMultiLinesMultipic;
 import com.color.home.widgets.multilines.ItemMultiLinesPagedText;
+import com.color.home.widgets.clt_json.ItemMLPagedCltJsonView;
 import com.color.home.widgets.singleline.ItemSingleLineText;
 import com.color.home.widgets.singleline.PCItemSingleLineText;
 import com.color.home.widgets.singleline.SLPCHTSurfaceView;
@@ -259,6 +265,29 @@ public class ItemsAdapter extends BaseAdapter {
                             return view;
                         }
                     } else { // Generate my text, do not use pc img.
+
+                        //clt_json
+                        if (Texts.isValidCltJsonText(Texts.getText(item))){
+
+                            if ("1".equals(item.isheadconnecttail)) {
+                                ItemSLScrollCltJsonView view = new ItemSLScrollCltJsonView(mContext, new SLScrollCltJsonHeadTailObject(mContext, item));
+                                view.setItem(mRegionView, item);
+                                if (DBG)
+                                    Log.d(TAG, "getView. [view=" + view);
+
+                                return view;
+
+                            } else {
+                                ItemSLScrollCltJsonView view = new ItemSLScrollCltJsonView(mContext, new SLScrollCltJsonObject(mContext, item));
+                                view.setItem(mRegionView, item);
+                                if (DBG)
+                                    Log.d(TAG, "getView. [view=" + view);
+
+                                return view;
+                            }
+
+                        }
+
                         if ("1".equals(item.isheadconnecttail)) {
 //                        SLHTSurfaceView view = new SLHTSurfaceView(mContext);
                             SLTextSurfaceView view = new SLTextSurfaceView(mContext, new TextObjectHeadTail(mContext, item));
@@ -286,9 +315,18 @@ public class ItemsAdapter extends BaseAdapter {
 
                 } else {
                     final MultiPicInfo multipicinfo = item.multipicinfo;
+
+                    if (Texts.isValidCltJsonText(Texts.getText(item))) {//clt_json
+                        ItemSLPagedCltJsonView view = (ItemSLPagedCltJsonView) mInflater.inflate(R.layout.layout_singleline_clt_json_text, null);
+                        view.setItem(mRegionView, item);
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+
+                        return view;
+                    }
+
                     // if we have multipic and it's correctly packed into relative path.
-                    if (!Texts.isValidCltJsonText(Texts.getText(item)) &&
-                            multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
+                    if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null
                             && "1".equals(multipicinfo.filePath.isrelative)) {
                         PCItemSingleLineText view = new PCItemSingleLineText(mContext);
                         view.setItem(mRegionView, mRegion, item);
@@ -318,6 +356,21 @@ public class ItemsAdapter extends BaseAdapter {
 //                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
                         if (DBG)
                             Log.d(TAG, "getView. [scrollmultipic.");
+
+                    if (("0".equals(item.sourceType) || item.scrollpicinfo == null
+                            || "0".equals(item.scrollpicinfo.picCount) || item.scrollpicinfo.filePath == null
+                            || "0".equals(item.scrollpicinfo.filePath.isrelative)
+                            || TextUtils.isEmpty(item.scrollpicinfo.filePath.filepath))
+                            && Texts.isValidCltJsonText(Texts.getText(item))){//clt_json
+
+                        ItemMLScrollCltJsonView view = new ItemMLScrollCltJsonView(mContext);
+                        view.setItem(mRegionView, item);
+                        if (DBG)
+                            Log.d(TAG, "getView. [view=" + view);
+
+                        return view;
+
+                    } else {
                         ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
                         // String filePath = getAbsFilePath(item);
                     /*
@@ -341,21 +394,24 @@ public class ItemsAdapter extends BaseAdapter {
 //                            Log.d(TAG, "getView. [view=" + view);
 //                        view.setItem(mRegionView, item);
 //                        return view;
-//                    }
+                    }
                 } else {  // not scroll
                     final MultiPicInfo multipicinfo = item.multipicinfo;
                     if (DBG)
                         Log.d(TAG, "multipicinfo= " + multipicinfo);
 
-                    if ("0".equals(item.sourceType) && Texts.isValidCltJsonText(Texts.getText(item))){
-                        ItemMultiLinesPagedText view = (ItemMultiLinesPagedText) mInflater.inflate(
-                                R.layout.layout_multilines_paged_text, null);
-                        view.setItem(mRegionView, item);
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
-                        return view;
+                        if (("0".equals(item.sourceType) || multipicinfo == null
+                                || "0".equals(multipicinfo.picCount) || multipicinfo.filePath == null
+                                || "0".equals(multipicinfo.filePath.isrelative))
+                                && Texts.isValidCltJsonText(Texts.getText(item))) {
 
-                    }
+                            ItemMLPagedCltJsonView view = (ItemMLPagedCltJsonView) mInflater.inflate(
+                                    R.layout.layout_multilines_paged_clt_json_text, null);
+                            view.setItem(mRegionView, item);
+                            if (DBG)
+                                Log.d(TAG, "getView. [view=" + view);
+                            return view;
+                        }
 
                     // if we have multipic and it's correctly packed into relative path.
                     if (multipicinfo != null && !"0".equals(multipicinfo.picCount) && multipicinfo.filePath != null && "1".equals(multipicinfo.filePath.isrelative)) {

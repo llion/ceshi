@@ -5,9 +5,8 @@ import android.util.Log;
 
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
-import com.color.home.model.CltContent;
+import com.color.home.model.CltJsonContent;
 import com.color.home.widgets.ItemsAdapter;
-import com.google.common.base.CharMatcher;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -212,49 +211,37 @@ public class Texts {
         if (TextUtils.isEmpty(text))
             return false;
 
-        if (text.contains("CLT_JSON") && text.indexOf("CLT_JSON") != text.lastIndexOf("CLT_JSON")
-                && text.contains("url") && text.contains("filter")) {
+        String subStr;
+        JSONObject jsonObject;
+        int firstMarkIndex;
 
-            List<CltContent> cltContents = new ArrayList<CltContent>();
-            String prefix, subStr;
-            int firstMarkIndex;
-            JSONObject jsonObject;
-            for (; text.indexOf("CLT_JSON") != text.lastIndexOf("CLT_JSON"); ) {
-                firstMarkIndex = text.indexOf("CLT_JSON");
-                prefix = text.substring(0, firstMarkIndex);
-                subStr = text.substring(firstMarkIndex + 8);
+        for (; text.indexOf("CLT_JSON") != text.lastIndexOf("CLT_JSON"); ) {
+            firstMarkIndex = text.indexOf("CLT_JSON");
+            subStr = text.substring(firstMarkIndex + 8);
+            if (DBG)
+                Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", subStr= " + subStr
+                        + ", subStr.substring(0, subStr.indexOf(\"CLT_JSON\"))= " + subStr.substring(0, subStr.indexOf("CLT_JSON")));
+            try {
+
+                jsonObject = new JSONObject(subStr.substring(0, subStr.indexOf("CLT_JSON")));
                 if (DBG)
-                    Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", prefix= " + prefix + ", subStr= " + subStr
-                            + ", subStr.substring(0, subStr.indexOf(\"CLT_JSON\"))= " + subStr.substring(0, subStr.indexOf("CLT_JSON")));
-                try {
+                    Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", url= " + jsonObject.getString("url"));
 
-                    jsonObject = new JSONObject(subStr.substring(0, subStr.indexOf("CLT_JSON")));
-                    cltContents.add(new CltContent(prefix, jsonObject));
+                if (!TextUtils.isEmpty(jsonObject.getString("url")))
+                    return true;
 
-                    if (DBG)
-                        Log.d(TAG, "firstMarkIndex= " + firstMarkIndex + ", url= " + jsonObject.getString("url")
-                                + ", filter= " + jsonObject.getString("filter"));
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                if (subStr.indexOf("CLT_JSON") + 8 < subStr.length())
-                    text = subStr.substring(subStr.indexOf("CLT_JSON") + 8);
-                else
-                    text = subStr.substring(subStr.indexOf("CLT_JSON"));
-
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
 
-            if (DBG)
-                Log.d(TAG, "cltContents.size= " + cltContents.size());
-
-            if (cltContents != null && cltContents.size() > 0)
-                return true;
+            if (subStr.indexOf("CLT_JSON") + 8 < subStr.length())
+                text = subStr.substring(subStr.indexOf("CLT_JSON") + 8);
             else
-                return false;
-        } else
-            return false;
+                text = subStr.substring(subStr.indexOf("CLT_JSON"));
+
+        }
+
+        return false;
     }
 
     public String mText;

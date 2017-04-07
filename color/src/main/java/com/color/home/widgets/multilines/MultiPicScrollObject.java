@@ -19,8 +19,6 @@ import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
@@ -30,7 +28,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.color.home.AppController;
-import com.color.home.Constants;
 import com.color.home.ProgramParser.Item;
 import com.color.home.ProgramParser.ScrollPicInfo;
 import com.color.home.Texts;
@@ -38,7 +35,6 @@ import com.color.home.utils.GraphUtils;
 import com.color.home.widgets.ItemsAdapter;
 import com.color.home.widgets.singleline.QuadGenerator;
 import com.color.home.widgets.singleline.QuadSegment;
-import com.color.home.widgets.singleline.cltjsonutils.CltJsonUtils;
 import com.color.home.widgets.singleline.localscroll.TextRenderer;
 import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;
@@ -86,7 +82,8 @@ public class MultiPicScrollObject {
     /**
      * We split the whole big bitmap into how many pieces.
      */
-    protected int mTexCount = 2;
+    protected int mTexCount = 1;
+    protected int mCurTextId = 0;
     protected boolean mIsTallPCPic = false;
     protected boolean mIsFatPCPic = false;
     protected int mRealSegmentsPerTex;
@@ -99,14 +96,6 @@ public class MultiPicScrollObject {
 
     private TextView mTextView;
     protected String mText = " ";
-    private int mCurTextId = 0;
-    private boolean mNeedChangeTexture = false;
-
-    private HandlerThread mCltHandlerThread;
-    private Handler mCltHandler;
-    private Runnable mCltRunnable;
-    private CltJsonUtils mCltJsonUtils;
-    private boolean mIsFirstTimeGetCltJson;
 
     // Constructor initialize all necessary members
     public MultiPicScrollObject(Context context, Item item) {
@@ -128,18 +117,6 @@ public class MultiPicScrollObject {
             // 3. Generate texture with the new evaluated font size
             if (DBG)
                 Log.d(TAG, "mScrollpicinfo= " + mScrollpicinfo + ", sourceType= " + mItem.sourceType);
-
-            if (isCltJsonMultilineScroll(mItem)){
-                mIsFirstTimeGetCltJson = true;
-                initTextView();
-                prepareCltJson(Texts.getText(mItem));
-
-                mCltHandler.removeCallbacks(mCltRunnable);
-                mCltHandler.post(mCltRunnable);
-
-                //do not generate quads and bind texture until get data from net
-                return;
-            }
 
             if (mScrollpicinfo != null && !"0".equals(mScrollpicinfo.picCount)
                     && mScrollpicinfo.filePath != null
@@ -205,46 +182,6 @@ public class MultiPicScrollObject {
 
         }
 
-    }
-
-    private boolean isCltJsonMultilineScroll(Item item) {
-
-            if (("0".equals(item.sourceType) || item.scrollpicinfo == null
-                    || "0".equals(item.scrollpicinfo.picCount) || item.scrollpicinfo.filePath == null
-                    || "0".equals(item.scrollpicinfo.filePath.isrelative)
-                    || TextUtils.isEmpty(item.scrollpicinfo.filePath.filepath))
-                    && Texts.isValidCltJsonText(Texts.getText(item)))
-                return true;
-
-        return false;
-    }
-
-    public void removeCltRunnable() {
-
-        if (DBG)
-            Log.d(TAG, "removeCltRunnable. mCltHandler= " + mCltHandler + ", mCltHandlerThread= " + mCltHandlerThread);
-
-        if (mCltHandler != null){
-            mCltHandler.removeCallbacks(mCltRunnable);
-        }
-        if (mCltHandlerThread != null){
-            mCltHandlerThread.quit();
-        }
-    }
-
-    public void reloadCltJson(){
-        try {
-
-            if (DBG)
-                Log.d(TAG, "reloadCltJson. mCltHandler= " + mCltHandler + ", mCltRunnable= " + mCltRunnable);
-            if (mCltHandler != null && mCltRunnable != null){
-                mCltHandler.removeCallbacks(mCltRunnable);
-                mCltHandler.post(mCltRunnable);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void resetPos() {
@@ -393,22 +330,6 @@ public class MultiPicScrollObject {
 
     public void render() {
 
-        if (mNeedChangeTexture){
-            if (DBG)
-                Log.d(TAG, "render. need change texture. mCurTextId= " + mCurTextId + ", mIsTallPCPic= " + mIsTallPCPic
-                 + ", mIsFatPCPic= " + mIsFatPCPic + ", Thread= " + Thread.currentThread());
-
-            mNeedChangeTexture = false;
-
-            try {
-                if (initSizeAndDrawBitmapToTexture())
-                    initAndPlayTexture();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-
         float[] modelMat = mMMatrix;
         // // Add program to OpenGL environment
 //        if(Math.abs(mPixelPerFrame) > 1.0f){
@@ -498,55 +419,7 @@ public class MultiPicScrollObject {
 
     }
 
-    private void initAndPlayTexture() {
 
-        if (mIsTallPCPic) {
-            generateTallPCMulpicQuads();
-        } else if (mIsFatPCPic) {
-            // TODO: Handle Fat PC multipic.
-            generateFatPCMulpicQuads();
-        }
-        if (mCurTextId == 0)
-            mCurTextId = 1;
-        else mCurTextId = 0;
-
-        if (DBG)
-            Log.d(TAG, "initAndPlayTexture. need play texture id= " + mCurTextId + ", Thread= " + Thread.currentThread());
-        initUpdateTex(mCurTextId);
-
-        if (DBG)
-            android.util.Log.i("INFO", "bmpSize[" + mPcWidth + ", " + mPcHeight + "]");
-
-        initShapes();
-        setupMVP();
-
-        if (mSr == null)
-            mSr = new SegRender(mHeight);
-        resetPos();
-
-        GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, mMMatrix, 0);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadVB);
-        GLES20.glEnableVertexAttribArray(maPositionHandle);
-
-        // mT += 0.1f;
-        // if (mT > 1.0f) {
-        // mT = 0.0f;
-        // }
-        //
-        // quadCB.put(1, mT);
-        // quadCB.put(7, mT);
-
-        // Prepare the triangle data
-        GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
-        GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
-
-        // Draw the triangle
-        GLES20.glDisable(GLES20.GL_CULL_FACE);
-        GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-    }
 
     protected void reset() {
 
@@ -1037,72 +910,11 @@ public class MultiPicScrollObject {
 
     }
 
-    private void prepareCltJson(String itemText) {
-
-        mCltHandlerThread = new HandlerThread("color-net-thread");
-        mCltHandlerThread.start();
-        mCltHandler = new Handler(mCltHandlerThread.getLooper());
-
-        mCltJsonUtils = new CltJsonUtils(mContext);
-        mCltJsonUtils.initMapList(itemText);
-
-        initCltRunnable();
-
-    }
-
-    private void initCltRunnable() {
-        mCltRunnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (DBG)
-                        Log.d(TAG, "mCltRunnable. Thread= " + Thread.currentThread().getName());
-
-                    String resultText = mCltJsonUtils.getCltText();
-                    if (TextUtils.isEmpty(resultText) || Constants.NETWORK_EXCEPTION.equals(resultText)){
-                        if (DBG)
-                            Log.d(TAG, "the data is empty or the network had exception.");
-                        if (mIsFirstTimeGetCltJson && mRepeatCount > 0)
-                            mNeedChangeTexture = true;
-
-                    } else if (!resultText.equals(mText)) {
-                        if (DBG)
-                            Log.d(TAG, "the data had updated.");
-                        setText(resultText);
-                        mNeedChangeTexture = true;
-
-                    } else  if (DBG)
-                        Log.d(TAG, "the data had not updated.");
-
-                    if (mIsFirstTimeGetCltJson)
-                        mIsFirstTimeGetCltJson = false;
-
-                    if ("1".equals(mItem.isNeedUpdate)) {
-                        long updateInterval = 0;
-                        try {
-                            updateInterval = Long.parseLong(mItem.updateInterval);
-                        } catch (NumberFormatException e) {
-                            e.printStackTrace();
-                        }
-
-                        if (mCltHandler != null && updateInterval > 0) {
-                            mCltHandler.removeCallbacks(this);
-                            mCltHandler.postDelayed(this, updateInterval);
-                        }
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-    }
-
-    private void setText(String text) {
+    protected void setText(String text) {
         mText = text;
     }
 
-    private boolean initSizeAndDrawBitmapToTexture() throws Exception {
+    protected boolean initSizeAndDrawBitmapToTexture() throws Exception {
         if (DBG)
             Log.d(TAG, "initSizeAndDrawBitmapToTexture. mTextView= " + mTextView + ", mText= " + mText);
 

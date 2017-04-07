@@ -23,14 +23,13 @@ import com.color.home.widgets.RegionView;
 import com.color.home.widgets.multilines.ItemMLScrollMultipic2View;
 import com.color.home.widgets.singleline.MovingTextUtils;
 
-public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver, NetworkObserver {
+public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlayFinishObserverable, FinishObserver{
     protected final static String TAG = "SLTextSurfaceView";
     protected static final boolean DBG = false;
     protected TextRenderer mRenderer;
     protected OnPlayFinishedListener mListener;
     protected Item mItem;
     protected TextObject mTextobj;
-    private NetworkConnectReceiver mNetworkConnectReceiver;
 
     public SLTextSurfaceView(Context context) {
         super(context);
@@ -98,8 +97,6 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
             mTextobj.setView(this);
             // int mDuration = Integer.parseInt(item.duration);
         }
-
-        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
 
     }
 
@@ -171,8 +168,6 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.registerNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
     }
 
     @Override
@@ -183,11 +178,6 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. Try to remove call back. result is removeCallbacks=" + removeCallbacks);
 
-        if (mTextobj != null)
-            mTextobj.removeCltRunnable();
-
-        if (mNetworkConnectReceiver != null)
-            ItemMLScrollMultipic2View.unRegisterNetworkConnectReceiver(mContext, mNetworkConnectReceiver);
         // if (mAnim != null) {
         // if (DBG)
         // Log.i(TAG, "onDetachedFromWindow. mAnim=" + mAnim + ", not null, end it. Thread=" + Thread.currentThread());
@@ -224,11 +214,4 @@ public class SLTextSurfaceView extends GLSurfaceView implements Runnable, OnPlay
         return mRenderer;
     }
 
-    @Override
-    public void reloadContent() {
-        if (DBG)
-            Log.d(TAG, "reloadContent. mTheTextObj= " + mTextobj);
-        if (mTextobj != null)
-            mTextobj.reloadCltJson();
-    }
 }
