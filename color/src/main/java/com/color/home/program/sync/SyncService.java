@@ -103,8 +103,7 @@ public class SyncService extends CLIntentService {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if(Settings.Global.getInt(getContentResolver(), "showToast", 1) == 1)
-                        AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(typeID) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
+                    AppController.getInstance().toast(getApplicationContext(), "> " + Constants.sourceTypeIDToSourceType(typeID) + normalizePlayingVsn(), Toast.LENGTH_SHORT);
 
                     // Sync dirty files whenever a program started.
                     try {
