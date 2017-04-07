@@ -200,9 +200,9 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
     private void displayByPages() {
         if (DBG)
-            Log.d(TAG, "displayByPages.");
+            Log.d(TAG, "displayByPages. region width= " + mRegionView.getRegionWidth());
 
-        mSplitTexts = splitText(mText, mRegionView.getWidth());
+        mSplitTexts = splitText(mText, mRegionView.getRegionWidth());
         mIndex = 0;
 
         if (DBG)
@@ -323,6 +323,12 @@ public class ItemSingleLineText extends TextView implements OnPlayFinishObserver
 
     @Override
     public void run() {
+
+        if (mSplitTexts == null){
+            postDelayed(mNotifyRunnable, mOnePicDuration);
+            return;
+        }
+
         if (DBG) {
             Log.i(TAG, "run.  mSplitTexts.length= " + mSplitTexts.length
                     + ", mIndex=" + mIndex + ", Thread= " + Thread.currentThread());
