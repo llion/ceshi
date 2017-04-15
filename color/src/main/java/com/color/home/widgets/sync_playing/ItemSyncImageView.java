@@ -21,6 +21,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemSyncImageView";
+    private static final boolean DBG_SYNC = true;
 
     private Item mItem;
     private String mFilePath;
@@ -77,7 +78,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
         try {
             width = Integer.parseInt(mRegion.rect.width);
             height = Integer.parseInt(mRegion.rect.height);
-            mDuration = Integer.parseInt(mItem.duration);
+            mDuration = Long.parseLong((mItem.duration));
             if (DBG)
                 Log.d(TAG, " mDuration = " + mDuration);
             setAlpha(Float.parseFloat(item.alhpa));
@@ -165,9 +166,14 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
 
         if(sleepTime < 0)
             sleepTime = 0;
-        if (DBG)
+
+        if (sleepTime > mDuration)
+            sleepTime = mDuration;
+
+        if (DBG_SYNC)
             Log.d(TAG, "sleepTime= " + sleepTime);
 
+        removeCallbacks(mRunnable);
         postDelayed(mRunnable, sleepTime);//进场 + 停留 + 出场
     }
 
@@ -187,7 +193,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
             if ("2".equals(item.type))
                 regionDurationMs += Long.parseLong(item.duration);
         }
-        if(DBG)
+        if(DBG_SYNC)
             Log.d(TAG, "regionDurationMs=" + regionDurationMs);
 
         return regionDurationMs;
@@ -195,7 +201,10 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
 
     private long getCurrentOffsetMs(long regionDuration){
 
-        return (System.currentTimeMillis() - ItemSyncImageView.BENCHMARK_TIMES_MS) % regionDuration;
+        long offset = System.currentTimeMillis() % regionDuration;
+        if (DBG_SYNC)
+            Log.d(TAG, "offset= " + offset);
+        return offset;
     }
 
     private long getSyncItemsPresentationTimeMs(Region region, Item item){
@@ -213,7 +222,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
             e.printStackTrace();
         }
 
-        if (DBG)
+        if (DBG_SYNC)
             Log.d(TAG, "getSyncItemsPresentationTimeMs. sumDuration= " + sumDuration);
         return sumDuration;
     }
@@ -310,7 +319,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     }
 
     private OnPlayFinishedListener mListener;
-    private int mDuration = 500;
+    private long mDuration = 500;
     private Runnable mRunnable;
 
     @Override
@@ -333,7 +342,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     }
 
     //2000,1,1
-    public static final long BENCHMARK_TIMES_MS = Long.valueOf("949334400000");
+//    public static final long BENCHMARK_TIMES_MS = Long.valueOf("949334400000");
 
     //
     @Override

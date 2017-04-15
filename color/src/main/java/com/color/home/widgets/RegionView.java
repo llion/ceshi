@@ -356,7 +356,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             Log.d(SYNC_TAG, "regionDurationMs=" + regionDurationMs);
         }
 
-        long offsetMs = (System.currentTimeMillis() - ItemSyncImageView.BENCHMARK_TIMES_MS) % regionDurationMs;
+        long offsetMs = System.currentTimeMillis() % regionDurationMs;
         if(SYNC_DBG)
             Log.d(SYNC_TAG, "Sync offsetMs = " + offsetMs);
 
