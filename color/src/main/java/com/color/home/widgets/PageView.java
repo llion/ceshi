@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -20,6 +21,7 @@ import android.widget.AbsoluteLayout;
 import android.widget.ImageView;
 
 import com.color.home.AppController;
+import com.color.home.ProgramParser;
 import com.color.home.ProgramParser.BgAudio;
 import com.color.home.ProgramParser.Page;
 import com.color.home.ProgramParser.Program;
@@ -64,6 +66,12 @@ public class PageView extends AbsoluteLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+
+        if (isSyncProgram(mProgram)){
+            if (DBG)
+                Log.d(TAG, "onAttachedToWindow. this is sync program, send broadcast of syncProgramStart.");
+            mContext.sendStickyBroadcast(new Intent("com.clt.intent.syncProgramStart"));
+        }
 
         if (mPage.bgaudios != null && mPage.bgaudios.size() > 0) {
             mMediaPlayer = new MediaPlayer();
@@ -154,13 +162,6 @@ public class PageView extends AbsoluteLayout {
         LayoutInflater li = LayoutInflater.from(getContext());
         for (Region region : regions) {
             if (region != null) {
-                if (DBG)
-                    Log.i(TAG, "setupRegions. region = " + region + ", region.name= " + region.name);
-                if(ItemsAdapter.isSyncRegion(region)){
-                    mContext.sendStickyBroadcast(new Intent("com.clt.intent.syncProgramStart"));
-                }else{
-                    mContext.sendBroadcast(new Intent("com.clt.intent.syncProgramStop"));
-                }
                 RegionView regionView;
                 if (isSinglelineScrollRegion(region))
                     regionView = (SinglelineScrollRegionView) li.inflate(R.layout.layout_singleline_scroll_region, null);
@@ -174,6 +175,9 @@ public class PageView extends AbsoluteLayout {
                  */
 
                 if (regionView != null) {
+                    if (isSyncProgram(mProgram) && isSyncRegion(region))
+                        regionView.setSync(true);
+
                     regionView.setRegion(this, region);
                     addView(regionView);
                 }
@@ -252,6 +256,12 @@ public class PageView extends AbsoluteLayout {
         if (DBG)
             Log.i(TAG, "onDetachedFromWindow. this= " + this);
 
+        if (isSyncProgram(mProgram)) {
+            if (DBG)
+                Log.d(TAG, "onDetachedFromWindow. this is sync program, send broadcast of syncProgramStop.");
+            mContext.sendBroadcast(new Intent("com.clt.intent.syncProgramStop"));
+        }
+
         if (mBitmap != null) {
             mBitmap.recycle();
             mBitmap = null;
@@ -323,6 +333,49 @@ public class PageView extends AbsoluteLayout {
             }
 
         }
+
+        return false;
+    }
+
+    public boolean isSyncProgram(Program program) {
+
+        if (program != null && program.pages != null && program.pages.size() == 1){
+
+            Page page = program.pages.get(0);
+            if (page.regions != null && page.regions.size() > 0){
+                for (ProgramParser.Region region : page.regions){
+                    if (isSyncRegion(region)) {
+                        if (DBG)
+                            Log.d(TAG, "this is sync program.");
+                        return true;
+                    }
+                }
+            }
+
+        }
+
+        if (DBG)
+            Log.d(TAG, "this is not sync program.");
+        return false;
+    }
+
+    public boolean isSyncRegion(ProgramParser.Region region){
+
+        if ("sync_program".equals(region.name)) {
+            for (int i = 0; i < region.items.size(); i++) {
+                if (DBG)
+                    Log.d(TAG, "i= " + i + ", item type= " + region.items.get(i).type);
+
+                if ("2".equals(region.items.get(i).type)) {
+                    if (DBG)
+                        Log.d(TAG, "this region is sync");
+                    return true;
+                }
+            }
+        }
+
+        if (DBG)
+            Log.d(TAG, "this region is not sync");
 
         return false;
     }

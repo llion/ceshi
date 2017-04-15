@@ -2,7 +2,6 @@ package com.color.home.widgets;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.database.DataSetObserver;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -111,6 +110,16 @@ public class ItemsAdapter extends BaseAdapter {
         try {
             // Video
             if ("3".equals(item.type)) {
+
+//                if (mRegionView.isSync()) {
+//                    ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
+//                    syncView.setRegion(mRegion);
+//                    syncView.setItem(mRegionView, item);
+//                    syncView.setLoop(getCount() == 1);
+//
+//                    return syncView;
+//                }
+
                 ItemVideoView vv = new ItemVideoView(mContext);
                 vv.setRegion(mRegion);
                 vv.setItem(mRegionView, item);
@@ -167,40 +176,47 @@ public class ItemsAdapter extends BaseAdapter {
                 return itemTimer;
 
             } else if ("2".equals(item.type)) { // Image
-                // int animationType = Integer.parseInt(item.ineffect.Type);
-//                int animationType = mRegionView.getmRealAnimationType();
-//                if (DBG)
-//                    Log.d(TAG, "animationType = " + animationType);
-//                if (animationType == 1) {
-//                    // type = mRand.nextInt((48 - 2) + 1) + 2;
-//                    animationType = stypes[mRand.nextInt(stypes.length)];
-//                    if (DBG) {
-//                        Log.d(TAG, "animationType======" + animationType);
-//                    }
-//                }
-                if (DBG)
-                    Log.d(TAG, "convertView==" + convertView);
 
-                // if (convertView != null && convertView.getContext().toString())
-//                    if (DBG)
-                ItemImageView iiv;
-                if (convertView != null
-                    //&&
-//                            convertView instanceof ItemImageView &&
-//                            !(convertView instanceof  SwitchableImageView)
-                        ) {
-                    iiv = (ItemImageView) convertView;
+                if (mRegionView.isSync()){
                     if (DBG)
-                        Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
-                                "!(convertView instanceof  SwitchableImageView)");
+                        Log.d(TAG, "convertView==" + convertView);
+
+                    ItemSyncImageView iiv;
+                    if (convertView != null) {
+                        iiv = (ItemSyncImageView) convertView;
+                        if (DBG)
+                            Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
+                                    "!(convertView instanceof  SwitchableImageView)");
+                    } else {
+                        iiv = new ItemSyncImageView(mContext);
+                        iiv.setRegion(mRegion);
+                        if (DBG)
+                            Log.d(TAG, "new ItemImageView(mContext)");
+                    }
+                    iiv.setItem(mRegionView, item);
+                    return iiv;
+
                 } else {
-                    iiv = new ItemImageView(mContext);
-                    iiv.setRegion(mRegion);
                     if (DBG)
-                        Log.d(TAG, "new ItemImageView(mContext)");
+                        Log.d(TAG, "convertView==" + convertView);
+
+                    // if (convertView != null && convertView.getContext().toString())
+//                    if (DBG)
+                    ItemImageView iiv;
+                    if (convertView != null) {
+                        iiv = (ItemImageView) convertView;
+                        if (DBG)
+                            Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
+                                    "!(convertView instanceof  SwitchableImageView)");
+                    } else {
+                        iiv = new ItemImageView(mContext);
+                        iiv.setRegion(mRegion);
+                        if (DBG)
+                            Log.d(TAG, "new ItemImageView(mContext)");
+                    }
+                    iiv.setItem(mRegionView, item);
+                    return iiv;
                 }
-                iiv.setItem(mRegionView, item);
-                return iiv;
 
             } else if ("4".equals(item.type)) {// Single line text.
                 if ("1".equals(item.isscroll)) {
@@ -313,18 +329,18 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo);
 //                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
 //                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
-                        if (DBG)
-                            Log.d(TAG, "getView. [scrollmultipic.");
-                        ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
-                        // String filePath = getAbsFilePath(item);
+                    if (DBG)
+                        Log.d(TAG, "getView. [scrollmultipic.");
+                    ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
+                    // String filePath = getAbsFilePath(item);
                     /*
                      * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
                      */
-                        view.setItem(mRegionView, item);
-                        if (DBG)
-                            Log.d(TAG, "getView. [view=" + view);
+                    view.setItem(mRegionView, item);
+                    if (DBG)
+                        Log.d(TAG, "getView. [view=" + view);
 
-                        return view;
+                    return view;
 //                    } else { // legacy scroll view.   one page, scroll
 //                        if (DBG)
 //                            Log.d(TAG, "getView. [legacy scroll view");
@@ -456,39 +472,6 @@ public class ItemsAdapter extends BaseAdapter {
              */
                 web.setItem(mContext, mRegionView, item);
                 return web;
-            } else if ("3".equals(item.type) && isSyncRegion(mRegion)) {
-//                return null;
-
-                //TODO sendBroadcast to start udp listening thread.
-                ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
-                syncView.setRegion(mRegion);
-                syncView.setItem(mRegionView, item);
-
-                return syncView;
-            } else if ("2".equals(item.type) && isSyncRegion(mRegion)) {
-                if (DBG)
-                    Log.d(TAG, "convertView==" + convertView);
-
-                // if (convertView != null && convertView.getContext().toString())
-//                    if (DBG)
-                ItemSyncImageView iiv;
-                if (convertView != null
-                    //&&
-//                            convertView instanceof ItemImageView &&
-//                            !(convertView instanceof  SwitchableImageView)
-                        ) {
-                    iiv = (ItemSyncImageView) convertView;
-                    if (DBG)
-                        Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
-                                "!(convertView instanceof  SwitchableImageView)");
-                } else {
-                    iiv = new ItemSyncImageView(mContext);
-                    iiv.setRegion(mRegion);
-                    if (DBG)
-                        Log.d(TAG, "new ItemImageView(mContext)");
-                }
-                iiv.setItem(mRegionView, item);
-                return iiv;
             } else {
                 return unknowView(item);
             }
@@ -497,10 +480,6 @@ public class ItemsAdapter extends BaseAdapter {
             e.printStackTrace();
             return unknowView(item);
         }
-    }
-
-    public static boolean isSyncRegion(Region region){
-        return "sync_program".equals(region.name);
     }
 
     public View unknowView(Item item) {

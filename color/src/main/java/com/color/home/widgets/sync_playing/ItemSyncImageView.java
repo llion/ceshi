@@ -1,7 +1,6 @@
 package com.color.home.widgets.sync_playing;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -19,7 +18,7 @@ import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
 public class ItemSyncImageView extends EffectView implements OnPlayFinishObserverable {
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemSyncImageView";
 
@@ -75,7 +74,6 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
         mFilePath = item.getAbsFilePath();
         int width = 128;
         int height = 128;
-        countRegionDuration();
         try {
             width = Integer.parseInt(mRegion.rect.width);
             height = Integer.parseInt(mRegion.rect.height);
@@ -163,14 +161,12 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
             }
         };
 
-        long presentationTimeMs = getItemPresentationTimeMs();
-        long lagTime = presentationTimeMs - getCurrentOffsetMs();
-        long sleepTime = mDuration + lagTime;
+        long sleepTime = getSyncItemsPresentationTimeMs(mRegion, mItem) - getCurrentOffsetMs(getSyncRegionDurationMs(mRegion));
+
         if(sleepTime < 0)
             sleepTime = 0;
-        if(DBG)
-            Log.d(TAG, "presentationTime=" + presentationTimeMs + ", lagTime=" + lagTime + ", sleepTime=" + sleepTime);
-
+        if (DBG)
+            Log.d(TAG, "sleepTime= " + sleepTime);
 
         postDelayed(mRunnable, sleepTime);//进场 + 停留 + 出场
     }
@@ -183,34 +179,42 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
         return -1;
     }
 
-    private void countRegionDuration(){
-        for(Item item : mRegion.items){
+    private long getSyncRegionDurationMs(Region region){
+
+        long regionDurationMs = 0;
+        for(Item item : region.items){
             //inEffect + stay + outEffect(stay)
-            mRegionDuration += Long.parseLong(item.duration);
+            if ("2".equals(item.type))
+                regionDurationMs += Long.parseLong(item.duration);
         }
-        if(DBG){
-            Log.d(TAG, "regionDurationMs=" + mRegionDuration);
-        }
+        if(DBG)
+            Log.d(TAG, "regionDurationMs=" + regionDurationMs);
+
+        return regionDurationMs;
     }
 
-    private long getCurrentOffsetMs(){
+    private long getCurrentOffsetMs(long regionDuration){
 
-        return (System.currentTimeMillis() - ItemSyncImageView.BENCHMARK_TIMES_MS) % mRegionDuration;
+        return (System.currentTimeMillis() - ItemSyncImageView.BENCHMARK_TIMES_MS) % regionDuration;
     }
 
-    private long getItemPresentationTimeMs(){
+    private long getSyncItemsPresentationTimeMs(Region region, Item item){
         long sumDuration = 0;
         try {
-            for (Item item : mRegion.items) {
+            for (Item it : region.items) {
+                if ("2".equals(it.type))
+                    sumDuration += Long.parseLong(it.duration);
 
-                if (!item.id.equals(mItem.id)) {
-                    sumDuration += Long.parseLong(item.duration);
-                }else{
+                if (item.id != null && item.id.equals(it.id))
                     break;
-                }
             }
 
-        }catch (NumberFormatException e){e.printStackTrace();}
+        }catch (NumberFormatException e){
+            e.printStackTrace();
+        }
+
+        if (DBG)
+            Log.d(TAG, "getSyncItemsPresentationTimeMs. sumDuration= " + sumDuration);
         return sumDuration;
     }
 
@@ -324,6 +328,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
             if (DBG)
                 Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 
@@ -333,9 +338,9 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     //
     @Override
     protected void onDraw(Canvas canvas) {
-        if (DBG) {
-            Log.d(TAG, " onDraw(Canvas canvas), effect2= " + effect2 + ", switchingPercent= " + switchingPercent);
-        }
+//        if (DBG) {
+//            Log.d(TAG, " onDraw(Canvas canvas), effect2= " + effect2 + ", switchingPercent= " + switchingPercent);
+//        }
         if (effect2)
             effectStyle.beforeDraw(canvas, switchingPercent);//限制新图出来的形状
 
