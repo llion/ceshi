@@ -213,7 +213,9 @@ public final class WifiConfigManager extends AsyncTask<WifiParsedResult, Object,
     }
 
     private static String quoteNonHex(String value, int... allowedLengths) {
-        return isHexOfLength(value, allowedLengths) ? value : convertToQuotedString(value);
+//        Log.d(TAG, "is Hex=" + isHexOfLength(value, allowedLengths) + ", params=" + allowedLengths.length);
+//        return isHexOfLength(value, allowedLengths) ? value : convertToQuotedString(value);
+        return convertToQuotedString(value);
     }
 
     /**

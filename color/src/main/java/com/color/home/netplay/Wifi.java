@@ -31,14 +31,15 @@ public class Wifi {
                 return;
             }
             String ssid = pp.getProperty(ConfigAPI.ATTR_WIFI_SSID);
+            Log.d(TAG, "wifi before escape ssid=" + ssid);
             String pass = pp.getProperty(ConfigAPI.ATTR_WIFI_PASS);
             String type = pp.getProperty(ConfigAPI.ATTR_WIFI_TYPE);
             String hidden = pp.getProperty(ConfigAPI.ATTR_WIFI_ISHIDDEN);
             // Removed the password != null config, as there could be open wifi.
             if (!TextUtils.isEmpty(ssid)) {
-                if (Config.isIsoFromTxtFile(pp)) {
-                    ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
-                }
+//                if (Config.isIsoFromTxtFile(pp)) {
+//                    ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
+//                }
                 mWc.connectTo(ssid, pass, type, hidden);
             }
         }

@@ -8,6 +8,8 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.internal.util.HexDump;
+
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.util.Properties;
@@ -73,10 +75,6 @@ public class WifiP2P {
             String pass = pp.getProperty(ConfigAPI.ATTR_AP_PASS);
             String channel = pp.getProperty(ConfigAPI.ATTR_AP_CHANNEL, "6");
 
-            if (enableAPRequested && !TextUtils.isEmpty(ssid) && pass != null) {
-                if (isIsoFromTxtFile(pp))
-                    ssid = new String(ssid.getBytes("ISO-8859-1"), "UTF-8");
-            }
 
             if (!TextUtils.isEmpty(ssid)) {
                 ssid = ssid.trim();
