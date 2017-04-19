@@ -39,13 +39,15 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
 
     private static final long ONE_MILLION = 1000000L;
     //2000,1,1
-    private static final long BENCHMARK_TIMES = Long.valueOf("949334400000000");
+//    private static final long BENCHMARK_TIMES = Long.valueOf("949334400000000");
 
     private long mPrevPresentUsec;
     private long mPrevMonoUsec;
     private long mMaxFrameDelta;
     private long mFixedFrameDurationUsec;
     private boolean mLoopReset = false;
+    private long mRegionDurationUsec;
+    private long mItemsPresentationUsec;
 
     /**
      * Sets a fixed playback rate.  If set, this will ignore the presentation time stamp
@@ -59,7 +61,7 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
     /**
      */
     @Override
-    public void preRender(long presentationTimeUsec, long durationUsec, MediaExtractor extractor) {
+    public boolean preRender(long presentationTimeUsec, long durationUsec, MediaExtractor extractor) {
         // For the first frame, we grab the presentation time from the video
         // and the current monotonic clock time.  For subsequent frames, we
         // sleep for a bit to try to ensure that we're rendering frames at the
@@ -67,6 +69,9 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
         //
         // If the frame rate is faster than v-sync we should be dropping frames.  On
         // Android 4.4 this may not be happening.
+
+        if (VERBOSE)
+            Log.d(TAG, "preRender. mPrevMonoUsec= " + mPrevMonoUsec + ", presentationTimeUsec= " + presentationTimeUsec);
         if (mPrevMonoUsec == 0) {
             // Latch current values, then return immediately.
 //            mPrevMonoUsec = System.nanoTime() / 1000;
@@ -93,12 +98,23 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
                 Log.d(TAG, "presentationTimeUsec=" + presentationTimeUsec
                         + ", mPrevPresentUsec=" + mPrevPresentUsec);
 
-            long offsetUsec = (System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec;
-            if(VERBOSE)
-                Log.d(TAG, " seekOffset:" + offsetUsec
-                        + " preRender" );
+//            long offsetUsec = (System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec;
+//            if(VERBOSE)
+//                Log.d(TAG, " seekOffset:" + offsetUsec
+//                        + " preRender" );
 
-            long sleepTimeUsec = presentationTimeUsec - offsetUsec;
+            long relativeOffsetUsec = getRelativeOffsetUsec(durationUsec);
+            if (VERBOSE)
+                Log.d(TAG, "relativeOffsetUsec= " + relativeOffsetUsec + ", durationUsec= " + durationUsec
+                + ", mRegionDurationUsec= " + mRegionDurationUsec + ", mItemsPresentationUsec= " + mItemsPresentationUsec);
+
+            if (relativeOffsetUsec < 0 || relativeOffsetUsec > durationUsec){
+                Log.d(TAG, "should not play this video item this moment. durationUsec= "  +durationUsec
+                + ", relativeOffsetUsec= " + relativeOffsetUsec);
+                return false;
+            }
+
+            long sleepTimeUsec = presentationTimeUsec - relativeOffsetUsec;
             long chaseTimeUsec = -sleepTimeUsec;
 //            long desiredPresentUsec = mPrevMonoUsec + presentationTimeUsec - offsetUsec;
 //
@@ -110,20 +126,22 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
             //TODO  Fix bug : Show last few frames after seeking to the start.
             if(VERBOSE)
                 Log.d(TAG, "presentationTimeUsec =" + presentationTimeUsec + " sleepTimeUsec =" + sleepTimeUsec +
+                        ", chaseTimeUsec= " + chaseTimeUsec +
                         ", mPrevPresentUsec =" + mPrevPresentUsec +
                         " , durationUsec=" + durationUsec);
 
             // presentationTimeUsec > mPrevPresentUsec means offset is too close to the end.
             // queueInputBuffer() is 3 frames further than dequeueOutputBuffer().So we do not seek at the last 4 frames.
 
-            if(chaseTimeUsec > 10000000 && durationUsec - offsetUsec > 4 * mMaxFrameDelta){
-                if(VERBOSE)
+            if(chaseTimeUsec > 10000000 && durationUsec - relativeOffsetUsec > 4 * mMaxFrameDelta){
+//                if(VERBOSE)
                     Log.w(TAG, "It may play the video fast for a long time. Do a seeking.");
                 //fast play will last for more than 10sec, then seek to destination
-                extractor.seekTo((System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec, MediaExtractor.SEEK_TO_NEXT_SYNC);
+//                extractor.seekTo((System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec, MediaExtractor.SEEK_TO_NEXT_SYNC);
+                extractor.seekTo(getRelativeOffsetUsec(durationUsec), MediaExtractor.SEEK_TO_NEXT_SYNC);
             }
 
-            while (sleepTimeUsec > 100   /*&& mState == RUNNING*/) {
+            if (sleepTimeUsec > 100   /*&& mState == RUNNING*/) {
                 // Sleep until it's time to wake up.  To be responsive to "stop" commands
                 // we're going to wake up every half a second even if the sleep is supposed
                 // to be longer (which should be rare).  The alternative would be
@@ -138,22 +156,27 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
 //                    sleepTimeUsec = 500000;
                 if(VERBOSE)
                     Log.d(TAG, "sleepTime: " + sleepTimeUsec);
-                if(sleepTimeUsec >= durationUsec / 3)
-                    break;
+
                 //time goes backward or be reset to somewhere distant now
                 if(sleepTimeUsec >= 10000000) {
-//                    if(VERBOSE)
                         Log.w(TAG, "Time goes backward or be reset to somewhere distant now.. Do a seeking.");
-                    extractor.seekTo((System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec, MediaExtractor.SEEK_TO_NEXT_SYNC);
-                    break;
+                    extractor.seekTo(getRelativeOffsetUsec(durationUsec), MediaExtractor.SEEK_TO_NEXT_SYNC);
                 }
 //                }
                 try {
-                    Thread.sleep(sleepTimeUsec / 1000);
+//                    Thread.sleep(sleepTimeUsec / 1000);
+                    Thread.sleep(sleepTimeUsec / 1000, (int) (sleepTimeUsec % 1000 * 1000));
 
-                } catch (InterruptedException ie) {}
-                offsetUsec = (System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec;
-                sleepTimeUsec = presentationTimeUsec - offsetUsec;
+                } catch (InterruptedException ie) {
+
+                }
+//                relativeOffsetUsec = getRelativeOffsetUsec(durationUsec);
+//                sleepTimeUsec = presentationTimeUsec - relativeOffsetUsec;
+//                if (VERBOSE)
+//                    Log.d(TAG, "relativeOffsetUsec= " + relativeOffsetUsec + ", presentationTimeUsec= " + presentationTimeUsec
+//                            + ", sleepTimeUsec= " + sleepTimeUsec);
+//                offsetUsec = (System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % durationUsec;
+//                sleepTimeUsec = presentationTimeUsec - offsetUsec;
 //                nowUsec = System.nanoTime() / 1000;
 //                nowUsec = System.currentTimeMillis() * 1000;
             }
@@ -163,6 +186,21 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
             mPrevMonoUsec = System.currentTimeMillis() * 1000 ;
             mPrevPresentUsec = presentationTimeUsec;
         }
+
+        if (VERBOSE)
+            Log.d(TAG, "preRender end.");
+
+        return true;
+    }
+
+    private long getRelativeOffsetUsec(long durationUsec) {
+        if (VERBOSE)
+            Log.d(TAG, "getRelativeOffsetUsec. mRegionDurationUsec= " + mRegionDurationUsec
+                    +", mItemsPresentationUsec= " + mItemsPresentationUsec
+                    + ", durationUsec= " + durationUsec
+            + ", absolute offset= " + (System.currentTimeMillis() * 1000) % mRegionDurationUsec);
+
+        return ((System.currentTimeMillis() * 1000) % mRegionDurationUsec) - (mItemsPresentationUsec - durationUsec);
     }
 
     // runs on decode thread
@@ -177,5 +215,13 @@ public class SpeedControlCallback implements MoviePlayer.FrameCallback {
 
         Log.d(TAG, "loopReset. Thread=" + Thread.currentThread().getName());
         mLoopReset = true;
+    }
+
+    public void setSyncRegionDurationUsec(long regionDurationUsec) {
+        mRegionDurationUsec = regionDurationUsec;
+    }
+
+    public void setSyncItemsPresentationTimeUsec(long syncItemsPresentationUsec) {
+        mItemsPresentationUsec = syncItemsPresentationUsec;
     }
 }

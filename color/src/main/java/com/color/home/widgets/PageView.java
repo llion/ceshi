@@ -366,7 +366,7 @@ public class PageView extends AbsoluteLayout {
                 if (DBG)
                     Log.d(TAG, "i= " + i + ", item type= " + region.items.get(i).type);
 
-                if ("2".equals(region.items.get(i).type)) {
+                if ("2".equals(region.items.get(i).type) || "3".equals(region.items.get(i).type)) {
                     if (DBG)
                         Log.d(TAG, "this region is sync");
                     return true;

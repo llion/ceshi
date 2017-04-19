@@ -42,7 +42,7 @@ public class MoviePlayer {
     private static final boolean VERBOSE = false;
 
     //2000,1,1
-    private static final long BENCHMARK_TIMES = Long.valueOf("949334400000000");
+//    private static final long BENCHMARK_TIMES = Long.valueOf("949334400000000");
 
     // Declare this here to reduce allocations.
     private MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
@@ -56,6 +56,9 @@ public class MoviePlayer {
     private boolean mLoop;
     private int mVideoWidth;
     private int mVideoHeight;
+    private long mDurationUsec = 0;
+
+    private boolean mNeedCheckout = false;
 
 
     /**
@@ -65,6 +68,8 @@ public class MoviePlayer {
      */
     public interface PlayerFeedback {
         void playbackStopped();
+
+        void playbackStoppedAndTellListener();
     }
 
 
@@ -78,7 +83,7 @@ public class MoviePlayer {
          * @param presentationTimeUsec The desired presentation time, in microseconds.
          *
          */
-        void preRender(long presentationTimeUsec, long durationUs, MediaExtractor extractor);
+        boolean preRender(long presentationTimeUsec, long durationUs, MediaExtractor extractor);
 
         /**
          * Called immediately after the frame render call returns.  The frame may not have
@@ -97,13 +102,11 @@ public class MoviePlayer {
 
     /**
      * Constructs a MoviePlayer.
-     *
      * @param sourceFile The video file to open.
+     * @param itemDurationUsec
      * @param outputSurface The Surface where frames will be sent.
-     * @param frameCallback Callback object, used to pace output.
-     * @throws IOException
-     */
-    public MoviePlayer(File sourceFile, Surface outputSurface, SpeedControlCallback frameCallback)
+     * @param frameCallback Callback object, used to pace output.   @throws IOException    */
+    public MoviePlayer(File sourceFile, long itemDurationUsec, Surface outputSurface, SpeedControlCallback frameCallback)
             throws IOException {
         mSourceFile = sourceFile;
         mOutputSurface = outputSurface;
@@ -124,6 +127,9 @@ public class MoviePlayer {
             extractor.selectTrack(trackIndex);
 
             MediaFormat format = extractor.getTrackFormat(trackIndex);
+
+            mDurationUsec = itemDurationUsec;
+//            mDurationUsec = format.getLong(MediaFormat.KEY_DURATION);
 
             mVideoWidth = format.getInteger(MediaFormat.KEY_WIDTH);
             mVideoHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
@@ -179,7 +185,9 @@ public class MoviePlayer {
      * Does not return until video playback is complete, or we get a "stop" signal from
      * frameCallback.
      */
-    public void play() throws IOException {
+    public void play() throws Exception {
+        if (VERBOSE)
+            Log.d(TAG, "play.");
         MediaExtractor extractor = null;
         MediaCodec decoder = null;
 
@@ -200,9 +208,11 @@ public class MoviePlayer {
 
             MediaFormat format = extractor.getTrackFormat(trackIndex);
 
-            mDuration = format.getLong(MediaFormat.KEY_DURATION);
+//            mDurationUsec = format.getLong(MediaFormat.KEY_DURATION);
+
+
 //            if(VERBOSE)
-                Log.d(TAG, "duration:" + mDuration);
+//                Log.d(TAG, "duration:" + mDurationUsec);
             //seek before start
 //            Calendar c = Calendar.getInstance();
 //            c.set(2016, 1, 1, 0, 0, 0);
@@ -213,7 +223,7 @@ public class MoviePlayer {
 //            if(VERBOSE)
 //                Log.d(TAG, "sysUs:" + System.currentTimeMillis()*1000 + ", benchUs:" + benchmarkTimeUs);
             //TODO DO NOT seek when the video starts in case of it look weired.
-//            long seekOffsetUs = ( System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % mDuration;
+//            long seekOffsetUs = ( System.currentTimeMillis() * 1000 - BENCHMARK_TIMES) % mDurationUsec;
 //            extractor.seekTo(seekOffsetUs, MediaExtractor.SEEK_TO_NEXT_SYNC);
 //            long sampleTime = extractor.getSampleTime();
 //            if(VERBOSE)
@@ -223,7 +233,9 @@ public class MoviePlayer {
             // extractor.  It's very important to use the format from the extractor because
             // it contains a copy of the CSD-0/CSD-1 codec-specific data chunks.
             String mime = format.getString(MediaFormat.KEY_MIME);
-            decoder = MediaCodec.createDecoderByType(mime);
+            if (VERBOSE)
+                Log.d(TAG, "mime type= " + mime + ", to nstantiate a decoder .");
+            decoder = MediaCodec.createDecoderByType(mime);//may be IOException(no support mime type)
             decoder.configure(format, mOutputSurface, null, 0);
             decoder.start();
 
@@ -242,7 +254,7 @@ public class MoviePlayer {
         }
     }
 
-    private long mDuration = 0;
+
     /**
      * Selects the video track, if any.
      *
@@ -330,7 +342,7 @@ public class MoviePlayer {
 
         final int TIMEOUT_USEC = 100000;
         ByteBuffer[] decoderInputBuffers = decoder.getInputBuffers();
-        int inputChunk = 0;
+        long inputChunk = 0;
         long firstInputTimeNsec = -1;
 
         boolean outputDone = false;
@@ -339,6 +351,7 @@ public class MoviePlayer {
         long lastNano = 0;
 
 //        long lastSystemMillis = 0;
+        long latestPresentationTimeMs = -1;
         while (!outputDone) {
 //            if (VERBOSE) Log.d(TAG, "loop");
             if (mIsStopRequested) {
@@ -347,75 +360,100 @@ public class MoviePlayer {
             }
 
             // Feed more data to the decoder.
+
+            if (VERBOSE)
+                Log.d(TAG, "inputDone= " + inputDone + ", extractor.getSampleTime= " + extractor.getSampleTime() +
+                        ", latestPresentationTimeMs= " + latestPresentationTimeMs);
             if (!inputDone) {
-                int inputBufIndex = decoder.dequeueInputBuffer(TIMEOUT_USEC);
-                if (inputBufIndex >= 0) {
-                    if (firstInputTimeNsec == -1) {
-                        firstInputTimeNsec = System.nanoTime();
-                    }
-                    ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
-                    // Read the sample data into the ByteBuffer.  This neither respects nor
-                    // updates inputBuf's position, limit, etc.
-                    int chunkSize = extractor.readSampleData(inputBuf, 0);
-                    //
 
-                    boolean reachTheEnd = false;
-                    if (chunkSize < 0) {
-                        reachTheEnd = true;
-                        if(mLoop){
-                            Log.e(TAG, "chunkSize is 0, seekTo the start of the video.");
+                if ((extractor.getSampleTime() == latestPresentationTimeMs)) {
+                    extractor.advance();
+                    continue;
 
-                            Log.d(TAG, "Notify to loopReset . Thread=" + Thread.currentThread().getName());
+                } else {
+                    latestPresentationTimeMs = extractor.getSampleTime();
 
-                            if(VERBOSE)
-                                Log.d(TAG, "sampleTime seek to 0 :" + extractor.getSampleTime());
+                    int inputBufIndex = decoder.dequeueInputBuffer(TIMEOUT_USEC);
+                    if (VERBOSE)
+                        Log.d(TAG, "inputBufIndex= " + inputBufIndex);
+                    if (inputBufIndex >= 0) {
+                        if (firstInputTimeNsec == -1) {
+                            firstInputTimeNsec = System.nanoTime();
+                        }
+                        ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
+                        // Read the sample data into the ByteBuffer.  This neither respects nor
+                        // updates inputBuf's position, limit, etc.
+                        int chunkSize = extractor.readSampleData(inputBuf, 0);
+                        //
 
-                            // Use BUFFER_FLAG_CODEC_CONFIG instead.
-                            extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-                            chunkSize = extractor.readSampleData(inputBuf, 0);
-                            //TODO
-                            // Do the seeking ,if needed, at the first loop ends
-                            // to avoid abnormal playing at the video beginning.
+                        if (VERBOSE)
+                            Log.d(TAG, "chunkSize= " + chunkSize + ", mLoop= " + mLoop);
 
-                        } else {
-                             // End of stream -- send empty frame with EOS flag set.
+                        if (chunkSize < 0 && !mLoop) {
+                            // End of stream -- send empty frame with EOS flag set.
                             decoder.queueInputBuffer(inputBufIndex, 0, 0, 0L,
                                     MediaCodec.BUFFER_FLAG_END_OF_STREAM);
                             inputDone = true;
                             if (VERBOSE) Log.d(TAG, "sent input EOS");
+
+                        } else {
+                            if (chunkSize < 0) {//loop
+                                Log.e(TAG, "chunkSize is less than 0, seekTo the start of the video.");
+
+                                Log.d(TAG, "Notify to loopReset . Thread=" + Thread.currentThread().getName());
+
+                                // Use BUFFER_FLAG_CODEC_CONFIG instead.
+                                extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                                chunkSize = extractor.readSampleData(inputBuf, 0);
+                                if (VERBOSE)
+                                    Log.d(TAG, "sampleTime seek to 0 :" + extractor.getSampleTime()
+                                            + ", chunkSize= " + chunkSize);
+                                //TODO
+                                // Do the seeking ,if needed, at the first loop ends
+                                // to avoid abnormal playing at the video beginning.
+
+                            }
+
+                            if (extractor.getSampleTrackIndex() != trackIndex) {
+                                Log.w(TAG, "WEIRD: got sample from track " +
+                                        extractor.getSampleTrackIndex() + ", expected " + trackIndex);
+                            }
+                            long presentationTimeUs = extractor.getSampleTime();
+                            if (VERBOSE)
+                                Log.d(TAG, "sampleFlag:" + extractor.getSampleFlags() + ", presentationTimeUs= " + presentationTimeUs);
+
+                            decoder.queueInputBuffer(inputBufIndex, 0, chunkSize,
+                                    presentationTimeUs, 0 /*flags*/);
+                            if (VERBOSE) {
+                                Log.d(TAG, "submitted frame " + inputChunk + " to dec, inputBufIndex= "
+                                        + inputBufIndex + ", size=" + chunkSize + ", presentationTimeUs= " + presentationTimeUs);
+                            }
+                            inputChunk++;//for log
+
+                            //FIXME
+                            extractor.advance();
+
                         }
+                    } else {
+                        if (VERBOSE) Log.d(TAG, "input buffer not available");
                     }
-//                    else {
-
-                    if (extractor.getSampleTrackIndex() != trackIndex) {
-                        Log.w(TAG, "WEIRD: got sample from track " +
-                                extractor.getSampleTrackIndex() + ", expected " + trackIndex);
-                    }
-                    long presentationTimeUs = extractor.getSampleTime();
-                    if (VERBOSE)
-                        Log.d(TAG, "sampleFlag:" + extractor.getSampleFlags());
-
-                    decoder.queueInputBuffer(inputBufIndex, 0, chunkSize,
-                            presentationTimeUs, 0 /*flags*/);
-                    if (VERBOSE) {
-                        Log.d(TAG, "submitted frame " + inputChunk + " to dec, size=" +
-                                chunkSize);
-                    }
-                    inputChunk++;//for log
-
-                    //FIXME
-                    extractor.advance();
-//                    }
-                } else {
-                    if (VERBOSE) Log.d(TAG, "input buffer not available");
                 }
             }
 
+            if (VERBOSE)
+                Log.d(TAG, "outputDone= " + outputDone);
+
             if (!outputDone) {
                 int decoderStatusOrIndex = decoder.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+                if (VERBOSE)
+                    Log.d(TAG, "decoderStatusOrIndex= " + decoderStatusOrIndex
+                            + ",mBufferInfo.size= " + mBufferInfo.size);
+
                 if (decoderStatusOrIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     // no output available yet
-                    if (VERBOSE) Log.d(TAG, "no output from decoder available");
+                    if (VERBOSE) Log.d(TAG, "no output from decoder available."
+                            + ",mBufferInfo.size= " + mBufferInfo.size + ", offset= " + mBufferInfo.offset);
+
                 } else if (decoderStatusOrIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     // not important for us, since we're using Surface
                     if (VERBOSE) Log.d(TAG, "decoder output buffers changed");
@@ -433,11 +471,11 @@ public class MoviePlayer {
                         long nowNsec;
                         nowNsec = System.nanoTime();
 
-                        if(VERBOSE)
-                            Log.d(TAG, "startup lag " + ((nowNsec-firstInputTimeNsec) / 1000000.0) + " ms");
+                        if (VERBOSE)
+                            Log.d(TAG, "startup lag " + ((nowNsec - firstInputTimeNsec) / 1000000.0) + " ms");
                         firstInputTimeNsec = 0;
 
-                        if(VERBOSE)
+                        if (VERBOSE)
                             Log.d(TAG, "first presentation Us:" + mBufferInfo.presentationTimeUs);
                     }
                     boolean doLoop = false;
@@ -446,7 +484,7 @@ public class MoviePlayer {
                         Log.d(TAG, "OutputFrame deltaNano : " + (System.nanoTime() - lastNano));
                         lastNano = System.nanoTime();
                         Log.d(TAG, "surface decoder given buffer " + decoderStatusOrIndex +
-                                " (size=" + mBufferInfo.size + ")" );
+                                " (size=" + mBufferInfo.size + ")");
                     }
 
                     //FLAG_END_OF_STREAM is not available on RockChip platform.
@@ -462,10 +500,14 @@ public class MoviePlayer {
                     boolean doRender = (mBufferInfo.size != 0);
 
                     if (doRender && mFrameCallback != null) {
-                        mFrameCallback.preRender(mBufferInfo.presentationTimeUs, mDuration, extractor);
+                        if (VERBOSE)
+                            Log.d(TAG, "moviePlyer to preRender: presentationTimeUs= " + mBufferInfo.presentationTimeUs);
+                        if (!mFrameCallback.preRender(mBufferInfo.presentationTimeUs, mDurationUsec, extractor)) {
+                            setCheckout(true);
+                        }
                     }
 
-                    if(VERBOSE)
+                    if (VERBOSE)
                         Log.d(TAG, "presentation Us=" + mBufferInfo.presentationTimeUs);
 
                     decoder.releaseOutputBuffer(decoderStatusOrIndex, doRender);
@@ -477,7 +519,7 @@ public class MoviePlayer {
                         Log.d(TAG, "Reached EOS, looping");
                         //int decoderStatusOrIndex = decoder.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
 //                        extractor.seekTo(0, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-                        if(VERBOSE)
+                        if (VERBOSE)
                             Log.d(TAG, "sampleTime after EOS:" + extractor.getSampleTime());
 
                         inputDone = false;
@@ -487,7 +529,11 @@ public class MoviePlayer {
                 }
             }
         }
+
+        if (VERBOSE)
+            Log.d(TAG, "loop end. outputDone= " + outputDone + ", inputDone= " + inputDone);
     }
+
 
     /**
      * Thread helper for video playback.
@@ -497,6 +543,7 @@ public class MoviePlayer {
      */
     public static class PlayTask implements Runnable {
         private static final int MSG_PLAY_STOPPED = 0;
+        private static final int MSG_PLAY_STOPPED_AND_TELL_LISTENER = 1;
 
         private MoviePlayer mVideoPlayer;
         private PlayerFeedback mFeedback;
@@ -565,9 +612,13 @@ public class MoviePlayer {
         public void run() {
             try {
                 mVideoPlayer.play();
-            } catch (IOException ioe) {
-                throw new RuntimeException(ioe);
+
+            } catch (Exception ioe) {
+                ioe.printStackTrace();
+
             } finally {
+                if (VERBOSE)
+                    Log.d(TAG, "moviePlayer play finish.");
                 // tell anybody waiting on us that we're done
                 synchronized (mStopLock) {
                     mStopped = true;
@@ -575,8 +626,16 @@ public class MoviePlayer {
                 }
 
                 // Send message through Handler so it runs on the right thread.
-                mLocalHandler.sendMessage(
-                        mLocalHandler.obtainMessage(MSG_PLAY_STOPPED, mFeedback));
+
+                if (mVideoPlayer.isNeedCheckout()) {
+                    mVideoPlayer.setCheckout(false);
+                    mLocalHandler.sendMessage(
+                            mLocalHandler.obtainMessage(MSG_PLAY_STOPPED_AND_TELL_LISTENER, mFeedback));
+
+                } else
+                    mLocalHandler.sendMessage(
+                            mLocalHandler.obtainMessage(MSG_PLAY_STOPPED, mFeedback));
+//
             }
         }
 
@@ -587,13 +646,30 @@ public class MoviePlayer {
 
                 switch (what) {
                     case MSG_PLAY_STOPPED:
+                        Log.d(TAG, "MSG_PLAY_STOPPED.");
                         PlayerFeedback fb = (PlayerFeedback) msg.obj;
                         fb.playbackStopped();
                         break;
+
+                    case MSG_PLAY_STOPPED_AND_TELL_LISTENER:
+                        Log.d(TAG, "MSG_PLAY_STOPPED_AND_TELL_LISTENER.");
+                        PlayerFeedback player = (PlayerFeedback) msg.obj;
+                        player.playbackStoppedAndTellListener();
+                        break;
+
                     default:
                         throw new RuntimeException("Unknown msg " + what);
                 }
             }
         }
+    }
+
+
+    private void setCheckout(boolean isNeedCheckout) {
+        mNeedCheckout = isNeedCheckout;
+    }
+
+    private boolean isNeedCheckout() {
+        return mNeedCheckout;
     }
 }

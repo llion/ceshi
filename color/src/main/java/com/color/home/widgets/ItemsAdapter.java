@@ -111,22 +111,23 @@ public class ItemsAdapter extends BaseAdapter {
             // Video
             if ("3".equals(item.type)) {
 
-//                if (mRegionView.isSync()) {
-//                    ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
-//                    syncView.setRegion(mRegion);
-//                    syncView.setItem(mRegionView, item);
-//                    syncView.setLoop(getCount() == 1);
-//
-//                    return syncView;
-//                }
+                if (mRegionView.isSync()) {
+                    ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
+                    syncView.setRegion(mRegion);
+                    syncView.setItem(mRegionView, item);
+                    syncView.setLoop(getCount() == 1);
 
-                ItemVideoView vv = new ItemVideoView(mContext);
-                vv.setRegion(mRegion);
-                vv.setItem(mRegionView, item);
+                    return syncView;
 
-                // If I'm the only one, always loop.
-                vv.setLoop(getCount() == 1);
-                return vv;
+                } else {
+                    ItemVideoView vv = new ItemVideoView(mContext);
+                    vv.setRegion(mRegion);
+                    vv.setItem(mRegionView, item);
+
+                    // If I'm the only one, always loop.
+                    vv.setLoop(getCount() == 1);
+                    return vv;
+                }
             } else if ("7".equals(item.type)) { // clock
 
                 String filepath = item.filesource.filepath;
@@ -191,7 +192,7 @@ public class ItemsAdapter extends BaseAdapter {
                         iiv = new ItemSyncImageView(mContext);
                         iiv.setRegion(mRegion);
                         if (DBG)
-                            Log.d(TAG, "new ItemImageView(mContext)");
+                            Log.d(TAG, "new ItemSyncImageView(mContext)");
                     }
                     iiv.setItem(mRegionView, item);
                     return iiv;

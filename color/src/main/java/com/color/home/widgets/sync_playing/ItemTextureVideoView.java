@@ -17,7 +17,6 @@
 package com.color.home.widgets.sync_playing;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
@@ -28,15 +27,19 @@ import android.view.View;
 
 import com.color.home.ProgramParser;
 import com.color.home.utils.Reflects;
+import com.color.home.widgets.OnPlayFinishObserverable;
+import com.color.home.widgets.OnPlayFinishedListener;
 import com.color.home.widgets.RegionView;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
-public class ItemTextureVideoView extends TextureView implements TextureView.SurfaceTextureListener, MoviePlayer.PlayerFeedback {
+
+public class ItemTextureVideoView extends TextureView implements TextureView.SurfaceTextureListener, MoviePlayer.PlayerFeedback, OnPlayFinishObserverable {
     private static final String TAG = "ItemTextureVideoView";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
+    private static final boolean SYNC_DBG = true;
 
     private Context mContext;
 //    private TextureView mTextureView;
@@ -49,6 +52,8 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
     private final Object mStopper = new Object();   // used to signal stop
 
     private Runnable mRunnable;
+    private ProgramParser.Item mItem;
+    private RegionView mRegionView;
 
     @Override
     protected void onAttachedToWindow() {
@@ -61,15 +66,29 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
                 tellListener();
             }
         };
-        postDelayed(mRunnable, mDuration);
+
+        long sleepTimeMs = ItemSyncImageView.getSyncItemsPresentationTimeMs(mRegion, mRegionView) - ItemSyncImageView.getCurrentOffsetMs(ItemSyncImageView.getSyncRegionDurationMs(mRegion));
+
+        if (sleepTimeMs < 0 || sleepTimeMs > mDuration) {
+            if (DBG)
+                Log.d(TAG, "should not play this video item this moment, tell listener at once.");
+            sleepTimeMs = 0;
+        }
+
+        if (SYNC_DBG)
+            Log.d(TAG, "sleepTimeMs= " + sleepTimeMs);
+
+        postDelayed(mRunnable, sleepTimeMs);
     }
 
 
     private void tellListener() {
+        if (DBG)
+            Log.i(TAG, "tellListener. Tell listener =" + mListener);
+
         if (mListener != null) {
-            if (DBG)
-                Log.i(TAG, "tellListener. Tell listener =" + mListener);
             mListener.onPlayFinished(this);
+            removeListener(mListener);
         }
     }
 
@@ -102,10 +121,12 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
             Field fieldFrom = Reflects.getFieldFrom(View.class, "mPrivateFlags");
             int flag = fieldFrom.getInt(this);
 
-            Log.i(TAG, "ItemSyncVideoView. value=" + flag);
+            if (DBG)
+                Log.i(TAG, "ItemSyncVideoView. value=" + flag);
 
             fieldFrom.setInt(this, flag & ~0x00000080);
-            Log.i(TAG, "ItemSyncVideoView. value new =" + fieldFrom.getInt(this));
+            if (DBG)
+                Log.i(TAG, "ItemSyncVideoView. value new =" + fieldFrom.getInt(this));
 
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
@@ -178,13 +199,15 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
         if(DBG)
             Log.d(TAG, "starting movie");
         SpeedControlCallback callback = new SpeedControlCallback();
+        callback.setSyncRegionDurationUsec(ItemSyncImageView.getSyncRegionDurationMs(mRegion) * 1000);
+        callback.setSyncItemsPresentationTimeUsec(ItemSyncImageView.getSyncItemsPresentationTimeMs(mRegion, mRegionView) * 1000);
 
         SurfaceTexture st1 = getSurfaceTexture();
         Surface surface = new Surface(st1);
         MoviePlayer videoPlayer = null;
         AudioPlayer audioPlayer = null;
         try {
-            videoPlayer = new MoviePlayer(new File(mFilePath), surface, callback);
+            videoPlayer = new MoviePlayer(new File(mFilePath), mDuration * 1000, surface, callback);
             audioPlayer = new AudioPlayer(new File(mFilePath), callback);
         } catch (IOException ioe) {
             Log.e(TAG, "Unable to play movie", ioe);
@@ -246,6 +269,19 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 //        updateControls();
     }
 
+    @Override
+    public void playbackStoppedAndTellListener() {
+        Log.d(TAG, "playback stopped and tell listener");
+        mShowStopLabel = false;
+        mVideoPlayTask = null;
+        mAudioPlayTask = null;
+
+        if (mRunnable != null){
+            removeCallbacks(mRunnable);
+            post(mRunnable);
+        }
+    }
+
     /**
      * Sets the TextureView transform to preserve the aspect ratio of the video.
      */
@@ -266,7 +302,9 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
         }
         int xoff = (viewWidth - newWidth) / 2;
         int yoff = (viewHeight - newHeight) / 2;
-        Log.v(TAG, "video=" + videoWidth + "x" + videoHeight +
+
+        if (DBG)
+            Log.v(TAG, "video=" + videoWidth + "x" + videoHeight +
                 " view=" + viewWidth + "x" + viewHeight +
                 " newView=" + newWidth + "x" + newHeight +
                 " off=" + xoff + "," + yoff);
@@ -288,15 +326,17 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 
     private boolean mLoop;
     private String mFilePath;
-    private RegionView mListener;
+    private OnPlayFinishedListener mListener;
     private long mDuration = 500;
 
     public void setItem(RegionView regionView, ProgramParser.Item item) {
+        mRegionView = regionView;
         mListener = regionView;
+        mItem = item;
         mFilePath = item.getAbsFilePath();
-        mLoop = "1".equals(item.loop);
         mDuration = Integer.parseInt(item.duration);
-        Log.i(TAG, "setItem. VideoView, [absFilePath=" + mFilePath);
+        if (DBG)
+            Log.i(TAG, "setItem. VideoView, [absFilePath=" + mFilePath);
 //        try {
 //            mVolume = Float.parseFloat(item.volume);
 //            mStartOffset = Integer.parseInt(item.inOffset);
@@ -307,4 +347,21 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 
     }
 
+    @Override
+    public void setListener(OnPlayFinishedListener listener) {
+        mListener = listener;
+    }
+
+    @Override
+    public void removeListener(OnPlayFinishedListener listener) {
+        mListener = null;
+    }
+
+    public void setLoop(boolean loop) {
+        mLoop = loop;
+    }
+
+    public boolean isLoop() {
+        return mLoop;
+    }
 }

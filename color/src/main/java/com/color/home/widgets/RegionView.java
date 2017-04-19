@@ -39,6 +39,7 @@ import com.color.home.widgets.singleline.SLPCHTSurfaceView;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
 import com.color.home.widgets.sync_playing.ItemSyncImageView;
+import com.color.home.widgets.sync_playing.ItemTextureVideoView;
 import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
@@ -49,7 +50,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private static final boolean DBG = false;
 
     private static final boolean SYNC_DBG = true;
-    private static final String SYNC_TAG = "SYNC_IMG";
+    private static final String SYNC_TAG = "SYNC_ITEM";
 
     private static final boolean DBG_DRAW = false;
     private static final boolean DRAW_DBG = false;
@@ -76,6 +77,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private int mRegionWidth;
     private int mRegionHeight;
     private boolean mIsSync;
+    private int mSyncItemIndex = -1;
 
     public int getRegionHeight() {
         return mRegionHeight;
@@ -349,11 +351,16 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         long regionDurationMs = 0;
         for(Item item : mRegion.items){
             //inEffect + stay + outEffect(stay)
-            if ("2".equals(item.type))
-                regionDurationMs += Long.parseLong(item.duration);
+            if ("2".equals(item.type) || "3".equals(item.type))
+                try {
+                    regionDurationMs += Long.parseLong(item.duration);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
         }
+
         if(SYNC_DBG){
-            Log.d(SYNC_TAG, "regionDurationMs=" + regionDurationMs);
+            Log.d(SYNC_TAG, "Sync regionDurationMs=" + regionDurationMs);
         }
 
         long offsetMs = System.currentTimeMillis() % regionDurationMs;
@@ -363,17 +370,21 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         long sumDuration = 0;
         for(int i = 0; i < mRegion.items.size(); i ++){
 
-            if ("2".equals(mRegion.items.get(i).type)) {
+            if ("2".equals(mRegion.items.get(i).type) || "3".equals(mRegion.items.get(i).type)) {
                 if(DBG)
                     Log.d(SYNC_TAG, "sumDuration= " + sumDuration);
                 sumDuration += Long.parseLong(mRegion.items.get(i).duration);
             }
 
             if (sumDuration > offsetMs) {
-                return i;
+                if (SYNC_DBG)
+                    Log.d(SYNC_TAG, "Sync item index= " + i);
+               return i;
             }
         }
 
+        if (SYNC_DBG)
+            Log.d(SYNC_TAG, "Sync item index= 0");
         return 0;
     }
 
@@ -569,6 +580,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof SLPCHTSurfaceView
                 || getChildAt(0) instanceof PCItemSingleLineText
                 || getChildAt(0) instanceof ItemSingleLineText
+                || getChildAt(0) instanceof ItemTextureVideoView
                 || getChildAt(0) instanceof ItemExternalVideoView)
                 ) {
             if (DBG)
@@ -634,8 +646,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (DBG)
             Log.d(TAG, "setDisplayedChild. isSync? " + isSync());
 
-        if (isSync())
+        if (isSync()) {
             displayedChild = getCurrentSyncItemIndex();
+            setSyncItemIndex(displayedChild);
+        }
         if (DBG)
             Log.d(TAG, "displayedChild= " + displayedChild);
 
@@ -674,6 +688,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || view instanceof ItemMLScrollMultipic2View
                 || view instanceof ItemMLScrollableText
                 || view instanceof ItemVideoView
+                || view instanceof ItemTextureVideoView
                 || view instanceof ItemMultiLinesPagedText
                 || view instanceof SLPCSurfaceView
                 || view instanceof SLPCHTSurfaceView
@@ -770,9 +785,9 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
             } else
                 addView(view);
-        } else {
+
+        } else
             addView(view);
-        }
 
         // Must remove old view after adding view. Otherwise, the remove old view
         // is inconsistent between animation ended and this one.
@@ -784,6 +799,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.d(TAG, "setDisplayedChild. [add view=" + view);
+    }
+
+    private void setSyncItemIndex(int displayedChild) {
+        mSyncItemIndex = displayedChild;
+    }
+
+    public int getSyncItemIndex() {
+        return mSyncItemIndex;
     }
 
     private int getRealAnimationType(Item item) {

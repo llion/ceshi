@@ -21,13 +21,14 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     private static final boolean DBG = false;
     // never public, so that another class won't be messed up.
     private final static String TAG = "ItemSyncImageView";
-    private static final boolean DBG_SYNC = true;
+    private static final boolean SYNC_DBG = true;
+    private static final String SYNC_TAG = "SYNC_ITEM";
 
     private Item mItem;
     private String mFilePath;
-    private long mRegionDuration;
     private Bitmap mBitmap;
     public Region mRegion;//....
+    private RegionView mRegionView;
 
     // private static BitmapFactory.Options sPurgeOption = new
     // BitmapFactory.Options();
@@ -70,6 +71,7 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
     public int mFinalAnimationType = 2;
 
     public void setItem(RegionView regionView, Item item) {
+        mRegionView = regionView;
         mListener = regionView;
         this.mItem = item;
         mFilePath = item.getAbsFilePath();
@@ -162,19 +164,19 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
             }
         };
 
-        long sleepTime = getSyncItemsPresentationTimeMs(mRegion, mItem) - getCurrentOffsetMs(getSyncRegionDurationMs(mRegion));
+        long sleepTimeMs = getSyncItemsPresentationTimeMs(mRegion, mRegionView) - getCurrentOffsetMs(getSyncRegionDurationMs(mRegion));
 
-        if(sleepTime < 0)
-            sleepTime = 0;
+        if(sleepTimeMs < 0 || sleepTimeMs > mDuration) {
+            if (DBG)
+                Log.d(TAG, "should not play this image item this moment, tell listener at once.");
+            sleepTimeMs = 0;
+        }
 
-        if (sleepTime > mDuration)
-            sleepTime = mDuration;
-
-        if (DBG_SYNC)
-            Log.d(TAG, "sleepTime= " + sleepTime);
+        if (SYNC_DBG)
+            Log.d(TAG, "sleepTimeMs= " + sleepTimeMs);
 
         removeCallbacks(mRunnable);
-        postDelayed(mRunnable, sleepTime);//进场 + 停留 + 出场
+        postDelayed(mRunnable, sleepTimeMs);//进场 + 停留 + 出场
     }
 
     private int getMyItemIndex(){
@@ -185,45 +187,47 @@ public class ItemSyncImageView extends EffectView implements OnPlayFinishObserve
         return -1;
     }
 
-    private long getSyncRegionDurationMs(Region region){
+    public static long getSyncRegionDurationMs(Region region){
 
         long regionDurationMs = 0;
         for(Item item : region.items){
             //inEffect + stay + outEffect(stay)
-            if ("2".equals(item.type))
+            if ("2".equals(item.type) || "3".equals(item.type))
                 regionDurationMs += Long.parseLong(item.duration);
         }
-        if(DBG_SYNC)
+        if(DBG)
             Log.d(TAG, "regionDurationMs=" + regionDurationMs);
 
         return regionDurationMs;
     }
 
-    private long getCurrentOffsetMs(long regionDuration){
+    public static long getCurrentOffsetMs(long regionDuration){
 
         long offset = System.currentTimeMillis() % regionDuration;
-        if (DBG_SYNC)
-            Log.d(TAG, "offset= " + offset);
+        if (SYNC_DBG)
+            Log.d(SYNC_TAG, "Sync offsetMs= " + offset);
         return offset;
     }
 
-    private long getSyncItemsPresentationTimeMs(Region region, Item item){
+    public static long getSyncItemsPresentationTimeMs(Region region, RegionView regionView){
         long sumDuration = 0;
-        try {
-            for (Item it : region.items) {
-                if ("2".equals(it.type))
-                    sumDuration += Long.parseLong(it.duration);
+            for (int i = 0; i < region.items.size(); i++) {
 
-                if (item.id != null && item.id.equals(it.id))
+                if (i > regionView.getSyncItemIndex())
                     break;
+
+                if ("2".equals(region.items.get(i).type) || "3".equals(region.items.get(i).type))
+                    try {
+                        sumDuration += Long.parseLong(region.items.get(i).duration);
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+
             }
 
-        }catch (NumberFormatException e){
-            e.printStackTrace();
-        }
+        if (SYNC_DBG)
+            Log.d(SYNC_TAG, "Sync itemsPresentationTimeMs= " + sumDuration);
 
-        if (DBG_SYNC)
-            Log.d(TAG, "getSyncItemsPresentationTimeMs. sumDuration= " + sumDuration);
         return sumDuration;
     }
 
