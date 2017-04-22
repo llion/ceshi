@@ -54,6 +54,7 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
     private Runnable mRunnable;
     private ProgramParser.Item mItem;
     private RegionView mRegionView;
+    private boolean mKeepAsp;
 
     @Override
     protected void onAttachedToWindow() {
@@ -311,9 +312,12 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
 
         Matrix txform = new Matrix();
         getTransform(txform);
-        txform.setScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
-        //txform.postRotate(10);          // just for fun
-        txform.postTranslate(xoff, yoff);
+
+        if (mKeepAsp) {
+            txform.setScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
+            //txform.postRotate(10);          // just for fun
+            txform.postTranslate(xoff, yoff);
+        }
         setTransform(txform);
     }
 
@@ -335,6 +339,7 @@ public class ItemTextureVideoView extends TextureView implements TextureView.Sur
         mItem = item;
         mFilePath = item.getAbsFilePath();
         mDuration = Integer.parseInt(item.duration);
+        mKeepAsp = "1".equals(item.reserveAS);
         if (DBG)
             Log.i(TAG, "setItem. VideoView, [absFilePath=" + mFilePath);
 //        try {
