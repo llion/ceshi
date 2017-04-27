@@ -256,12 +256,14 @@ public class Config implements ConfigAPI {
 
     private static void enableRil() throws IOException {
         Log.d(TAG, "enable ril");
-        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 1"});
+//        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 1"});
+        FtpServer.RunAsRoot(new String[]{"setprop color.modem.huawei 1"});
     }
 
     private static void disableRil() throws IOException {
         Log.d(TAG, "disable ril");
-        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 0"});
+//        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 0"});
+        FtpServer.RunAsRoot(new String[]{"setprop color.modem.huawei 0"});
     }
 
 
