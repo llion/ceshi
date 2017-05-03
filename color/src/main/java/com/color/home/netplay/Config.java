@@ -48,6 +48,7 @@ public class Config implements ConfigAPI {
     public static final String CMD_SCREENSHOT = "screenshot";
 
     private final static String CONFIG_FILE = "config.txt";
+    private final static String HUAWEI_MODULE = "color.modem.huawei";
     /**
      * The expected config file is resident in this mnt sdcard root folder.
      */
@@ -230,7 +231,7 @@ public class Config implements ConfigAPI {
         Settings.Global.putInt(mContext.getContentResolver(), ATTR_MOBILE_ENABLED, rilProperExpected);
         Log.d(TAG, "Attempt to " + (toEnableMobile ? "enable" : "disable") + " mobile data.");
 
-        if(! rilProperChanged(rilProperExpected)) {
+        if(! rilPropertyChanged(rilProperExpected)) {
             Log.w(TAG, "huawei proper not changed. abort.!");
             return;
         }
@@ -241,10 +242,10 @@ public class Config implements ConfigAPI {
             disableRil();
     }
 
-    private boolean rilProperChanged(int rilProperExpected){
+    private boolean rilPropertyChanged(int rilProperExpected){
         boolean properChanged = false;
         try {
-            int rilProper = SystemProperties.getInt("persist.color.modem.huawei", 0);
+            int rilProper = SystemProperties.getInt(HUAWEI_MODULE, 0);
             if(rilProperExpected != rilProper)
                 properChanged = true;
         }catch (NumberFormatException e){
@@ -257,13 +258,13 @@ public class Config implements ConfigAPI {
     private static void enableRil() throws IOException {
         Log.d(TAG, "enable ril");
 //        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 1"});
-        FtpServer.RunAsRoot(new String[]{"setprop color.modem.huawei 1"});
+        FtpServer.RunAsRoot(new String[]{"setprop " + HUAWEI_MODULE + " 1"});
     }
 
     private static void disableRil() throws IOException {
         Log.d(TAG, "disable ril");
 //        FtpServer.RunAsRoot(new String[]{"setprop persist.color.modem.huawei 0"});
-        FtpServer.RunAsRoot(new String[]{"setprop color.modem.huawei 0"});
+        FtpServer.RunAsRoot(new String[]{"setprop " + HUAWEI_MODULE + " 0"});
     }
 
 
