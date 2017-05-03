@@ -420,7 +420,7 @@ public class Config implements ConfigAPI {
             Log.d(TAG, "device model name= " + deviceName);
 
         //
-        if ("c3".equals(deviceName) || "c4".equals(deviceName)) {
+        if ("c3".equals(deviceName)) {
             UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
             HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
             if (DBG)

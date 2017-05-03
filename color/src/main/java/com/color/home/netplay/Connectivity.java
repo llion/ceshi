@@ -34,7 +34,7 @@ public class Connectivity {
         String deviceName = Config.getDeviceModelName();
         if (DBG)
             Log.i(TAG, "registerUSBWifiDongleReceiver. deviceName=" + deviceName);
-        if ("c3".equals(deviceName) || "c4".equals(deviceName)) {
+        if ("c3".equals(deviceName)) {
             IntentFilter filter = new IntentFilter("android.hardware.usb.action.USB_DEVICE_ATTACHED");
 //        filter.addAction("android.hardware.usb.action.USB_DEVICE_DETACHED");
             mContext.registerReceiver(new UsbAttachedReceiver(mWifiP2P), filter);
