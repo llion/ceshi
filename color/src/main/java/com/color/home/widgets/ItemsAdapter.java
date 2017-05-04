@@ -39,7 +39,12 @@ import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.localscroll.TextObject;
 import com.color.home.widgets.singleline.localscroll.TextObjectHeadTail;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+
 import com.color.home.widgets.singleline_scroll.ScrollRSSSurfaceview;
+
+import com.color.home.widgets.sync_playing.ItemSyncImageView;
+import com.color.home.widgets.sync_playing.ItemTextureVideoView;
+
 import com.color.home.widgets.timer.ItemTimer;
 import com.color.home.widgets.weather.ItemWeatherMLPagesView;
 import com.color.home.widgets.weather.ItemWeatherMLScrollView;
@@ -118,14 +123,25 @@ public class ItemsAdapter extends BaseAdapter {
         try {
             // Video
             if ("3".equals(item.type)) {
-                ItemVideoView vv = new ItemVideoView(mContext);
-                vv.setRegion(mRegion);
-                vv.setItem(mRegionView, item);
 
-                // If I'm the only one, always loop.
-                vv.setLoop(getCount() == 1);
-                return vv;
-            } else if ("7".equals(item.type)) { // Image
+                if (mRegionView.isSync()) {
+                    ItemTextureVideoView syncView = new ItemTextureVideoView(mContext);
+                    syncView.setRegion(mRegion);
+                    syncView.setItem(mRegionView, item);
+                    syncView.setLoop(getCount() == 1);
+
+                    return syncView;
+
+                } else {
+                    ItemVideoView vv = new ItemVideoView(mContext);
+                    vv.setRegion(mRegion);
+                    vv.setItem(mRegionView, item);
+
+                    // If I'm the only one, always loop.
+                    vv.setLoop(getCount() == 1);
+                    return vv;
+                }
+            } else if ("7".equals(item.type)) { // clock
 
                 String filepath = item.filesource.filepath;
                 int index = filepath.indexOf("clock") + 5;
@@ -174,40 +190,47 @@ public class ItemsAdapter extends BaseAdapter {
                 return itemTimer;
 
             } else if ("2".equals(item.type)) { // Image
-                // int animationType = Integer.parseInt(item.ineffect.Type);
-//                int animationType = mRegionView.getmRealAnimationType();
-//                if (DBG)
-//                    Log.d(TAG, "animationType = " + animationType);
-//                if (animationType == 1) {
-//                    // type = mRand.nextInt((48 - 2) + 1) + 2;
-//                    animationType = stypes[mRand.nextInt(stypes.length)];
-//                    if (DBG) {
-//                        Log.d(TAG, "animationType======" + animationType);
-//                    }
-//                }
-                if (DBG)
-                    Log.d(TAG, "convertView==" + convertView);
 
-                // if (convertView != null && convertView.getContext().toString())
-//                    if (DBG)
-                ItemImageView iiv;
-                if (convertView != null
-                    //&&
-//                            convertView instanceof ItemImageView &&
-//                            !(convertView instanceof  SwitchableImageView)
-                        ) {
-                    iiv = (ItemImageView) convertView;
+                if (mRegionView.isSync()){
                     if (DBG)
-                        Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
-                                "!(convertView instanceof  SwitchableImageView)");
+                        Log.d(TAG, "convertView==" + convertView);
+
+                    ItemSyncImageView iiv;
+                    if (convertView != null) {
+                        iiv = (ItemSyncImageView) convertView;
+                        if (DBG)
+                            Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
+                                    "!(convertView instanceof  SwitchableImageView)");
+                    } else {
+                        iiv = new ItemSyncImageView(mContext);
+                        iiv.setRegion(mRegion);
+                        if (DBG)
+                            Log.d(TAG, "new ItemSyncImageView(mContext)");
+                    }
+                    iiv.setItem(mRegionView, item);
+                    return iiv;
+
                 } else {
-                    iiv = new ItemImageView(mContext);
-                    iiv.setRegion(mRegion);
                     if (DBG)
-                        Log.d(TAG, "new ItemImageView(mContext)");
+                        Log.d(TAG, "convertView==" + convertView);
+
+                    // if (convertView != null && convertView.getContext().toString())
+//                    if (DBG)
+                    ItemImageView iiv;
+                    if (convertView != null) {
+                        iiv = (ItemImageView) convertView;
+                        if (DBG)
+                            Log.d(TAG, "convertView != null && convertView instanceof ItemImageView && " +
+                                    "!(convertView instanceof  SwitchableImageView)");
+                    } else {
+                        iiv = new ItemImageView(mContext);
+                        iiv.setRegion(mRegion);
+                        if (DBG)
+                            Log.d(TAG, "new ItemImageView(mContext)");
+                    }
+                    iiv.setItem(mRegionView, item);
+                    return iiv;
                 }
-                iiv.setItem(mRegionView, item);
-                return iiv;
 
             } else if ("4".equals(item.type)) {// Single line text.
                 if ("1".equals(item.isscroll)) {
@@ -354,6 +377,7 @@ public class ItemsAdapter extends BaseAdapter {
                         Log.d(TAG, "getView. [isscroll multi lines=" + item.scrollpicinfo);
 //                    final ScrollPicInfo scrollpicinfo = item.scrollpicinfo;
 //                    if (scrollpicinfo != null && !"0".equals(scrollpicinfo.picCount) && "1".equals(scrollpicinfo.filePath.isrelative)) {
+
                         if (DBG)
                             Log.d(TAG, "getView. [scrollmultipic.");
 
@@ -371,29 +395,34 @@ public class ItemsAdapter extends BaseAdapter {
                         return view;
 
                     } else {
+
+                        if (DBG)
+                            Log.d(TAG, "getView. [scrollmultipic.");
+
                         ItemMLScrollMultipic2View view = new ItemMLScrollMultipic2View(mContext);
                         // String filePath = getAbsFilePath(item);
-                    /*
-                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-                     */
+
+                        /*
+                         * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+                         */
                         view.setItem(mRegionView, item);
                         if (DBG)
                             Log.d(TAG, "getView. [view=" + view);
 
                         return view;
-//                    } else { // legacy scroll view.   one page, scroll
-//                        if (DBG)
-//                            Log.d(TAG, "getView. [legacy scroll view");
-//                        ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
-//                                R.layout.layout_multilines_scrollable_text, null);
-//                        // String filePath = getAbsFilePath(item);
-//                    /*
-//                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
-//                     */
-//                        if (DBG)
-//                            Log.d(TAG, "getView. [view=" + view);
-//                        view.setItem(mRegionView, item);
-//                        return view;
+    //                    } else { // legacy scroll view.   one page, scroll
+    //                        if (DBG)
+    //                            Log.d(TAG, "getView. [legacy scroll view");
+    //                        ItemMLScrollableText view = (ItemMLScrollableText) mInflater.inflate(
+    //                                R.layout.layout_multilines_scrollable_text, null);
+    //                        // String filePath = getAbsFilePath(item);
+    //                    /*
+    //                     * if (DBG) Log.i(TAG, "getView. [TextView file path=" + filePath);
+    //                     */
+    //                        if (DBG)
+    //                            Log.d(TAG, "getView. [view=" + view);
+    //                        view.setItem(mRegionView, item);
+    //                        return view;
                     }
                 } else {  // not scroll
                     final MultiPicInfo multipicinfo = item.multipicinfo;
