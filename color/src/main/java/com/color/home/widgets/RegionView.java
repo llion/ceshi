@@ -42,7 +42,12 @@ import com.color.home.widgets.singleline.PCItemSingleLineText;
 import com.color.home.widgets.singleline.SLPCHTSurfaceView;
 import com.color.home.widgets.singleline.localscroll.SLTextSurfaceView;
 import com.color.home.widgets.singleline.pcscroll.SLPCSurfaceView;
+
 import com.color.home.widgets.singleline_scroll.ScrollRSSSurfaceview;
+
+import com.color.home.widgets.sync_playing.ItemSyncImageView;
+import com.color.home.widgets.sync_playing.ItemTextureVideoView;
+
 import com.color.home.widgets.timer.ItemTimer;
 
 import java.util.Random;
@@ -51,6 +56,10 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     // never public, so that another class won't be messed up.
     private final static String TAG = "RegionView";
     private static final boolean DBG = false;
+
+    private static final boolean SYNC_DBG = true;
+    private static final String SYNC_TAG = "SYNC_ITEM";
+
     private static final boolean DBG_DRAW = false;
     private static final boolean DRAW_DBG = false;
     private static final int[] sTypes = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -75,6 +84,8 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
     private ObjectAnimator customDisappearingAnim;
     private int mRegionWidth;
     private int mRegionHeight;
+    private boolean mIsSync;
+    private int mSyncItemIndex = -1;
 
     public int getRegionHeight() {
         return mRegionHeight;
@@ -146,7 +157,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 mStrokePaint.setPathEffect(getPathEffect());
                 canvas.drawRect(mRectF, mStrokePaint);
 
-                 mPhase -= 0.3f;
+                mPhase -= 0.3f;
 
                 if (DBG_DRAW)
                     Log.d(TAG, "callBack= " + getCallback() + ", mPhase= " + mPhase);
@@ -276,6 +287,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
             setupItems();
     }
 
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
@@ -339,8 +351,49 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     private void setAdapter(ItemsAdapter itemsAdapter) {
         mItemsAdapter = itemsAdapter;
-
         setDisplayedChild(0);
+    }
+
+    private int getCurrentSyncItemIndex(){
+
+        long regionDurationMs = 0;
+        for(Item item : mRegion.items){
+            //inEffect + stay + outEffect(stay)
+            if ("2".equals(item.type) || "3".equals(item.type))
+                try {
+                    regionDurationMs += Long.parseLong(item.duration);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+        }
+
+        if(SYNC_DBG){
+            Log.d(SYNC_TAG, "Sync regionDurationMs=" + regionDurationMs);
+        }
+
+        long offsetMs = System.currentTimeMillis() % regionDurationMs;
+        if(SYNC_DBG)
+            Log.d(SYNC_TAG, "Sync offsetMs = " + offsetMs);
+
+        long sumDuration = 0;
+        for(int i = 0; i < mRegion.items.size(); i ++){
+
+            if ("2".equals(mRegion.items.get(i).type) || "3".equals(mRegion.items.get(i).type)) {
+                if(DBG)
+                    Log.d(SYNC_TAG, "sumDuration= " + sumDuration);
+                sumDuration += Long.parseLong(mRegion.items.get(i).duration);
+            }
+
+            if (sumDuration > offsetMs) {
+                if (SYNC_DBG)
+                    Log.d(SYNC_TAG, "Sync item index= " + i);
+               return i;
+            }
+        }
+
+        if (SYNC_DBG)
+            Log.d(SYNC_TAG, "Sync item index= 0");
+        return 0;
     }
 
     // @Override
@@ -537,10 +590,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || getChildAt(0) instanceof PCItemSingleLineText
                 || getChildAt(0) instanceof ScrollRSSSurfaceview
                 || getChildAt(0) instanceof ItemSingleLineText
+
                 || getChildAt(0) instanceof ItemSLPagedCltJsonView
                 || getChildAt(0) instanceof ItemMLPagedCltJsonView
                 || getChildAt(0) instanceof ItemSLScrollCltJsonView
                 || getChildAt(0) instanceof ItemMLScrollCltJsonView
+
+                || getChildAt(0) instanceof ItemTextureVideoView
+
                 || getChildAt(0) instanceof ItemExternalVideoView)
                 || (getChildAt(0) instanceof ItemImageView && !TextUtils.isEmpty( mRegion.items.get(0).url))
                 ) {
@@ -575,6 +632,46 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
             return;
         }
+
+//        boolean playAnimation = true;
+        //If it is the first image in a sync region...
+//        if(ItemsAdapter.isSyncImageProgram(mRegion)) {
+//            if (!isPlayingImage()) {
+//                if (SYNC_DBG) {
+//                    Log.d(SYNC_TAG, "Sync img region.");
+//                }
+//
+//                ItemSyncImageView.CurrentSyncImageStatus syncImgStatus = getCurrentSyncImgStatus();
+//                if (SYNC_DBG) {
+//                    Log.d(SYNC_TAG, "syncImgStatus index=" + syncImgStatus.index);
+//                    Log.d(SYNC_TAG, "syncImgStatus rest stay=" + syncImgStatus.restStayTime);
+//                }
+//                //TODO Switch child with no animation.
+////                playAnimation = false;
+//                displayedChild = syncImgStatus.index + 1;
+//            }
+////            setDisplayedChild(syncImgStatus.index + 1, false);
+//
+//            if (displayedChild >= getAdapter().getCount()) {
+//                displayedChild = 0;
+//            }
+//
+//            while(!"2".equals(mRegion.items.get(displayedChild).type)){
+//                displayedChild ++;
+//                if (displayedChild >= getAdapter().getCount()) {
+//                    displayedChild = 0;
+//                }
+//            }
+//        }
+        if (DBG)
+            Log.d(TAG, "setDisplayedChild. isSync? " + isSync());
+
+        if (isSync()) {
+            displayedChild = getCurrentSyncItemIndex();
+            setSyncItemIndex(displayedChild);
+        }
+        if (DBG)
+            Log.d(TAG, "displayedChild= " + displayedChild);
 
         if (displayedChild >= getAdapter().getCount()) {
             mDisplayedChild = 0;
@@ -611,6 +708,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || view instanceof ItemMLScrollMultipic2View
                 || view instanceof ItemMLScrollableText
                 || view instanceof ItemVideoView
+                || view instanceof ItemTextureVideoView
                 || view instanceof ItemMultiLinesPagedText
                 || view instanceof SLPCSurfaceView
                 || view instanceof SLPCHTSurfaceView
@@ -707,6 +805,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
             } else
                 addView(view);
+
         } else
             addView(view);
 
@@ -720,6 +819,14 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
         if (DBG)
             Log.d(TAG, "setDisplayedChild. [add view=" + view);
+    }
+
+    private void setSyncItemIndex(int displayedChild) {
+        mSyncItemIndex = displayedChild;
+    }
+
+    public int getSyncItemIndex() {
+        return mSyncItemIndex;
     }
 
     private int getRealAnimationType(Item item) {
@@ -736,8 +843,13 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         }
 
         if (type == 1) {
-            // type = mRand.nextInt((48 - 2) + 1) + 2;
-            realAnimType = sTypes[mRand.nextInt(sTypes.length)];
+            if (isSync())
+                realAnimType = 31;//alpha
+            else {
+                // type = mRand.nextInt((48 - 2) + 1) + 2;
+                realAnimType = sTypes[mRand.nextInt(sTypes.length)];
+            }
+
         } else {
             realAnimType = type;
         }
@@ -904,6 +1016,16 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
 
     public ValueAnimator getmCustomAppearingAnim() {
         return mCustomAppearingAnim;
+    }
+
+    public void setSync(boolean isSync) {
+        if (DBG)
+            Log.d(TAG, "setSync. isSync= " + isSync);
+        mIsSync = isSync;
+    }
+
+    public boolean isSync(){
+        return mIsSync;
     }
 
 }

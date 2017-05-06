@@ -154,6 +154,10 @@ public class SLScrollCltJsonObject extends TextObject {
         // Prepare the triangle data
         GLES20.glVertexAttribPointer(maTexCoordsHandle, 3, GLES20.GL_FLOAT, false, 12, mQuadTCB);
         GLES20.glEnableVertexAttribArray(maTexCoordsHandle);
+
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     public void reloadCltJson() {

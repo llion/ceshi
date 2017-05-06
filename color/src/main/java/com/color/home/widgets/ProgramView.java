@@ -121,14 +121,14 @@ public class ProgramView extends FrameLayout implements AdaptedProgram {
                 Log.i(TAG, "showNext. No adapter, mAdapter= " + mAdapter);
             return;
         }
-        
+
         if (mDisplayedChild == 0 && pagesCount == 1) {
             if (DBG)
                 Log.d(TAG, "showNext. [Single page program, don't move on to next.");
             sendBroadcastOfProgramFinished();
             return;
         }
-        
+
         setDisplayedChild(mDisplayedChild + 1);
         // View currentView = getCurrentView();
         // removeViewAt(0);
