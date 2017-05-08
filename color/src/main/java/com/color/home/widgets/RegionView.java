@@ -580,6 +580,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
         if (mDisplayedChild == 0 && getAdapter().getCount() == 1
                 && (getChildAt(0) instanceof ItemTimer
                 || getChildAt(0) instanceof ItemWebView
+                || getChildAt(0) instanceof ItemStreamView
                 || getChildAt(0) instanceof ItemMultiLinesPagedText
                 || getChildAt(0) instanceof ItemMultiLinesMultipic
                 || getChildAt(0) instanceof ItemMLScrollMultipic2View
@@ -709,6 +710,7 @@ public class RegionView extends FrameLayout implements OnPlayFinishedListener, A
                 || view instanceof ItemMLScrollableText
                 || view instanceof ItemVideoView
                 || view instanceof ItemTextureVideoView
+                || view instanceof ItemStreamView
                 || view instanceof ItemMultiLinesPagedText
                 || view instanceof SLPCSurfaceView
                 || view instanceof SLPCHTSurfaceView

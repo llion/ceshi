@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.text.TextUtils;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -551,11 +552,30 @@ public class ItemsAdapter extends BaseAdapter {
 
                 if (DBG)
                     Log.d(TAG, "type = 27, url= " + item.url);
+                if (item.url == null)
+                    return unknowView(item);
 
-                String url;
-                if (!item.url.contains("http://") && !item.url.contains("https://"))
+                String url = item.url;
+                if (!item.url.contains("://")) {//has no protocol header
+                    if (DBG)
+                        Log.d(TAG, "type == 27 has no protocol header.");
                     url = "http://" + item.url;
-                else url = item.url;
+                }
+
+                Uri parse = Uri.parse(url);
+                String scheme = parse.getScheme();
+                if (scheme.equals("rtsp")
+                        || scheme.equals("udp")
+                        || scheme.equals("rtp")
+                        || scheme.equals("rtmp")
+                        || (parse.getQueryParameter("type") != null && parse.getQueryParameter("type").equals("clt_streaming"))
+                        || url.contains(".m3u8")) {
+
+                    ItemStreamView isv = new ItemStreamView(mContext);
+                    item.url = url;
+                    isv.setItem(mRegionView, item);
+                    return isv;
+                }
 
                 HttpUrl httpUrl = HttpUrl.parse(url);
                 if (DBG) {
