@@ -15,8 +15,8 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import com.color.home.ProgramParser;
+import com.color.home.network.ExpandNetworkObserver;
 import com.color.home.network.NetworkConnectReceiver;
-import com.color.home.network.NetworkObserver;
 import com.color.home.utils.Reflects;
 
 import java.io.IOException;
@@ -27,12 +27,12 @@ import java.lang.reflect.Field;
  * 2017/3/15
  */
 
-public class ItemStreamView extends SurfaceView implements OnPlayFinishObserverable, MediaPlayer.OnBufferingUpdateListener,Runnable,FinishObserver,MediaPlayer.OnInfoListener,NetworkObserver,
+public class ItemStreamView extends SurfaceView implements OnPlayFinishObserverable, MediaPlayer.OnBufferingUpdateListener,Runnable,FinishObserver,MediaPlayer.OnInfoListener,ExpandNetworkObserver,
         MediaPlayer.OnPreparedListener, MediaPlayer.OnVideoSizeChangedListener, SurfaceHolder.Callback, MediaPlayer.OnErrorListener,MediaPlayer.OnSeekCompleteListener{
 
 
     private static final boolean DBG = false;
-    private final static String TAG = "ItemSurfaceView";
+    private final static String TAG = "ItemStreamView";
     private OnPlayFinishedListener mListener;
     private int mVideoWidth;
     private int mVideoHeight;
@@ -53,6 +53,7 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     public MediaPlayer mMediaPlayer;
 
     private boolean mStarted;
+    private boolean mIsNetConnectted;
 
     public ItemStreamView(Context context) {
         this(context,null);
@@ -95,7 +96,7 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             Log.e(TAG, "onError. mp, what, extra=" + mp + ", " + what + ", " + extra + ", Thread=" + Thread.currentThread());
         if(what == 1 && extra == -2147483648)
             releaseMediaPlayer();
-        return true;
+        return false;
     }
 
     @Override
@@ -120,14 +121,14 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     public void surfaceCreated(SurfaceHolder holder) {
         if (DBG)
             Log.d(TAG, "surfaceCreated called");
-        playVideo();
+        mNetworkConnectReceiver = new NetworkConnectReceiver(this);
+        registerNetworkConnectReceiver();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         if (DBG)
             Log.d(TAG, "surfaceChanged called format=" + format + ", width=" + width + ", height=" + height);
-
     }
 
     @Override
@@ -135,6 +136,8 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         if (DBG)
             Log.d(TAG, "surfaceDestroyed called");
         releaseMediaPlayer();
+        removeCallbacks(this);
+        unRegisterNetworkConnectReceiver();
     }
 
     @Override
@@ -150,10 +153,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         super.onDetachedFromWindow();
         if (DBG)
             Log.e(TAG, "onDetachedFromWindow. stopPlayback. this=" + this);
-
-        if (mNetworkConnectReceiver != null)
-            mContext.unregisterReceiver(mNetworkConnectReceiver);
-        releaseMediaPlayer();
         doCleanUp();
     }
 
@@ -171,35 +170,35 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (DBG)
             Log.i(TAG, "onMeasure");
-        {
-            if (mKeepAsp) {
 
-                int width = getDefaultSize(mVideoWidth, widthMeasureSpec);
-                int height = getDefaultSize(mVideoHeight, heightMeasureSpec);
-                if (DBG)
-                    Log.d(TAG, "onMeasure. mVideoWidth= " + mVideoWidth + ", mVideoHeight= " + mVideoHeight);
+        if (mKeepAsp) {
 
-                if (mVideoWidth > 0 && mVideoHeight > 0) {
-                    if (mVideoWidth * height > width * mVideoHeight) {
-                        // Log.i("@@@", "image too tall, correcting");
-                        height = width * mVideoHeight / mVideoWidth;
-                    } else if (mVideoWidth * height < width * mVideoHeight) {
-                        // Log.i("@@@", "image too wide, correcting");
-                        width = height * mVideoWidth / mVideoHeight;
-                    }
+            int width = getDefaultSize(mVideoWidth, widthMeasureSpec);
+            int height = getDefaultSize(mVideoHeight, heightMeasureSpec);
+            if (DBG)
+                Log.d(TAG, "onMeasure. mVideoWidth= " + mVideoWidth + ", mVideoHeight= " + mVideoHeight);
+
+            if (mVideoWidth > 0 && mVideoHeight > 0) {
+                if (mVideoWidth * height > width * mVideoHeight) {
+                    // Log.i("@@@", "image too tall, correcting");
+                    height = width * mVideoHeight / mVideoWidth;
+                } else if (mVideoWidth * height < width * mVideoHeight) {
+                    // Log.i("@@@", "image too wide, correcting");
+                    width = height * mVideoWidth / mVideoHeight;
                 }
-
-                if (DBG)
-                    Log.d(TAG, "setMeasuredDimension. width= " + width + ", height= " + height);
-                setMeasuredDimension(width, height);
-
-                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height, Gravity.CENTER);
-                this.setLayoutParams(layoutParams);
-            }else{
-
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             }
+
+            if (DBG)
+                Log.d(TAG, "setMeasuredDimension. width= " + width + ", height= " + height);
+            setMeasuredDimension(width, height);
+
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height, Gravity.CENTER);
+            this.setLayoutParams(layoutParams);
+        }else{
+
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
+
     }
 
     private void checkSkipDraw() {
@@ -208,12 +207,12 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             int flag = fieldFrom.getInt(this);
 
             if (DBG) {
-                Log.i(TAG, "ItemVideoView. value=" + flag);
+                Log.i(TAG, "ItemSurfaceView. value=" + flag);
             }
 
             fieldFrom.setInt(this, flag & ~0x00000080);
             if (DBG) {
-                Log.i(TAG, "ItemVideoView. value new =" + fieldFrom.getInt(this));
+                Log.i(TAG, "ItemSurfaceView. value new =" + fieldFrom.getInt(this));
             }
 
         } catch (NoSuchFieldException e) {
@@ -280,16 +279,26 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         }
     }
 
-    public void releaseMediaPlayer() {
+    public synchronized void releaseMediaPlayer() {
         if (DBG)
             Log.e(TAG, "releaseMediaPlayer. mMediaPlayer=" + mMediaPlayer);
+
         if (mMediaPlayer != null) {
-            // Do not stop, otherwise it could halt the Main thread.
-            mMediaPlayer.reset();
-            // PlayerPool.getInst().release(mMediaPlayer);
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-            removeCallbacks(this);
+            if(mMediaPlayer.isPlaying()){
+                mMediaPlayer.stop();
+            }
+            new Thread(){
+                @Override
+                public void run() {
+                    if(DBG)
+                        Log.i(TAG, "releaseMediaPlayer. reset=start");
+                    // Do not stop, otherwise it could halt the Main thread.
+                    mMediaPlayer.reset();
+                    // PlayerPool.getInst().release(mMediaPlayer);
+                    mMediaPlayer.release();
+                    mMediaPlayer = null;
+                }
+            }.start();
         }
     }
 
@@ -301,8 +310,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         if (!mStarted) {
             mStarted = true;
             mMediaPlayer.start();
-            mNetworkConnectReceiver = new NetworkConnectReceiver(this);
-            registerNetworkConnectReceiver();
         }
     }
 
@@ -345,11 +352,38 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
 
     @Override
     public void reloadContent() {
-      if(mMediaPlayer!=null){
-          if(DBG)
-              Log.i(TAG,"itemStreamView:-reloadContent");
-          mMediaPlayer.start();
-      }
+        networkConnectLogic();
+    }
+
+    @Override
+    public void networkDisconnect() {
+        networkDisconnectLogic();
+    }
+
+    private synchronized void networkConnectLogic(){
+        if(!mIsNetConnectted){
+            if(DBG)
+                Log.e(TAG,"NetWork_Connected_broadcast_receive");
+            mIsNetConnectted = true;
+            if (mMediaPlayer != null) {
+
+                if(mMediaPlayer.isPlaying()){
+                    mMediaPlayer.stop();
+                }
+                mMediaPlayer.reset();
+                mMediaPlayer.release();
+                mMediaPlayer = null;
+            }
+            playVideo();
+        }
+    }
+
+    private synchronized void networkDisconnectLogic(){
+        if(mIsNetConnectted){
+            if (DBG)
+            Log.i(TAG,"NetWork_Disconnected_broadcast_receive");
+            mIsNetConnectted = false;
+        }
     }
 
     public void registerNetworkConnectReceiver() {
@@ -358,5 +392,12 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
             mContext.registerReceiver(mNetworkConnectReceiver, filter);
         }
+    }
+
+    public  void unRegisterNetworkConnectReceiver() {
+        if (DBG)
+            Log.i(TAG, "mNetworkConnectReceiver-unregisterReceiver-started");
+        if (mNetworkConnectReceiver != null)
+            mContext.unregisterReceiver(mNetworkConnectReceiver);
     }
 }

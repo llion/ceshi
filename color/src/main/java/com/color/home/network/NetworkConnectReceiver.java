@@ -10,9 +10,9 @@ import android.util.Log;
 
 public class NetworkConnectReceiver extends BroadcastReceiver{
     public  static final String TAG ="NetworkConnectReceiver";
-    public  static boolean DBG = false;
+    public  static boolean DBG = true;
+    private final NetworkObserver mNetworkObserver;
 
-    public NetworkObserver mNetworkObserver;
 
     public NetworkConnectReceiver(NetworkObserver networkObserver) {
         if (DBG)
@@ -21,9 +21,6 @@ public class NetworkConnectReceiver extends BroadcastReceiver{
     }
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (DBG){
-            Log.i(TAG,"--------onReceive, thread=" + Thread.currentThread());
-        }
 
 //      监听网络连接(包括WiFi连接和移动数据的打开和关闭)，以及连接连接上可用的连接都可以监听到
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())){
@@ -31,6 +28,7 @@ public class NetworkConnectReceiver extends BroadcastReceiver{
             NetworkInfo info=intent
                     .getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
             if (info!=null){
+
 //                    如果当前网络连接成功并且网络连接可用
                 if (NetworkInfo.State.CONNECTED == info.getState() && info.isAvailable()){
                     if (DBG){
@@ -38,21 +36,15 @@ public class NetworkConnectReceiver extends BroadcastReceiver{
                         Log.i(TAG,"InternetType:" + info.getType() + " connected.");
                     }
                     if (mNetworkObserver != null) {
-                        if (DBG){
-                            Log.i(TAG,"------mNetworkObserver.reloadContent");
-                        }
-
                         mNetworkObserver.reloadContent();
                     }
+                }else {
+                       if(mNetworkObserver instanceof ExpandNetworkObserver){
+                           if (DBG)
+                               Log.i(TAG,"---------Internet disconnected.");
+                           ((ExpandNetworkObserver) mNetworkObserver).networkDisconnect();
+                       }
                 }
-            }else{
-                if (DBG){
-                    Log.i(TAG,"---------Internet disconnected.");
-                }
-            }
-        }else {
-            if (DBG){
-                Log.i(TAG,"---------There is no Internet");
             }
         }
     }
