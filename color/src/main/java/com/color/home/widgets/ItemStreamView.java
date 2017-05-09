@@ -6,6 +6,8 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -27,8 +29,8 @@ import java.lang.reflect.Field;
  * 2017/3/15
  */
 
-public class ItemStreamView extends SurfaceView implements OnPlayFinishObserverable, MediaPlayer.OnBufferingUpdateListener,Runnable,FinishObserver,MediaPlayer.OnInfoListener,ExpandNetworkObserver,
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnVideoSizeChangedListener, SurfaceHolder.Callback, MediaPlayer.OnErrorListener,MediaPlayer.OnSeekCompleteListener{
+public class ItemStreamView extends SurfaceView implements OnPlayFinishObserverable, Runnable,FinishObserver,ExpandNetworkObserver,
+          SurfaceHolder.Callback{
 
 
     private static final boolean DBG = false;
@@ -54,6 +56,7 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
 
     private boolean mStarted;
     private boolean mIsNetConnectted;
+    private Handler mHandler;
 
     public ItemStreamView(Context context) {
         this(context,null);
@@ -70,51 +73,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         checkSkipDraw();
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mediaplayer) {
-        if (DBG)
-            Log.d(TAG, "onPrepared called, mIsVideoReadyToBePlayed=" + mIsVideoReadyToBePlayed
-                    + ", mIsVideoSizeKnown=" + mIsVideoSizeKnown);
-
-        mIsVideoReadyToBePlayed = true;
-        if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
-            startVideoPlayback();
-        }
-    }
-
-    @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        if (DBG)
-            Log.d(TAG, "onBufferingUpdate percent:" + percent);
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        if (DBG)
-            Log.e(TAG, "onError. mp, what, extra=" + mp + ", " + what + ", " + extra + ", Thread=" + Thread.currentThread());
-        if(what == 1 && extra == -2147483648)
-            releaseMediaPlayer();
-        return false;
-    }
-
-    @Override
-    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-        if (DBG)
-            Log.v(TAG, "onVideoSizeChanged called");
-        if (width == 0 || height == 0) {
-            Log.e(TAG, "invalid video width(" + width + ") or height(" + height + ")");
-            return;
-        }
-        mIsVideoSizeKnown = true;
-        mVideoWidth = width;
-        mVideoHeight = height;
-
-        // Donnot call twice. HMH
-        if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
-            startVideoPlayback();
-        }
     }
 
     @Override
@@ -135,22 +93,18 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
     public void surfaceDestroyed(SurfaceHolder holder) {
         if (DBG)
             Log.d(TAG, "surfaceDestroyed called");
+        if(mHandler != null)
+            mHandler.removeMessages(0);
         releaseMediaPlayer();
         removeCallbacks(this);
         unRegisterNetworkConnectReceiver();
     }
 
     @Override
-    public void onSeekComplete(MediaPlayer mp) {
-        if (DBG) {
-            Log.d(TAG, "onSeekComplete.....");
-        }
-        tellListener();
-    }
-
-    @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        if(mHandler != null)
+            mHandler.removeMessages(0);
         if (DBG)
             Log.e(TAG, "onDetachedFromWindow. stopPlayback. this=" + this);
         doCleanUp();
@@ -230,33 +184,100 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
 
         doCleanUp();
 
-        try {
-            mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.reset();
-            mMediaPlayer.setDataSource(mContext, Uri.parse(path));
-            mMediaPlayer.setDisplay(holder);
-            mMediaPlayer.prepareAsync();
-            //setting volume
-//            float leftVolume;
-//            float rightVolume = leftVolume = mVolume;
-//            mMediaPlayer.setVolume(leftVolume, rightVolume);
-            mMediaPlayer.setOnBufferingUpdateListener(this);
-            mMediaPlayer.setOnErrorListener(this);
-            mMediaPlayer.setOnSeekCompleteListener(this);
-            mMediaPlayer.setOnPreparedListener(this);
-            mMediaPlayer.setOnVideoSizeChangedListener(this);
-            mMediaPlayer.setOnInfoListener(this);
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.reset();
 
+        mHandler = new StreamHandler();
+        new Thread(){
+            @Override
+            public void run() {
+                try {
+                    Log.d(TAG, "setDataSource..");
+                    if(mMediaPlayer != null)
+                         mMediaPlayer.setDataSource(mContext, Uri.parse(path));
+                    if(mHandler != null)
+                        mHandler.sendEmptyMessage(0);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+    public class StreamHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+
+            try {
+                if(mMediaPlayer != null){
+
+                    mMediaPlayer.setDisplay(holder);
+                    Log.d(TAG, "prepareAsync..");
+                    mMediaPlayer.prepareAsync();
+                    Log.d(TAG, "setOnBufferingUpdateListener..");
+
+                    mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                        @Override
+                        public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                            if (DBG)
+                                Log.d(TAG, "onBufferingUpdate percent:" + percent);
+                        }
+                    });
+
+                    mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                        @Override
+                        public boolean onError(MediaPlayer mp, int what, int extra) {
+                            if (DBG)
+                                Log.e(TAG, "onError. mp, what, extra=" + mp + ", " + what + ", " + extra + ", Thread=" + Thread.currentThread());
+                            if(what == 1 && extra == -2147483648)
+                                releaseMediaPlayer();
+                            return false;
+                        }
+                    });
+
+                    mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            if (DBG)
+                                Log.d(TAG, "onPrepared called, mIsVideoReadyToBePlayed=" + mIsVideoReadyToBePlayed
+                                        + ", mIsVideoSizeKnown=" + mIsVideoSizeKnown);
+
+                            mIsVideoReadyToBePlayed = true;
+                            if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
+                                startVideoPlayback();
+                            }
+                        }
+                    });
+
+                    mMediaPlayer.setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
+                        @Override
+                        public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+                            if (DBG)
+                                Log.v(TAG, "onVideoSizeChanged called");
+                            if (width == 0 || height == 0) {
+                                Log.e(TAG, "invalid video width(" + width + ") or height(" + height + ")");
+                                return;
+                            }
+                            mIsVideoSizeKnown = true;
+                            mVideoWidth = width;
+                            mVideoHeight = height;
+
+                            // Donnot call twice. HMH
+                            if (mIsVideoReadyToBePlayed && mIsVideoSizeKnown) {
+                                startVideoPlayback();
+                            }
+                        }
+                    });
+                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                }
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     protected void doCleanUp() {
@@ -267,16 +288,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
         mIsVideoReadyToBePlayed = false;
         mIsVideoSizeKnown = false;
         mStarted = false;
-    }
-
-    private void tellListener() {
-        if (DBG)
-            Log.i(TAG, "tellListener. Tell listener =" + mListener);
-
-        if (mListener != null) {
-            mListener.onPlayFinished(this);
-            removeListener(mListener);
-        }
     }
 
     public synchronized void releaseMediaPlayer() {
@@ -309,7 +320,8 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
 
         if (!mStarted) {
             mStarted = true;
-            mMediaPlayer.start();
+            if(mMediaPlayer != null)
+                mMediaPlayer.start();
         }
     }
 
@@ -343,11 +355,6 @@ public class ItemStreamView extends SurfaceView implements OnPlayFinishObservera
             mListener.onPlayFinished(this);
             removeListener(mListener);
         }
-    }
-
-    @Override
-    public boolean onInfo(MediaPlayer mediaPlayer, int i, int i1) {
-        return true;
     }
 
     @Override
