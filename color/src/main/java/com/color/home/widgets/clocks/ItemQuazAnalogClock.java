@@ -318,7 +318,7 @@ public class ItemQuazAnalogClock extends View implements ItemData, Runnable, Fin
             Typeface tf = Typeface.create(AppController.getInstance().getTypeface(fixedDate.lfFaceName), style);
             mDatePaint.setTypeface(tf);
             mDatePaint.setTextAlign(Paint.Align.CENTER);
-            mDatePaint.setColor((int)(Long.parseLong(mClockFont.weekColor)) | 0xFF000000);//LedVision修改星期字体颜色，日期颜色变化
+            mDatePaint.setColor((int)(Long.parseLong(mClockFont.dateColor)) | 0xFF000000);//LedVision修改星期字体颜色，日期颜色变化
             mSdfDate = new SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "MMMMdd"));
             mSdfDate.setTimeZone(TimeZone.getTimeZone(mTzId));
         }
@@ -344,7 +344,7 @@ public class ItemQuazAnalogClock extends View implements ItemData, Runnable, Fin
             Typeface tf = Typeface.create(AppController.getInstance().getTypeface(fixedWeek.lfFaceName), style);
             mWeekPaint.setTypeface(tf);
             mWeekPaint.setTextAlign(Paint.Align.CENTER);
-            mWeekPaint.setColor((int)(Long.parseLong(mClockFont.dateColor)) | 0xFF000000);//LedVision中第一个DateColor
+            mWeekPaint.setColor((int)(Long.parseLong(mClockFont.weekColor)) | 0xFF000000);//LedVision中第一个DateColor
             mSdfWeek = new SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEE"));
             mSdfWeek.setTimeZone(TimeZone.getTimeZone(mTzId));
         }
